@@ -1,0 +1,20 @@
+# 헤더: type(scope): subject (50자 이내)
+# types: feat | fix | refactor | chore | docs | test | build
+type(scope): 간단한 요약을 입력하세요
+
+# 본문(선택) — 무엇/왜/영향 (한 줄당 72자 이내 권장)
+- 무엇(What):
+- 이유(Why):
+- 영향 범위(Impact):
+
+# 테스트 방법
+- 명령: ./mvnw test / ./mvnw spring-boot:run
+- 시나리오/엔드포인트:
+- 기대 결과:
+
+# 참고
+- 관련 이슈: #
+- (선택) 설계/의사결정 요약을 본문에 포함하세요. 로컬 작업 노트는 참조하지 않습니다.
+
+# 파괴적 변경(해당 시)
+# BREAKING CHANGE: 내용

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+msg_file="$1"
+first_line=$(sed -n '1{s/[[:space:]]*$//;p;q;}' "$msg_file")
+
+# Conventional Commits 패턴 검사
+if [[ ! "$first_line" =~ ^(feat|fix|refactor|chore|docs|test|build)(\([^)]+\))?:\ .* ]]; then
+  echo "[commit-msg] 커밋 메시지 헤더가 Conventional Commits 형식을 따르지 않습니다." >&2
+  echo "예: feat(user): 사용자 생성 API 추가" >&2
+  echo "현재: $first_line" >&2
+  echo "" >&2
+  echo "도움말: 레포 루트의 .gitmessage 템플릿을 참고하세요.\n- 설정: git config commit.template .gitmessage" >&2
+  exit 1
+fi
+
+# 헤더 길이 권장(50자 이내) 경고
+header_len=${#first_line}
+if (( header_len > 72 )); then
+  echo "[commit-msg] 경고: 첫 줄이 72자를 초과합니다(현재 ${header_len}). 50자 내 요약을 권장합니다." >&2
+fi
+
+exit 0
+

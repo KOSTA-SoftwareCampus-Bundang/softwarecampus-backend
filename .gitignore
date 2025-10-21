@@ -1,0 +1,152 @@
+# --------------------------------------------
+# Spring Boot 프로젝트용 .gitignore파일
+# 2025.10.19 최종 수정
+# 작성자 : Jaehyun Park
+# 새로운 내용 추가 시 섹션 맨 끝에 추가할 것
+# 새로운 내용 추가 시 주석으로 추가한 날짜 남길 것
+# 주석은 맨 끝이 아닌 상단에 적고 개행할 것
+# ---------------------------------------------
+
+# ---------------------------------------------
+# ☕️ Java / Maven
+# ---------------------------------------------
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+
+# ---------------------------------------------
+# 🧠 IDE / Editor stuff
+# ---------------------------------------------
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+# IntelliJ data & cache
+shelf/
+workspace.xml
+tasks.xml
+usage.statistics.xml
+.idea_modules/
+# Datasource / HTTP client stuff
+dataSources/
+dataSources.local.xml
+httpRequests/
+mavenHomeManager.xml
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# VSCode
+.vscode/
+.history/
+
+# ---------------------------------------------
+# 🧱 OS-specific junk
+# ---------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ---------------------------------------------
+# 🚀 Build / Temp / Logs
+# ---------------------------------------------
+logs/
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+boot/
+spring.log
+
+# ---------------------------------------------
+# 🌱 Spring Boot specific
+# ---------------------------------------------
+.springBeans
+!src/main/resources/static/
+!src/main/resources/templates/
+
+# ---------------------------------------------
+# 🔒 Env / Secrets / Config
+# ---------------------------------------------
+.env
+.env.*
+application-*.yml
+application-*.yaml
+application-*.properties
+!application.yml
+!application.yaml
+!application.properties
+
+# ---------------------------------------------
+# ⚙️ Build Cache / Tooling
+# ---------------------------------------------
+bin/
+tmp/
+build/
+.gradle/
+.gradle-cache/
+.cache/
+# Maven local repo cache (optional — 주석 해제 시 local repo 무시)
+# .m2/repository/
+
+# ---------------------------------------------
+# 🧩 JetBrains-specific extras
+# ---------------------------------------------
+# IntelliJ local history & indexes
+.idea/shelf/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/httpRequests/
+.idea/dataSources/
+.idea/dataSources.local.xml
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+.idea/sonarlint/
+.idea/compiler.xml
+.idea/libraries/
+.idea/jarRepositories.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/runConfigurations/
+
+# ---------------------------------------------
+# 📦 Misc
+# ---------------------------------------------
+# IDE preview caches
+*.class
+*.hprof
+*.orig
+*.rej
+ 
+# ---------------------------------------------
+# 🧾 Local work logs (per-user)
+# ---------------------------------------------
+# 개인 작업 로그(로컬)
+work-history.md
+.md/work-history.md

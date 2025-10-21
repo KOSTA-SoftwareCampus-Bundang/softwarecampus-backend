@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MSG_FILE="$1"
+SOURCE="${2:-}"
+
+# 머지/리베이스/스크립트에 의한 커밋은 수정하지 않음
+case "$SOURCE" in
+  merge|squash|commit|message|rebase)
+    exit 0 ;;
+esac
+
+# 메시지가 비어있을 때만 브랜치명으로 헤더 힌트 생성
+if [[ ! -s "$MSG_FILE" ]]; then
+  branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+  type=""
+  scope=""
+  subject=""
+
+  # 브랜치 네이밍 예: feat/user-create 또는 fix/auth-token
+  if [[ "$branch" =~ ^(feat|fix|refactor|chore|docs|test|build)/([a-zA-Z0-9._-]+) ]]; then
+    type="${BASH_REMATCH[1]}"
+    raw_scope="${BASH_REMATCH[2]}"
+    scope=${raw_scope%%-*}
+    subject=$(echo "${raw_scope#*-}" | tr '-' ' ')
+  fi
+
+  if [[ -n "$type" && -n "$scope" ]]; then
+    echo "${type}(${scope}): ${subject}" > "$MSG_FILE"
+    echo >> "$MSG_FILE"
+  fi
+
+  # 템플릿이 있으면 덧붙이기
+  if [[ -f .gitmessage ]]; then
+    cat .gitmessage >> "$MSG_FILE"
+  fi
+fi
+
+exit 0
+
