@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 논리적 삭제(Soft Delete)를 지원하는 베이스 엔티티
  */
 @MappedSuperclass
-public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
+public abstract class BaseSoftDeleteEntity extends BaseTimeEntity {
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;

@@ -1,37 +1,34 @@
 package com.softwarecampus.backend.domain.common;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import lombok.Getter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 /**
- * 공통적으로 사용되는 타임스탬프 관련 컬럼을 MappedSuperclass 어노테이션을 통해 관리
- * updated
+ * 생성일시, 수정일시를 자동으로 관리하는 베이스 엔티티
  */
 @MappedSuperclass
-@Getter
+@EntityListeners(AuditingEntityListener.class)
 public abstract class BaseTimeEntity {
 
-
+    @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @LastModifiedDate
+    @Column(name = "modified_at")
+    private LocalDateTime modifiedAt;
 
-    @PrePersist
-    //EntityManager.persist() 호출 시 실행, 해당 컬럼의 값을 현재 시간으로 수정 (CreatedDate와 같은 역할)
-    protected void onCreate() {
-        this.createdAt = this.updatedAt = LocalDateTime.now();
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
-    @PreUpdate
-    // flush/commit 시 실행, 해당 컬럼의 값을 현재 시간으로 수정 (LastModifiedDate와 같은 역할)
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+    public LocalDateTime getModifiedAt() {
+        return modifiedAt;
     }
 }
