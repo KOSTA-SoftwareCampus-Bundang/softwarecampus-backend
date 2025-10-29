@@ -27,7 +27,7 @@ public class Board extends BaseSoftDeleteSupportEntity {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false,columnDefinition = "text")
     private String text;
 
     @Column(nullable = false)
@@ -41,9 +41,11 @@ public class Board extends BaseSoftDeleteSupportEntity {
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy ="board")
+    @Builder.Default
     private List<BoardAttach> boardAttaches = new ArrayList<>();
 
     @OneToMany(mappedBy = "board",cascade = CascadeType.REMOVE)
+    @Builder.Default
     private List<BoardRecommend> boardRecommends = new ArrayList<>();
 
 }

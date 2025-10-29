@@ -20,7 +20,7 @@ public class Comment extends BaseSoftDeleteSupportEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false,columnDefinition = "text")
     private String text;
 
     @OneToMany(mappedBy = "topComment")
@@ -35,5 +35,6 @@ public class Comment extends BaseSoftDeleteSupportEntity {
     private Board board;
 
     @OneToMany(mappedBy = "comment",cascade = CascadeType.REMOVE)
+    @Builder.Default
     private List<CommentRecommend> comments = new ArrayList<>();
 }
