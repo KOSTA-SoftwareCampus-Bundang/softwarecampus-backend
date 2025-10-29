@@ -23,13 +23,15 @@ public class Comment extends BaseSoftDeleteSupportEntity {
     @Column(nullable = false)
     private String text;
 
-
     @OneToMany(mappedBy = "topComment")
     private List<Comment> subComments = new ArrayList<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Comment topComment;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Board board;
+
+    @OneToMany(mappedBy = "comment",cascade = CascadeType.REMOVE)
+    private List<Comment> comments = new ArrayList<>();
 }

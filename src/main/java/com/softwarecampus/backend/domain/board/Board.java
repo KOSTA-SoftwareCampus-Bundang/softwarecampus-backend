@@ -32,15 +32,18 @@ public class Board extends BaseSoftDeleteSupportEntity {
 
     @Column(nullable = false)
     @ColumnDefault("0")
-    private Long hits;
+    private long hits;
 
     @Column(nullable = false)
-    private Boolean isSecret;
+    private boolean isSecret;
 
     @OneToMany(mappedBy ="board")
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy ="board")
     private List<BoardAttach> boardAttaches = new ArrayList<>();
+
+    @OneToMany(mappedBy = "board",cascade = CascadeType.REMOVE)
+    private List<BoardRecommend> boardRecommends = new ArrayList<>();
 
 }
