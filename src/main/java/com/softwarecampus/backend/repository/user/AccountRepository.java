@@ -5,6 +5,7 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
      * - isDeleted=false인 계정 중에서만 중복 체크
      */
     @Query("SELECT COUNT(a) > 0 FROM Account a WHERE a.userName = :userName AND a.isDeleted = false")
-    boolean existsActiveUserName(@org.springframework.data.repository.query.Param("userName") String userName);
+    boolean existsActiveUserName(@Param("userName") String userName);
     
     /**
      * 사용자명으로 활성 계정 조회 (Soft Delete 고려)
