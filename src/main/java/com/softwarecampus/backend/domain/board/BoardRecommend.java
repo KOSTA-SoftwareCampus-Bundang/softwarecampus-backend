@@ -18,5 +18,6 @@ public class BoardRecommend extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "board_id",nullable = false)
     private Board board;
 }

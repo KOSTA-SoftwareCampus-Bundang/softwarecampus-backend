@@ -23,5 +23,6 @@ public class BoardAttach {
     private String realFilename;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="board_id",nullable = false)
     private Board board;
 }

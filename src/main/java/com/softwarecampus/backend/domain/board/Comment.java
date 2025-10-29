@@ -27,9 +27,11 @@ public class Comment extends BaseSoftDeleteSupportEntity {
     private List<Comment> subComments = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="comment_id")
     private Comment topComment;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="board_id",nullable = false)
     private Board board;
 
     @OneToMany(mappedBy = "comment",cascade = CascadeType.REMOVE)
