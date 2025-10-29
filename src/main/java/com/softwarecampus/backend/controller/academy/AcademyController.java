@@ -28,12 +28,12 @@ public class AcademyController {
     }
 
     /**
-     * 단일 조회
+     * 훈련기관 이름으로 부분 일치 검색
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<AcademyResponse> getAcademyById(@PathVariable Long id) {
-        AcademyResponse academyResponse = academyService.getAcademyById(id);
-        return ResponseEntity.ok(academyResponse);
+    @GetMapping("/search")
+    public ResponseEntity<List<AcademyResponse>> searchAcademiesByName(@RequestParam String name) {
+        List<AcademyResponse> response = academyService.searchAcademiesByName(name);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -48,7 +48,7 @@ public class AcademyController {
     /**
      * 훈련기관 정보 수정
      */
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<AcademyResponse> updateAcademy(@PathVariable Long id, @RequestBody AcademyUpdateRequest request) {
         AcademyResponse academyResponse = academyService.updateAcademy(id, request);
         return ResponseEntity.ok(academyResponse);
@@ -66,5 +66,10 @@ public class AcademyController {
     /**
      * 훈련기관 등록 승인
      */
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<AcademyResponse> approveAcademy(@PathVariable Long id) {
+        AcademyResponse academyResponse = academyService.approveAcademy(id);
+        return ResponseEntity.ok(academyResponse);
+    }
 
 }

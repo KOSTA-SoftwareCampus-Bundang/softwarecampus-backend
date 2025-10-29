@@ -44,9 +44,10 @@ public class AcademyServiceImpl implements AcademyService {
      */
     @Override
     @Transactional
-    public AcademyResponse getAcademyById(Long id) {
-        Academy academy = findAcademyOrThrow(id);
-        return AcademyResponse.from(academy);
+    public List<AcademyResponse> searchAcademiesByName(String name) {
+        List<Academy> academies = academyRepository.findByNameContaining(name);
+
+        return academies.stream().map(AcademyResponse::from).collect(Collectors.toList());
     }
 
     /**
@@ -62,17 +63,24 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     /**
-     * 훈련기관 정보 수정
+     * 훈련기관 정보 수정 (부분/전체)
      */
     @Override
     public AcademyResponse updateAcademy(Long id, AcademyUpdateRequest request) {
         Academy academy = findAcademyOrThrow(id);
 
-        academy.setName(request.getName());
-        academy.setAddress(request.getAddress());
-        academy.setBusiness_number(request.getBusinessNumber());
-        academy.setEmail(request.getEmail());
-
+        if (request.getName() != null) {
+            academy.setName(request.getName());
+        }
+        if (request.getAddress() != null) {
+            academy.setAddress(request.getAddress());
+        }
+        if (request.getBusinessNumber() != null) {
+            academy.setBusiness_number(request.getBusinessNumber());
+        }
+        if (request.getEmail() != null) {
+            academy.setEmail(request.getEmail());
+        }
         return AcademyResponse.from(academy);
     }
 
@@ -88,5 +96,11 @@ public class AcademyServiceImpl implements AcademyService {
     /**
      * 학원 승인 처리
      */
+    @Override
+    public AcademyResponse approveAcademy(Long id) {
+        Academy academy = findAcademyOrThrow(id);
+        academy.approve();
+        return AcademyResponse.from(academy);
+    }
 
 }

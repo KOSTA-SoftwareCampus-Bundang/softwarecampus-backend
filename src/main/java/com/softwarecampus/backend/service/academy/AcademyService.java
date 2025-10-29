@@ -10,10 +10,10 @@ public interface AcademyService {
     // 등록
     AcademyResponse createAcademy(AcademyCreateRequest request);
 
-    // 단일 조회
-    AcademyResponse getAcademyById(Long id);
+    // 훈련기관 이름으로 조회
+    List<AcademyResponse> searchAcademiesByName(String name);
 
-    // 목록 조회
+    // 전체 목록 조회
     List<AcademyResponse> getAllAcademies();
 
     // 정보 수정
@@ -23,5 +23,5 @@ public interface AcademyService {
     void deleteAcademy(Long id);
 
     // 승인 처리
-
+    AcademyResponse approveAcademy(Long id);
 }
