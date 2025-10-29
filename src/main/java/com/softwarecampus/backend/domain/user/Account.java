@@ -21,8 +21,8 @@ import lombok.*;
     name = "account",
     indexes = {
         @Index(name = "uk_account_email", columnList = "email", unique = true),
-        @Index(name = "uk_account_username", columnList = "userName", unique = true),
         @Index(name = "uk_account_phone", columnList = "phoneNumber", unique = true),
+        @Index(name = "idx_account_username", columnList = "userName"),
         @Index(name = "idx_account_type_approved", columnList = "account_type,account_approved")
     }
 )
@@ -33,17 +33,17 @@ public class Account extends BaseSoftDeleteSupportEntity {
     private Long id;
     
     // ===== 기존 필드 (유지) =====
-    @Column(unique = true)
-    private String userName;              // 사용자명
+    @Column
+    private String userName;              // 사용자명 (Soft Delete 고려: unique 제약 없음, 비즈니스 로직에서 활성 계정만 중복 체크)
     
     @Column(nullable = false)
     private String password;              // 암호화된 비밀번호
     
-    @Column(nullable = false, unique = true)
-    private String email;                 // 이메일 (로그인 ID)
+    @Column(nullable = false)
+    private String email;                 // 이메일 (로그인 ID, unique 제약은 @Index에서 관리)
     
-    @Column(nullable = false, unique = true)
-    private String phoneNumber;           // 전화번호
+    @Column(nullable = false)
+    private String phoneNumber;           // 전화번호 (unique 제약은 @Index에서 관리)
     
     // ===== 수정된 필드 =====
     @Enumerated(EnumType.STRING)

@@ -28,20 +28,21 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     boolean existsByEmail(String email);
     
     /**
-     * 사용자명 중복 체크
+     * 활성 사용자명 중복 체크 (Soft Delete 고려)
+     * - isDeleted=false인 계정 중에서만 중복 체크
      */
-    boolean existsByUserName(String userName);
+    @Query("SELECT COUNT(a) > 0 FROM Account a WHERE a.userName = :userName AND a.isDeleted = false")
+    boolean existsActiveUserName(@org.springframework.data.repository.query.Param("userName") String userName);
+    
+    /**
+     * 사용자명으로 활성 계정 조회 (Soft Delete 고려)
+     */
+    Optional<Account> findByUserNameAndIsDeleted(String userName, Boolean isDeleted);
     
     /**
      * 전화번호 중복 체크
      */
     boolean existsByPhoneNumber(String phoneNumber);
-    
-    /**
-     * 승인 대기중인 기관 계정 조회 (관리자용)
-     */
-    @Query("SELECT a FROM Account a WHERE a.accountType = 'ACADEMY' AND a.accountApproved = 'PENDING' AND a.isDeleted = false")
-    List<Account> findPendingAcademyAccounts();
     
     /**
      * 계정 타입별 조회 (삭제되지 않은 것만)
