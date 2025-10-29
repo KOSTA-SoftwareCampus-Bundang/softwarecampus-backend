@@ -274,9 +274,9 @@ public record SignupRequest(
     )
     String password,
     
-    @NotBlank(message = "닉네임은 필수입니다")
-    @Size(min = 2, max = 20, message = "닉네임은 2~20자여야 합니다")
-    String nickname,
+    @NotBlank(message = "사용자명은 필수입니다")
+    @Size(min = 2, max = 20, message = "사용자명은 2~20자여야 합니다")
+    String userName,
     
     String address,
     String affiliation,
@@ -298,7 +298,7 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
 public record AccountResponse(
     Long id,
     String email,
-    String nickname,
+    String userName,
     AccountType accountType,
     ApprovalStatus approvalStatus,
     String address,
@@ -417,7 +417,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = Account.builder()
             .email(request.email())
             .password(encodedPassword)
-            .nickname(request.nickname())
+            .userName(request.userName())
             .accountType(AccountType.USER) // 기본값
             .approvalStatus(ApprovalStatus.PENDING) // 기본값
             .address(request.address())
@@ -445,7 +445,7 @@ public class AccountServiceImpl implements AccountService {
         return new AccountResponse(
             account.getId(),
             account.getEmail(),
-            account.getNickname(),
+            account.getUserName(),
             account.getAccountType(),
             account.getApprovalStatus(),
             account.getAddress(),
@@ -596,7 +596,7 @@ class AccountServiceImplTest {
             .id(1L)
             .email(request.email())
             .password("encoded_password")
-            .nickname(request.nickname())
+            .userName(request.userName())
             .accountType(AccountType.USER)
             .approvalStatus(ApprovalStatus.PENDING)
             .build();
@@ -608,7 +608,7 @@ class AccountServiceImplTest {
         
         // then
         assertThat(response.email()).isEqualTo("test@example.com");
-        assertThat(response.nickname()).isEqualTo("테스트유저");
+        assertThat(response.userName()).isEqualTo("테스트유저");
         
         // verify
         then(accountRepository).should(times(1)).existsByEmail(request.email());
@@ -646,7 +646,7 @@ class AccountServiceImplTest {
         Account account = Account.builder()
             .id(1L)
             .email(email)
-            .nickname("테스트유저")
+            .userName("테스트유저")
             .accountType(AccountType.USER)
             .approvalStatus(ApprovalStatus.APPROVED)
             .build();
@@ -658,7 +658,7 @@ class AccountServiceImplTest {
         
         // then
         assertThat(response.email()).isEqualTo(email);
-        assertThat(response.nickname()).isEqualTo("테스트유저");
+        assertThat(response.userName()).isEqualTo("테스트유저");
     }
     
     @Test
@@ -754,7 +754,7 @@ public class AuthController {
 {
   "email": "test@example.com",
   "password": "password123!",
-  "nickname": "테스트유저",
+  "userName": "테스트유저",
   "address": "서울시 강남구",
   "affiliation": "소프트웨어캠퍼스",
   "position": "수강생"
@@ -766,7 +766,7 @@ public class AuthController {
 {
   "id": 1,
   "email": "test@example.com",
-  "nickname": "테스트유저",
+  "userName": "테스트유저",
   "accountType": "USER",
   "approvalStatus": "PENDING",
   "address": "서울시 강남구",
@@ -883,7 +883,7 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.email").value("test@example.com"))
-            .andExpect(jsonPath("$.nickname").value("테스트유저"))
+            .andExpect(jsonPath("$.userName").value("테스트유저"))
             .andExpect(jsonPath("$.accountType").value("USER"));
     }
     
@@ -992,7 +992,7 @@ class AccountRepositoryTest {
         // then
         assertThat(found).isPresent();
         assertThat(found.get().getEmail()).isEqualTo("test@example.com");
-        assertThat(found.get().getNickname()).isEqualTo("테스트유저");
+        assertThat(found.get().getUserName()).isEqualTo("테스트유저");
     }
     
     @Test
@@ -1008,18 +1008,18 @@ class AccountRepositoryTest {
     }
     
     @Test
-    @DisplayName("닉네임으로 계정 조회")
-    void findByNickname() {
+    @DisplayName("사용자명으로 계정 조회")
+    void findByUserName() {
         // given
-        Account account = createAccount("test@example.com", "유니크닉네임");
+        Account account = createAccount("test@example.com", "유니크사용자명");
         accountRepository.save(account);
         
         // when
-        Optional<Account> found = accountRepository.findByNickname("유니크닉네임");
+        Optional<Account> found = accountRepository.findByUserName("유니크사용자명");
         
         // then
         assertThat(found).isPresent();
-        assertThat(found.get().getNickname()).isEqualTo("유니크닉네임");
+        assertThat(found.get().getUserName()).isEqualTo("유니크사용자명");
     }
     
     @Test
@@ -1056,15 +1056,15 @@ class AccountRepositoryTest {
     }
     
     // 테스트 헬퍼 메서드
-    private Account createAccount(String email, String nickname) {
-        return createAccount(email, nickname, AccountType.USER);
+    private Account createAccount(String email, String userName) {
+        return createAccount(email, userName, AccountType.USER);
     }
     
-    private Account createAccount(String email, String nickname, AccountType accountType) {
+    private Account createAccount(String email, String userName, AccountType accountType) {
         return Account.builder()
             .email(email)
             .password("encoded_password")
-            .nickname(nickname)
+            .userName(userName)
             .accountType(accountType)
             .approvalStatus(ApprovalStatus.PENDING)
             .build();
