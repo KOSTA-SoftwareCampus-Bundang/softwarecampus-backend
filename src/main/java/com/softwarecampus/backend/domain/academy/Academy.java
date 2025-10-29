@@ -19,7 +19,7 @@ public class Academy extends BaseSoftDeleteSupportEntity {
 
     private String name;
     private String address;
-    private String business_number;
+    private String businessNumber;
     private String email;
 
     // 승인 여부 (PENDING / APPROVED / REJECTED)

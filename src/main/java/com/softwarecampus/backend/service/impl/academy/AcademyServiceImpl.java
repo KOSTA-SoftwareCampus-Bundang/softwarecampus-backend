@@ -7,15 +7,19 @@ import com.softwarecampus.backend.dto.academy.AcademyResponse;
 import com.softwarecampus.backend.dto.academy.AcademyUpdateRequest;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.service.academy.AcademyService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+@Service
+@RequiredArgsConstructor
 public class AcademyServiceImpl implements AcademyService {
 
-    private AcademyRepository academyRepository;
+    private final AcademyRepository academyRepository;
 
     private Academy findAcademyOrThrow(Long id) {
         return academyRepository.findById(id)
@@ -26,11 +30,12 @@ public class AcademyServiceImpl implements AcademyService {
      *  훈련기관 등록
      */
     @Override
+    @Transactional
     public AcademyResponse createAcademy(AcademyCreateRequest request) {
         Academy academy = Academy.builder()
                 .name(request.getName())
                 .address(request.getAddress())
-                .business_number(request.getBusinessNumber())
+                .businessNumber(request.getBusinessNumber())
                 .email(request.getEmail())
                 .isApproved(ApprovalStatus.PENDING)
                 .build();
@@ -76,7 +81,7 @@ public class AcademyServiceImpl implements AcademyService {
             academy.setAddress(request.getAddress());
         }
         if (request.getBusinessNumber() != null) {
-            academy.setBusiness_number(request.getBusinessNumber());
+            academy.setBusinessNumber(request.getBusinessNumber());
         }
         if (request.getEmail() != null) {
             academy.setEmail(request.getEmail());
@@ -88,6 +93,7 @@ public class AcademyServiceImpl implements AcademyService {
      * 훈련기관 삭제
      */
     @Override
+    @Transactional
     public void deleteAcademy(Long id) {
         Academy academy = findAcademyOrThrow(id);
         academyRepository.delete(academy);
@@ -97,6 +103,7 @@ public class AcademyServiceImpl implements AcademyService {
      * 학원 승인 처리
      */
     @Override
+    @Transactional
     public AcademyResponse approveAcademy(Long id) {
         Academy academy = findAcademyOrThrow(id);
         academy.approve();

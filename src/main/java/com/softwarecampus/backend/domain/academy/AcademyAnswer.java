@@ -17,11 +17,12 @@ public class AcademyAnswer extends BaseSoftDeleteSupportEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String text;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "is_approved")
-    private ApprovalStatus isApproved;
+    @Column(name = "is_approved", nullable = false)
+    private ApprovalStatus isApproved = ApprovalStatus.PENDING;
 
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;

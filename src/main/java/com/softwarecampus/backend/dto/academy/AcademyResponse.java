@@ -26,7 +26,7 @@ public class AcademyResponse {
                 .id(academy.getId())
                 .name(academy.getName())
                 .address(academy.getAddress())
-                .businessNumber(academy.getBusiness_number()) // 도메인 필드명에 맞춤
+                .businessNumber(academy.getBusinessNumber()) // 도메인 필드명에 맞춤
                 .email(academy.getEmail())
                 .isApproved(academy.getIsApproved())
                 .approvedAt(academy.getApprovedAt())

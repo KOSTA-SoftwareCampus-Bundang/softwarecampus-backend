@@ -19,14 +19,14 @@ public class AcademyQuestion extends BaseSoftDeleteSupportEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String question_number;
+    private String questionNumber;
     private String title;
     @Column(columnDefinition = "TEXT")
     private String text;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "is_approved", nullable = false)
-    private ApprovalStatus isApproved;
+    private ApprovalStatus isApproved =  ApprovalStatus.PENDING;
 
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;

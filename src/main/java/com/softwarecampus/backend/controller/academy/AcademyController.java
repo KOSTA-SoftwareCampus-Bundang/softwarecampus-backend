@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AcademyController {
 
-    private AcademyService academyService;
+    private final AcademyService academyService;
 
     /**
      * 훈련기관 등록
@@ -24,7 +24,7 @@ public class AcademyController {
     @PostMapping
     public ResponseEntity<AcademyResponse> createAcademy(@RequestBody AcademyCreateRequest request) {
         AcademyResponse academyResponse = academyService.createAcademy(request);
-        return ResponseEntity.ok(academyResponse);
+        return ResponseEntity.status(HttpStatus.CREATED).body(academyResponse);
     }
 
     /**
