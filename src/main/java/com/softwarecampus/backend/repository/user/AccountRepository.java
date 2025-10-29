@@ -1,0 +1,57 @@
+package com.softwarecampus.backend.repository.user;
+
+import com.softwarecampus.backend.domain.common.AccountType;
+import com.softwarecampus.backend.domain.common.ApprovalStatus;
+import com.softwarecampus.backend.domain.user.Account;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Account 엔티티에 대한 Repository
+ * - 사용자 계정 CRUD 및 조회 기능
+ */
+@Repository
+public interface AccountRepository extends JpaRepository<Account, Long> {
+    
+    /**
+     * 이메일로 계정 조회 (로그인)
+     */
+    Optional<Account> findByEmail(String email);
+    
+    /**
+     * 이메일 중복 체크
+     */
+    boolean existsByEmail(String email);
+    
+    /**
+     * 활성 사용자명 중복 체크 (Soft Delete 고려)
+     * - isDeleted=false인 계정 중에서만 중복 체크
+     */
+    boolean existsByUserNameAndIsDeletedFalse(String userName);
+    
+    /**
+     * 사용자명으로 활성 계정 조회 (Soft Delete 고려)
+     */
+    Optional<Account> findByUserNameAndIsDeletedFalse(String userName);
+    
+    /**
+     * 전화번호 중복 체크
+     */
+    boolean existsByPhoneNumber(String phoneNumber);
+    
+    /**
+     * 계정 타입별 활성 계정 조회
+     */
+    List<Account> findByAccountTypeAndIsDeletedFalse(AccountType accountType);
+    
+    /**
+     * 계정 타입 및 승인 상태별 활성 계정 조회
+     */
+    List<Account> findByAccountTypeAndAccountApprovedAndIsDeletedFalse(
+        AccountType accountType, 
+        ApprovalStatus accountApproved
+    );
+}
