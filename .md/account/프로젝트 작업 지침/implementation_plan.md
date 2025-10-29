@@ -1074,7 +1074,7 @@ class AccountRepositoryTest {
         return Account.builder()
             .email(email)
             .password("encoded_password")
-            .nickname("테스트유저")
+            .userName("테스트유저")
             .accountType(AccountType.USER)
             .approvalStatus(status)
             .build();
@@ -1163,7 +1163,7 @@ class SignupIntegrationTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.email").value("integration@example.com"))
-            .andExpect(jsonPath("$.nickname").value("통합테스트유저"))
+            .andExpect(jsonPath("$.userName").value("통합테스트유저"))
             .andExpect(jsonPath("$.accountType").value("USER"))
             .andExpect(jsonPath("$.approvalStatus").value("PENDING"));
         
