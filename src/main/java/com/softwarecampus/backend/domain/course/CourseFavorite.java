@@ -8,7 +8,10 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "course_favorite")
+@Table(name = "course_favorite",
+        uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"account_id", "course_id"})
+        })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,10 +24,10 @@ public class CourseFavorite extends BaseSoftDeleteSupportEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id")
+    @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 }

@@ -22,14 +22,14 @@ public class CourseReview extends BaseSoftDeleteSupportEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
     @Column(nullable = false)
     private String title;
 
-    // 🔹 리뷰 섹션 리스트 (1:N 관계)
-    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "review", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @Builder.Default
     private List<ReviewSection> sections = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
@@ -37,4 +37,15 @@ public class CourseReview extends BaseSoftDeleteSupportEntity {
     private ApprovalStatus reviewApproved = ApprovalStatus.WAITING;
 
     private LocalDateTime approvedAt;
+
+    // ✅ 헬퍼 메서드
+    public void addSection(ReviewSection section) {
+        sections.add(section);
+        section.setReview(this);
+    }
+
+    public void removeSection(ReviewSection section) {
+        sections.remove(section);
+        section.setReview(null);
+    }
 }

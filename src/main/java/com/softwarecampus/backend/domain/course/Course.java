@@ -22,11 +22,11 @@ public class Course extends BaseSoftDeleteSupportEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "academy_id")
+    @JoinColumn(name = "academy_id", nullable = false)
     private Academy academy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "category_id", nullable = false)
     private CourseCategory category;
 
     @Column(nullable = false)
@@ -50,12 +50,46 @@ public class Course extends BaseSoftDeleteSupportEntity {
 
     private LocalDateTime approvedAt;
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @Builder.Default
     private List<CourseReview> reviews = new ArrayList<>();
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @Builder.Default
     private List<CourseQuestion> questions = new ArrayList<>();
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @Builder.Default
     private List<CourseFavorite> favorites = new ArrayList<>();
+
+    // ✅ 연관관계 편의 메서드들
+    public void addReview(CourseReview review) {
+        reviews.add(review);
+        review.setCourse(this);
+    }
+
+    public void removeReview(CourseReview review) {
+        reviews.remove(review);
+        review.setCourse(null);
+    }
+
+    public void addQuestion(CourseQuestion question) {
+        questions.add(question);
+        question.setCourse(this);
+    }
+
+    public void removeQuestion(CourseQuestion question) {
+        questions.remove(question);
+        question.setCourse(null);
+    }
+
+    public void addFavorite(CourseFavorite favorite) {
+        favorites.add(favorite);
+        favorite.setCourse(this);
+    }
+
+    public void removeFavorite(CourseFavorite favorite) {
+        favorites.remove(favorite);
+        favorite.setCourse(null);
+    }
 }

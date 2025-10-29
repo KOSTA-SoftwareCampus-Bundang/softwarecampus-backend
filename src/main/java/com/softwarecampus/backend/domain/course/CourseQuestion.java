@@ -25,7 +25,7 @@ public class CourseQuestion extends BaseSoftDeleteSupportEntity {
     private String text;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
     @Enumerated(EnumType.STRING)
