@@ -29,31 +29,17 @@ public class Account extends BaseSoftDeleteSupportEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    // ===== 기존 필드 (유지) =====
-    @Column(unique = true)
-    private String userName;
-    
-    @Column(nullable = false)
-    private String password;
-    
     @Column(nullable = false, unique = true)
     private String email;
     
-    private String role;
-    
-    private String company;
-    
-    private String department;
-    
-    @Column(nullable = false, unique = true)
-    private String phoneNumber;
-
-    // ===== 새로 추가된 필드 =====
     @Enumerated(EnumType.STRING)
     @Column(name = "account_type", nullable = false)
     private AccountType accountType;
-
+    
     private String nickname;
+    
+    @Column(nullable = false)
+    private String password;
     
     private String address;
     
@@ -62,6 +48,11 @@ public class Account extends BaseSoftDeleteSupportEntity {
     private String position;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "account_approved")
+    @Column(name = "account_approved", nullable = false)
     private ApprovalStatus accountApproved;
+    
+    // academy_id는 추후 Academy 엔티티 생성 시 추가 예정
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "academy_id")
+    // private Academy academy;
 }
