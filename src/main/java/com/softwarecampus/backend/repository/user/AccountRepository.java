@@ -43,16 +43,15 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     boolean existsByPhoneNumber(String phoneNumber);
     
     /**
-     * 계정 타입별 조회 (삭제되지 않은 것만)
+     * 계정 타입별 활성 계정 조회
      */
-    List<Account> findByAccountTypeAndIsDeleted(AccountType accountType, Boolean isDeleted);
+    List<Account> findByAccountTypeAndIsDeletedFalse(AccountType accountType);
     
     /**
-     * 계정 타입 및 승인 상태별 조회
+     * 계정 타입 및 승인 상태별 활성 계정 조회
      */
-    List<Account> findByAccountTypeAndAccountApprovedAndIsDeleted(
+    List<Account> findByAccountTypeAndAccountApprovedAndIsDeletedFalse(
         AccountType accountType, 
-        ApprovalStatus accountApproved,
-        Boolean isDeleted
+        ApprovalStatus accountApproved
     );
 }

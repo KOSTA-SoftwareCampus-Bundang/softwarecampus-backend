@@ -24,8 +24,8 @@ public class Account extends BaseSoftDeleteSupportEntity {
     private Long id;
     
     // ===== 기존 필드 (유지) =====
-    @Column(unique = true)
-    private String userName;              // 사용자명 (nickname과 동일)
+    @Column
+    private String userName;              // 사용자명 (표시명)
     
     @Column(nullable = false)
     private String password;              // 암호화된 비밀번호
@@ -119,7 +119,7 @@ CREATE TABLE `account` (
 	`id`	int	NOT NULL,
 	`email`	VARCHAR(255)	NULL,
 	`account_type`	ENUM	NOT NULL,
-	`nickname`	VARCHAR(255)	NULL,
+	`user_name`	VARCHAR(255)	NULL,        -- 엔티티의 userName 필드 (SQL은 참고용)
 	`password`	VARCHAR(255)	NOT NULL,
 	`address`	VARCHAR(255)	NULL,
 	`affiliation`	VARCHAR(255)	NULL,
@@ -144,8 +144,8 @@ CREATE TABLE `account` (
 | `updated_at` | `updatedAt` | ✅ 유지 | BaseTimeEntity 상속 |
 | `is_deleted` | `isDeleted` | ✅ 유지 | BaseSoftDeleteSupportEntity 상속 |
 | `deleted_at` | `deletedAt` | ✅ 유지 | BaseSoftDeleteSupportEntity 상속 |
-| - | `userName` | ✅ 유지 | 기존 필드 유지 (nickname과 동일 개념) |
-| - | `phoneNumber` | ✅ 유지 | 기존 필드 유지 |
+| `user_name` | `userName` | ✅ 유지 | 사용자명 (표시명) - Entity-First 방식으로 유지 |
+| `phone_number` | `phoneNumber` | ✅ 유지 | 전화번호 (Entity-First 방식으로 유지) |
 | `account_type` | `role` | 🔄 수정 | **role → accountType** (Enum으로 관리) |
 | `address` | - | ➕ 추가 | **address 필드 추가** (사용자 주소) |
 | `affiliation` | `company` | 🔄 수정 | **company → affiliation** (회사 소속이 아닐 수도 있음) |
@@ -265,31 +265,65 @@ List<Account> findByAccountApproved(ApprovalStatus approved);
 
 ## 4. AccountRepository 설계
 
-### 4.1 현재 구현
+### 4.1 현재 구현 (최종)
 
 ```java
 package com.softwarecampus.backend.repository.user;
 
+import com.softwarecampus.backend.domain.common.AccountType;
+import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
+/**
+ * Account 엔티티에 대한 Repository
+ * - 사용자 계정 CRUD 및 조회 기능
+ */
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
     
-    // 로그인용: 이메일로 계정 조회
+    /**
+     * 이메일로 계정 조회 (로그인)
+     */
     Optional<Account> findByEmail(String email);
     
-    // 회원가입 중복 체크
+    /**
+     * 이메일 중복 체크
+     */
     boolean existsByEmail(String email);
-    boolean existsByUserName(String userName);
+    
+    /**
+     * 활성 사용자명 중복 체크 (Soft Delete 고려)
+     * - isDeleted=false인 계정 중에서만 중복 체크
+     */
+    boolean existsByUserNameAndIsDeletedFalse(String userName);
+    
+    /**
+     * 사용자명으로 활성 계정 조회 (Soft Delete 고려)
+     */
+    Optional<Account> findByUserNameAndIsDeletedFalse(String userName);
+    
+    /**
+     * 전화번호 중복 체크
+     */
     boolean existsByPhoneNumber(String phoneNumber);
     
-    // 기관 승인 관련 (추가 가능)
-    List<Account> findByAccountApproved(ApprovalStatus approved);
-    List<Account> findByAccountTypeAndAccountApproved(AccountType accountType, ApprovalStatus approved);
+    /**
+     * 계정 타입별 활성 계정 조회
+     */
+    List<Account> findByAccountTypeAndIsDeletedFalse(AccountType accountType);
+    
+    /**
+     * 계정 타입 및 승인 상태별 활성 계정 조회
+     */
+    List<Account> findByAccountTypeAndAccountApprovedAndIsDeletedFalse(
+        AccountType accountType, 
+        ApprovalStatus accountApproved
+    );
 }
 ```
 
@@ -297,12 +331,26 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
 | 메소드명 | 반환 타입 | 용도 | 비고 |
 |----------|-----------|------|------|
-| `findByEmail(String)` | `Optional<Account>` | 로그인 시 이메일로 계정 조회 | - |
-| `existsByEmail(String)` | `boolean` | 회원가입 시 이메일 중복 체크 | - |
-| `existsByUserName(String)` | `boolean` | 회원가입 시 사용자명 중복 체크 | - |
-| `existsByPhoneNumber(String)` | `boolean` | 회원가입 시 전화번호 중복 체크 | - |
-| `findByAccountApproved(ApprovalStatus)` | `List<Account>` | 승인 상태별 계정 조회 | 관리자용 |
-| `findByAccountTypeAndAccountApprovedAndIsDeleted()` | `List<Account>` | 계정 타입 + 승인 상태 조회 | 기관 승인 관리 |
+| `findByEmail(String)` | `Optional<Account>` | 로그인 시 이메일로 계정 조회 | Soft Delete 미고려 |
+| `existsByEmail(String)` | `boolean` | 회원가입 시 이메일 중복 체크 | Soft Delete 미고려 |
+| `existsByUserNameAndIsDeletedFalse(String)` | `boolean` | 활성 사용자명 중복 체크 | ✅ Soft Delete 고려 |
+| `findByUserNameAndIsDeletedFalse(String)` | `Optional<Account>` | 활성 계정 조회 (사용자명) | ✅ Soft Delete 고려 |
+| `existsByPhoneNumber(String)` | `boolean` | 회원가입 시 전화번호 중복 체크 | Soft Delete 미고려 |
+| `findByAccountTypeAndIsDeletedFalse(AccountType)` | `List<Account>` | 계정 타입별 활성 계정 조회 | ✅ Soft Delete 고려 |
+| `findByAccountTypeAndAccountApprovedAndIsDeletedFalse(...)` | `List<Account>` | 타입+승인 상태별 활성 계정 조회 | ✅ Soft Delete 고려 |
+
+### 4.3 Soft Delete 처리 전략
+
+**userName**: Soft Delete 고려 (재가입 가능)
+- ✅ `existsByUserNameAndIsDeletedFalse()` - 활성 계정만 중복 체크
+- ✅ `findByUserNameAndIsDeletedFalse()` - 활성 계정만 조회
+
+**email, phoneNumber**: Soft Delete 미고려 (unique 제약 유지)
+- ⚠️ `existsByEmail()` - 삭제된 계정도 포함 (재가입 불가)
+- ⚠️ `existsByPhoneNumber()` - 삭제된 계정도 포함 (재가입 불가)
+
+> 💡 **참고**: userName만 Soft Delete 후 재사용 가능. email/phoneNumber는 unique 제약으로 재가입 불가.
+> 자세한 내용은 `soft_delete_username_strategy.md` 참고.
 
 ---
 
