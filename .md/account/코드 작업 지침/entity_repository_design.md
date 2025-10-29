@@ -302,54 +302,28 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 | `existsByUserName(String)` | `boolean` | 회원가입 시 사용자명 중복 체크 | - |
 | `existsByPhoneNumber(String)` | `boolean` | 회원가입 시 전화번호 중복 체크 | - |
 | `findByAccountApproved(ApprovalStatus)` | `List<Account>` | 승인 상태별 계정 조회 | 관리자용 |
-| `findByAccountTypeAndAccountApproved()` | `List<Account>` | 계정 타입 + 승인 상태 조회 | 기관 승인 관리 |
+| `findByAccountTypeAndAccountApprovedAndIsDeleted()` | `List<Account>` | 계정 타입 + 승인 상태 조회 | 기관 승인 관리 |
 
 ---
 
-## 4. 향후 추가 가능한 필드 (검토 필요)
+## 5. 향후 추가 예정 필드 (다른 도메인 작업 후)
 
-### 4.1 SQL 스키마에만 있는 필드들
-
-SQL을 참고하여 향후 추가를 고려할 수 있는 필드:
+### 5.1 Academy 연관관계 (Academy 도메인 담당자 작업 대기)
 
 ```java
-// 추가 검토 필요 - 팀 논의 후 결정
-@Enumerated(EnumType.STRING)
-@Column(name = "account_type")
-private AccountType accountType;      // 계정 유형 (USER/ACADEMY/ADMIN)
-
-private String nickname;              // 닉네임 (userName과 중복?)
-
-private String address;               // 주소
-
-private String affiliation;           // 소속 (company와 유사?)
-
-private String position;              // 직책
-
-@Enumerated(EnumType.STRING)
-@Column(name = "account_approved")
-private ApprovalStatus accountApproved;  // 승인 상태 (기관 계정용?)
+// academy_id는 추후 Academy 엔티티 생성 시 추가 예정
+// @ManyToOne(fetch = FetchType.LAZY)
+// @JoinColumn(name = "academy_id")
+// private Academy academy;
 ```
 
-### 4.2 추가 여부 결정 기준
-
-1. **비즈니스 요구사항 확인**
-   - 기관 계정 승인 기능이 필요한가?
-   - 일반 사용자와 기관을 구분해야 하는가?
-
-2. **기존 필드와 중복 검토**
-   - `nickname` vs `userName` - 둘 다 필요한가?
-   - `affiliation` vs `company` - 차이점이 무엇인가?
-
-3. **팀원과 협의**
-   - Academy 도메인 담당자와 account_type, account_approved 필요성 논의
-   - 프론트엔드 팀과 필요한 필드 확인
+**추가 시점**: Academy 도메인 담당자가 Academy 엔티티를 완성한 후
 
 ---
 
-## 5. 베이스 엔티티 (수정 금지)
+## 6. 베이스 엔티티 (수정 금지)
 
-### 5.1 BaseTimeEntity
+### 6.1 BaseTimeEntity
 
 ```java
 @MappedSuperclass
@@ -373,7 +347,7 @@ public abstract class BaseTimeEntity {
 }
 ```
 
-### 5.2 BaseSoftDeleteSupportEntity
+### 6.2 BaseSoftDeleteSupportEntity
 
 ```java
 @Getter
@@ -403,9 +377,9 @@ public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
 
 ---
 
-## 6. 개발 가이드라인
+## 7. 개발 가이드라인
 
-### 6.1 엔티티 작성 규칙
+### 7.1 엔티티 작성 규칙
 
 1. **필드 변경 완료 사항**
    - ✅ **유지된 필드**: userName, password, email, phoneNumber (삭제/수정 금지)
@@ -430,7 +404,7 @@ public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
 5. **Enum 타입**
    - `@Enumerated(EnumType.STRING)` 사용 (ORDINAL 금지)
 
-### 6.2 레포지토리 작성 규칙
+### 7.2 레포지토리 작성 규칙
 
 1. **메소드 네이밍**
    - Spring Data JPA 규칙 준수
@@ -446,9 +420,9 @@ public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
 
 ---
 
-## 7. 다음 단계
+## 8. 다음 단계
 
-### 7.1 완료된 작업 ✅
+### 8.1 완료된 작업 ✅
 - [x] Enum 클래스 생성 (AccountType, ApprovalStatus)
 - [x] Account.java 엔티티 필드 수정
   - [x] role → accountType 변경 (Enum 타입)
@@ -460,7 +434,7 @@ public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
   - [x] findByEmail(), existsByEmail() 등 7개 쿼리 메소드
   - [x] findByAccountApproved() 등 승인 관련 메소드
 
-### 7.2 진행 예정 작업
+### 8.2 진행 예정 작업
 - [ ] AccountService 인터페이스 작성
 - [ ] AccountServiceImpl 구현
 - [ ] DTO 클래스 작성 (SignupRequest, LoginRequest, LoginResponse 등)
@@ -468,7 +442,7 @@ public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
 - [ ] Spring Security + JWT 설정
 - [ ] 단위 테스트 작성 (Repository, Service, Controller)
 
-### 7.3 팀 협의 필요
+### 8.3 팀 협의 필요
 - [ ] 프론트엔드 팀에 API 필드명 변경 공지
   - `role` → `accountType`
   - `company` → `affiliation`
@@ -477,14 +451,14 @@ public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
 - [ ] 기존 DB 데이터가 있다면 마이그레이션 스크립트 작성
 - [ ] Academy 도메인과 연관관계 설정 시기 논의
 
-### 7.4 대기 중
+### 8.4 대기 중
 - [ ] Academy 엔티티 생성 후 연관관계 매핑 (Academy 담당자 작업 대기)
 - [ ] DDL 생성 및 DB 스키마 동기화
 - [ ] 통합 테스트 작성
 
 ---
 
-## 8. 참고 자료
+## 9. 참고 자료
 
 - **프로젝트 가이드**: `.md/account/ACCOUNT_WORK_GUIDELINE.md`
 - **JPA 가이드**: `.md/JPA_GUIDELINE.md`
