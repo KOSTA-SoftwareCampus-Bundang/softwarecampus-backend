@@ -47,7 +47,7 @@ public class Account extends BaseSoftDeleteSupportEntity {
     
     // ===== 수정된 필드 =====
     @Enumerated(EnumType.STRING)
-    @Column(name = "account_type")
+    @Column(name = "account_type", nullable = false)
     private AccountType accountType;      // 계정 유형 (USER/ACADEMY/ADMIN)
     
     private String affiliation;           // 소속 (회사/학교 등)
