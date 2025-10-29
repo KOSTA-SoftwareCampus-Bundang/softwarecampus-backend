@@ -35,5 +35,5 @@ public class Comment extends BaseSoftDeleteSupportEntity {
     private Board board;
 
     @OneToMany(mappedBy = "comment",cascade = CascadeType.REMOVE)
-    private List<Comment> comments = new ArrayList<>();
+    private List<CommentRecommend> comments = new ArrayList<>();
 }
