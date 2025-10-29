@@ -17,40 +17,43 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "account",
-    indexes = {
-        @Index(name = "idx_account_email", columnList = "email"),
-        @Index(name = "idx_account_type_approved", columnList = "account_type, account_approved")
-    }
-)
+@Table(name = "account")
 public class Account extends BaseSoftDeleteSupportEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false, unique = true)
-    private String email;
-    
-    @Enumerated(EnumType.STRING)
-    @Column(name = "account_type", nullable = false)
-    private AccountType accountType;
-    
-    private String nickname;
+    // ===== 기존 필드 (유지) =====
+    @Column(unique = true)
+    private String userName;              // 사용자명
     
     @Column(nullable = false)
-    private String password;
+    private String password;              // 암호화된 비밀번호
     
-    private String address;
+    @Column(nullable = false, unique = true)
+    private String email;                 // 이메일 (로그인 ID)
     
-    private String affiliation;
+    @Column(nullable = false, unique = true)
+    private String phoneNumber;           // 전화번호
     
-    private String position;
-
+    // ===== 수정된 필드 =====
     @Enumerated(EnumType.STRING)
-    @Column(name = "account_approved", nullable = false)
-    private ApprovalStatus accountApproved;
+    @Column(name = "account_type")
+    private AccountType accountType;      // 계정 유형 (USER/ACADEMY/ADMIN)
     
+    private String affiliation;           // 소속 (회사/학교 등)
+    
+    private String position;              // 직책/역할
+    
+    // ===== 새로 추가된 필드 =====
+    private String address;               // 주소
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_approved")
+    private ApprovalStatus accountApproved;  // 승인 상태 (기관 계정용)
+    
+    // ===== 향후 추가 예정 (다른 도메인 작업 후) =====
     // academy_id는 추후 Academy 엔티티 생성 시 추가 예정
     // @ManyToOne(fetch = FetchType.LAZY)
     // @JoinColumn(name = "academy_id")
