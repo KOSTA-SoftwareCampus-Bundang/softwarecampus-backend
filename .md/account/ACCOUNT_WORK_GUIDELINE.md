@@ -134,14 +134,17 @@ private Academy academy;  // Academy는 다른 담당자 영역!
 - [x] Account.java (필드 변환 완료)
 - [x] AccountRepository.java (7개 쿼리 메소드)
 
-### Phase 2: Service Layer (진행 예정)
-- [ ] AccountService.java, AccountServiceImpl.java
+### Phase 2: DTO Layer (진행 예정)
+- [ ] Request DTO 작성 (SignupRequest, LoginRequest, UpdateMyInfoRequest)
+- [ ] Response DTO 작성 (LoginResponse, AccountInfoResponse, MessageResponse)
 
-### Phase 3: DTO Layer (진행 예정)
-- [ ] Request/Response DTO 작성
+### Phase 3: Service Layer (진행 예정)
+- [ ] AccountService.java (인터페이스)
+- [ ] AccountServiceImpl.java (구현)
 
 ### Phase 4: Controller Layer (진행 예정)
-- [ ] AuthController.java, MyPageController.java
+- [ ] AuthController.java (회원가입/로그인 API)
+- [ ] MyPageController.java (마이페이지 API)
 
 ### Phase 5: Security Layer (진행 예정)
 - [ ] JWT, Spring Security 설정
