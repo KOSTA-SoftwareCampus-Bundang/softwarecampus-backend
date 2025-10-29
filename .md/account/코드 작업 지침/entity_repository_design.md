@@ -407,8 +407,13 @@ public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
 
 ### 6.1 엔티티 작성 규칙
 
-1. **기존 필드 절대 유지**
-   - userName, password, email, role, company, department, phoneNumber는 삭제/수정 금지
+1. **필드 변경 완료 사항**
+   - ✅ **유지된 필드**: userName, password, email, phoneNumber (삭제/수정 금지)
+   - 🔄 **변경된 필드**: 
+     - `role` → `accountType` (Enum으로 변경 완료)
+     - `company` → `affiliation` (명칭 변경 완료)
+     - `department` → `position` (명칭 변경 완료)
+   - ➕ **추가된 필드**: address, accountApproved (신규 추가 완료)
 
 2. **새 필드 추가 시**
    - 팀원과 협의
@@ -443,30 +448,37 @@ public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
 
 ## 7. 다음 단계
 
-### 7.1 즉시 작업 가능
-- [x] Enum 클래스 확인 (AccountType, ApprovalStatus)
-- [ ] Account.java 엔티티 필드 수정
-  - [ ] role → accountType 변경
-  - [ ] company → affiliation 변경
-  - [ ] department → position 변경
-  - [ ] address 필드 추가
-  - [ ] accountApproved 필드 추가
-- [ ] AccountRepository.java 메소드 추가
-  - [ ] findByAccountApproved() 추가
-  - [ ] findByAccountTypeAndAccountApproved() 추가
-- [ ] 기존 코드에서 필드명 참조 변경
-- [ ] AccountService 인터페이스
+### 7.1 완료된 작업 ✅
+- [x] Enum 클래스 생성 (AccountType, ApprovalStatus)
+- [x] Account.java 엔티티 필드 수정
+  - [x] role → accountType 변경 (Enum 타입)
+  - [x] company → affiliation 변경
+  - [x] department → position 변경
+  - [x] address 필드 추가
+  - [x] accountApproved 필드 추가 (Enum 타입)
+- [x] AccountRepository.java 메소드 구현
+  - [x] findByEmail(), existsByEmail() 등 7개 쿼리 메소드
+  - [x] findByAccountApproved() 등 승인 관련 메소드
+
+### 7.2 진행 예정 작업
+- [ ] AccountService 인터페이스 작성
 - [ ] AccountServiceImpl 구현
-- [ ] DTO 클래스 작성
-- [ ] AuthController 작성
+- [ ] DTO 클래스 작성 (SignupRequest, LoginRequest, LoginResponse 등)
+- [ ] AuthController 작성 (회원가입/로그인 API)
+- [ ] Spring Security + JWT 설정
+- [ ] 단위 테스트 작성 (Repository, Service, Controller)
 
-### 7.2 팀 협의 필요
+### 7.3 팀 협의 필요
 - [ ] 프론트엔드 팀에 API 필드명 변경 공지
-- [ ] 기존 DB 데이터 마이그레이션 계획
-- [ ] Academy 도메인과 연관관계 설정 시기
+  - `role` → `accountType`
+  - `company` → `affiliation`
+  - `department` → `position`
+  - 신규 필드: `address`, `accountApproved`
+- [ ] 기존 DB 데이터가 있다면 마이그레이션 스크립트 작성
+- [ ] Academy 도메인과 연관관계 설정 시기 논의
 
-### 7.3 대기 중
-- [ ] Academy 엔티티 생성 후 연관관계 매핑
+### 7.4 대기 중
+- [ ] Academy 엔티티 생성 후 연관관계 매핑 (Academy 담당자 작업 대기)
 - [ ] DDL 생성 및 DB 스키마 동기화
 - [ ] 통합 테스트 작성
 
@@ -477,10 +489,12 @@ public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
 - **프로젝트 가이드**: `.md/account/ACCOUNT_WORK_GUIDELINE.md`
 - **JPA 가이드**: `.md/JPA_GUIDELINE.md`
 - **API 가이드**: `.md/API_GUIDELINES.md`
-- **SQL 참고**: `ninja gaiden/softcampus.sql` (line 172-188)
+- **SQL 참고**: `sql/softcampus.sql` (line 172-188)
 
 ---
 
 **작성일**: 2025-10-29  
+**최종 수정일**: 2025-10-29  
 **작성 방식**: Entity-First (엔티티 코드 우선, SQL은 참고용)  
-**현재 상태**: 기존 필드 유지, SQL 추가 필드는 검토 중
+**현재 상태**: Domain Layer 완료 (필드 변환 완료: role→accountType, company→affiliation, department→position)  
+**다음 단계**: Service Layer 구현 예정

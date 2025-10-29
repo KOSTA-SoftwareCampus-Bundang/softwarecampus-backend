@@ -17,7 +17,15 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "account")
+@Table(
+    name = "account",
+    indexes = {
+        @Index(name = "uk_account_email", columnList = "email", unique = true),
+        @Index(name = "uk_account_username", columnList = "userName", unique = true),
+        @Index(name = "uk_account_phone", columnList = "phoneNumber", unique = true),
+        @Index(name = "idx_account_type_approved", columnList = "account_type,account_approved")
+    }
+)
 public class Account extends BaseSoftDeleteSupportEntity {
 
     @Id
