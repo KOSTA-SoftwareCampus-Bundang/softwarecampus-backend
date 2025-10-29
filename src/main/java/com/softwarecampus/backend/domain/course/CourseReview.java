@@ -1,9 +1,12 @@
 package com.softwarecampus.backend.domain.course;
 
+import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "course_review")
@@ -12,7 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CourseReview {
+public class CourseReview extends BaseSoftDeleteSupportEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,29 +28,13 @@ public class CourseReview {
     @Column(nullable = false)
     private String title;
 
-    private Integer section1Point;
-    private String section1Text;
-    private Integer section2Point;
-    private String section2Text;
-    private Integer section3Point;
-    private String section3Text;
-    private Integer section4Point;
-    private String section4Text;
-    private Integer section5Point;
-    private String section5Text;
-    private Integer section6Point;
-    private String section6Text;
+    // 🔹 리뷰 섹션 리스트 (1:N 관계)
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewSection> sections = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ApprovalStatus reviewApproved = ApprovalStatus.WAITING;
 
     private LocalDateTime approvedAt;
-
-    @Column(nullable = false)
-    private boolean isDeleted = false;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 }

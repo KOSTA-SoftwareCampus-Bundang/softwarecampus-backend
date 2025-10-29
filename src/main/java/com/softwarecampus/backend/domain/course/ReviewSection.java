@@ -4,26 +4,24 @@ import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "course_image")
+@Table(name = "review_section")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CourseImage extends BaseSoftDeleteSupportEntity {
+public class ReviewSection extends BaseSoftDeleteSupportEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String imageUrl;
-
-    private boolean isThumbnail;
+    private Integer sectionNumber; // 예: 1~5
+    private Integer point;
+    private String text;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
-    private Course course;
+    @JoinColumn(name = "review_id")
+    private CourseReview review;
 }

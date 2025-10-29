@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.domain.course;
 
+import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import com.softwarecampus.backend.domain.user.Account;
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CourseFavorite {
+public class CourseFavorite extends BaseSoftDeleteSupportEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,11 +27,4 @@ public class CourseFavorite {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id")
     private Course course;
-
-    @Column(nullable = false)
-    private boolean isDeleted = false;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 }

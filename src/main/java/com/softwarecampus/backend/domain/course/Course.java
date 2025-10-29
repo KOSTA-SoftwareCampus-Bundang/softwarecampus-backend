@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.domain.course;
 
 import com.softwarecampus.backend.domain.academy.Academy;
+import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -14,7 +15,7 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Course {
+public class Course extends BaseSoftDeleteSupportEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,13 +49,6 @@ public class Course {
     private ApprovalStatus isApproved = ApprovalStatus.WAITING;
 
     private LocalDateTime approvedAt;
-
-    @Column(nullable = false)
-    private boolean isDeleted = false;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CourseReview> reviews = new ArrayList<>();

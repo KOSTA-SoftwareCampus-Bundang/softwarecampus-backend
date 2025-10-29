@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.domain.course;
 
+import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CourseCategory {
+public class CourseCategory extends BaseSoftDeleteSupportEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,10 +26,4 @@ public class CourseCategory {
     @Column(nullable = false)
     private CategoryType categoryType; // EMPLOYEE, JOB_SEEKER
 
-    @Column(nullable = false)
-    private boolean isDeleted = false;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 }

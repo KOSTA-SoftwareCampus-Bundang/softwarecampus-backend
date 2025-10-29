@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.domain.course;
 
+import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CourseQuestion {
+public class CourseQuestion extends BaseSoftDeleteSupportEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,13 +33,6 @@ public class CourseQuestion {
     private ApprovalStatus isApproved = ApprovalStatus.WAITING;
 
     private LocalDateTime approvedAt;
-
-    @Column(nullable = false)
-    private boolean isDeleted = false;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 
     @OneToOne(mappedBy = "question", cascade = CascadeType.ALL)
     private CourseAnswer answer;
