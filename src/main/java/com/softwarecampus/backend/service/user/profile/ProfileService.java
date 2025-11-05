@@ -12,7 +12,7 @@ public interface ProfileService {
      * 
      * @param accountId 계정 ID
      * @return 계정 정보
-     * @throws com.softwarecampus.backend.exception.AccountNotFoundException 계정이 존재하지 않는 경우
+     * @throws com.softwarecampus.backend.exception.user.AccountNotFoundException 계정이 존재하지 않는 경우
      */
     AccountResponse getAccountById(Long accountId);
     
@@ -21,7 +21,7 @@ public interface ProfileService {
      * 
      * @param email 이메일
      * @return 계정 정보
-     * @throws com.softwarecampus.backend.exception.AccountNotFoundException 계정이 존재하지 않는 경우
+     * @throws com.softwarecampus.backend.exception.user.AccountNotFoundException 계정이 존재하지 않는 경우
      */
     AccountResponse getAccountByEmail(String email);
 }

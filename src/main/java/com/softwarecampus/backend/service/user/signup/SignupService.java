@@ -13,7 +13,7 @@ public interface SignupService {
      * 
      * @param request 회원가입 요청 DTO
      * @return 생성된 계정 정보
-     * @throws com.softwarecampus.backend.exception.DuplicateEmailException 이메일이 이미 존재하는 경우
+     * @throws com.softwarecampus.backend.exception.user.DuplicateEmailException 이메일이 이미 존재하는 경우
      */
     AccountResponse signup(SignupRequest request);
 }
