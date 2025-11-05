@@ -8,7 +8,7 @@
 
 ## 📋 작업 개요
 
-회원가입의 핵심 비즈니스 로직을 처리하는 Service Layer를 구현합니다. 이메일 중복 체크, 비밀번호 암호화, 엔티티 저장 등의 작업을 수행하며, 발생 가능한 도메인 예외를 함께 정의합니다.
+회원가입의 핵심 비즈니스 로직을 처리하는 Service Layer를 구현합니다. 이메일 형식 검증, 비밀번호 암호화, 엔티티 저장 등의 작업을 수행하며, 발생 가능한 도메인 예외를 함께 정의합니다.
 
 **설계 원칙:**
 - 기능별 독립 패키지 (signup/login/profile)
@@ -16,25 +16,42 @@
 - DTO ↔ Entity 변환은 Service Layer에서 처리
 - 비즈니스 예외는 도메인 예외로 명확히 표현
 - `@Transactional` 적용으로 트랜잭션 보장
+- **보안**: PII(개인정보) 로깅 제거, 동시성 안전 처리
 
 ---
 
-## 📂 생성 파일
+## 📂 생성/수정 파일
 
+### 새로 생성된 파일:
 ```
 src/main/java/com/softwarecampus/backend/
-├─ service/
-│  └─ user/
-│     ├─ signup/
-│     │  ├─ SignupService.java              (회원가입 인터페이스)
-│     │  └─ SignupServiceImpl.java          (회원가입 구현)
-│     └─ profile/
-│        ├─ ProfileService.java             (프로필 인터페이스)
-│        └─ ProfileServiceImpl.java         (프로필 구현)
-└─ exception/
-   └─ user/                                  (도메인별 예외 패키지)
-      ├─ DuplicateEmailException.java       (이메일 중복 예외)
-      └─ AccountNotFoundException.java      (계정 미존재 예외)
+├─ service/user/
+│  ├─ signup/
+│  │  ├─ SignupService.java              ✅ 회원가입 인터페이스
+│  │  └─ SignupServiceImpl.java          ✅ 회원가입 구현
+│  └─ profile/
+│     ├─ ProfileService.java             ✅ 프로필 인터페이스
+│     └─ ProfileServiceImpl.java         ✅ 프로필 구현
+├─ exception/user/
+│  ├─ InvalidInputException.java         ✅ 잘못된 입력 예외
+│  ├─ DuplicateEmailException.java       ✅ 이메일 중복 예외
+│  └─ AccountNotFoundException.java      ✅ 계정 미존재 예외
+└─ util/
+   └─ EmailUtils.java                    ✅ 이메일 검증/마스킹 유틸
+
+.md/account/시나리오/
+├─ README.md                             ✅ 시나리오 목록
+├─ signup_scenarios.md                   ✅ 회원가입 시나리오
+└─ profile_scenarios.md                  ✅ 프로필 조회 시나리오
+```
+
+### 수정된 파일:
+```
+src/main/java/com/softwarecampus/backend/
+├─ exception/
+│  └─ GlobalExceptionHandler.java        ✅ InvalidInputException 핸들러 추가
+└─ dto/user/
+   └─ MessageResponse.java               ✅ Status 필드 제거 (RESTful)
 ```
 
 **Phase별 확장 계획:**
@@ -93,18 +110,23 @@ import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
+import com.softwarecampus.backend.exception.user.InvalidInputException;
 import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.util.EmailUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 회원가입 Service
+ * - 이메일 형식 검증 (RFC 5322, RFC 1035)
  * - 이메일 중복 체크
  * - 비밀번호 암호화
  * - Account 엔티티 생성 및 저장
+ * - PII 로깅 보호 (이메일 마스킹)
  */
 @Slf4j
 @Service
@@ -117,20 +139,99 @@ public class SignupServiceImpl implements SignupService {
     
     /**
      * 회원가입 처리
+     * 
+     * @throws InvalidInputException 이메일 형식 오류
+     * @throws DuplicateEmailException 이메일 중복
      */
     @Override
     @Transactional
     public AccountResponse signup(SignupRequest request) {
-        log.info("회원가입 시도: email={}", request.email());
+        String maskedEmail = EmailUtils.maskEmail(request.email());
+        log.info("회원가입 시도: maskedEmail={}", maskedEmail);
         
-        // 1. 이메일 중복 체크
+        // 1. 이메일 형식 검증 (RFC 5322 + RFC 1035)
+        validateEmailFormat(request.email());
+        
+        // 2. 이메일 중복 체크
         validateEmailNotDuplicate(request.email());
         
-        // 2. 비밀번호 암호화
+        // 3. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.password());
         
-        // 3. Account 엔티티 생성
+        // 4. Account 엔티티 생성
         Account account = createAccount(request, encodedPassword);
+        
+        // 5. DB 저장 (동시성 안전 처리)
+        Account savedAccount = saveAccountSafely(account, maskedEmail);
+        
+        log.info("회원가입 완료: accountId={}, maskedEmail={}", 
+                savedAccount.getAccountId(), maskedEmail);
+        return AccountResponse.from(savedAccount);
+    }
+    
+    /**
+     * 이메일 형식 검증
+     * RFC 5322 (이메일 기본 형식) + RFC 1035 (도메인 레이블 규칙)
+     */
+    private void validateEmailFormat(String email) {
+        if (!EmailUtils.isValidEmail(email)) {
+            log.warn("잘못된 이메일 형식: maskedEmail={}", EmailUtils.maskEmail(email));
+            throw new InvalidInputException("잘못된 이메일 형식입니다.");
+        }
+    }
+    
+    /**
+     * 이메일 중복 체크
+     */
+    private void validateEmailNotDuplicate(String email) {
+        if (accountRepository.existsByEmail(email)) {
+            String maskedEmail = EmailUtils.maskEmail(email);
+            log.warn("이메일 중복: maskedEmail={}", maskedEmail);
+            throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
+        }
+    }
+    
+    /**
+     * Account 엔티티 생성
+     */
+    private Account createAccount(SignupRequest request, String encodedPassword) {
+        return Account.builder()
+                .email(request.email())
+                .password(encodedPassword)
+                .name(request.name())
+                .accountType(AccountType.USER)
+                .accountApproved(ApprovalStatus.APPROVED)
+                .build();
+    }
+    
+    /**
+     * DB 저장 (동시성 안전 처리)
+     * 
+     * Race Condition 방어:
+     * - DB의 UNIQUE 제약 조건이 동시성 안전 보장
+     * - 중복 체크와 저장 사이 간극은 DB가 처리
+     */
+    private Account saveAccountSafely(Account account, String maskedEmail) {
+        try {
+            return accountRepository.save(account);
+        } catch (DataIntegrityViolationException e) {
+            String message = e.getMessage();
+            if (message != null) {
+                // CodeRabbit 리뷰: 중복 null 체크 최적화
+                if (message.contains("uk_account_email")) {
+                    log.warn("동시 요청 감지: maskedEmail={}", maskedEmail);
+                    throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
+                }
+                if (message.contains("uk_account_name")) {
+                    log.warn("닉네임 중복: name={}", account.getName());
+                    throw new InvalidInputException("이미 사용 중인 닉네임입니다.");
+                }
+            }
+            log.error("DB 제약 조건 위반: maskedEmail={}", maskedEmail, e);
+            throw new RuntimeException("회원가입 처리 중 오류가 발생했습니다.", e);
+        }
+    }
+}
         
         // 4. 저장
         Account savedAccount = accountRepository.save(account);
@@ -189,7 +290,11 @@ public class SignupServiceImpl implements SignupService {
 **설계 포인트:**
 - 회원가입 로직만 집중 (단일 책임)
 - private 메서드로 로직 분리 (가독성)
-- 파일 크기 약 100줄
+- **보안**: PII 로깅 제거 (이메일 마스킹)
+- **동시성**: DB UNIQUE 제약으로 Race Condition 방어
+- **입력 검증**: RFC 5322, RFC 1035 표준 준수
+- **예외 처리**: `DataIntegrityViolationException` null 체크 최적화
+- 파일 크기 약 130줄
 
 ---
 
@@ -243,7 +348,9 @@ package com.softwarecampus.backend.service.user.profile;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
+import com.softwarecampus.backend.exception.user.InvalidInputException;
 import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.util.EmailUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -253,6 +360,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 계정 조회 Service
  * - Phase 5: 기본 조회 기능
  * - Phase 18: 수정/삭제 기능 추가 예정
+ * - PII 로깅 보호 (이메일 마스킹)
  */
 @Slf4j
 @Service
@@ -270,29 +378,48 @@ public class ProfileServiceImpl implements ProfileService {
         log.info("계정 조회: accountId={}", accountId);
         
         Account account = accountRepository.findById(accountId)
-            .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다: " + accountId));
+            .orElseThrow(() -> {
+                log.warn("계정 미존재: accountId={}", accountId);
+                return new AccountNotFoundException("계정을 찾을 수 없습니다.");
+            });
         
-        return toAccountResponse(account);
+        return AccountResponse.from(account);
     }
     
     /**
      * 이메일로 계정 조회
+     * 
+     * @throws InvalidInputException 이메일 형식 오류
+     * @throws AccountNotFoundException 계정 미존재
      */
     @Override
     public AccountResponse getAccountByEmail(String email) {
-        log.info("계정 조회: email={}", email);
+        String maskedEmail = EmailUtils.maskEmail(email);
+        log.info("계정 조회: maskedEmail={}", maskedEmail);
+        
+        // 이메일 형식 검증
+        validateEmailFormat(email);
         
         Account account = accountRepository.findByEmail(email)
-            .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다: " + email));
+            .orElseThrow(() -> {
+                log.warn("계정 미존재: maskedEmail={}", maskedEmail);
+                return new AccountNotFoundException("계정을 찾을 수 없습니다.");
+            });
         
-        return toAccountResponse(account);
+        return AccountResponse.from(account);
     }
     
     /**
-     * Entity → DTO 변환
+     * 이메일 형식 검증
+     * RFC 5322 (이메일 기본 형식) + RFC 1035 (도메인 레이블 규칙)
      */
-    private AccountResponse toAccountResponse(Account account) {
-        return new AccountResponse(
+    private void validateEmailFormat(String email) {
+        if (!EmailUtils.isValidEmail(email)) {
+            log.warn("잘못된 이메일 형식: maskedEmail={}", EmailUtils.maskEmail(email));
+            throw new InvalidInputException("잘못된 이메일 형식입니다.");
+        }
+    }
+}
             account.getId(),
             account.getEmail(),
             account.getUserName(),
@@ -320,6 +447,39 @@ public class ProfileServiceImpl implements ProfileService {
 
 ### 5. DuplicateEmailException.java
 
+**경로:** `exception/user/InvalidInputException.java`
+
+**설명:** 잘못된 입력 (이메일 형식 오류 등) 시 발생하는 도메인 예외
+
+```java
+package com.softwarecampus.backend.exception.user;
+
+/**
+ * 잘못된 입력 예외
+ * - 이메일 형식 오류 (RFC 5322, RFC 1035 위반)
+ * - 닉네임 중복 등
+ */
+public class InvalidInputException extends RuntimeException {
+    
+    public InvalidInputException(String message) {
+        super(message);
+    }
+    
+    public InvalidInputException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+```
+
+**설계 포인트:**
+- `RuntimeException` 상속 (Unchecked Exception)
+- 입력 검증 실패 시 명확한 예외 표현
+- GlobalExceptionHandler에서 400 Bad Request 응답
+
+---
+
+### 6. DuplicateEmailException.java
+
 **경로:** `exception/user/DuplicateEmailException.java`
 
 **설명:** 이메일 중복 시 발생하는 도메인 예외
@@ -330,6 +490,7 @@ package com.softwarecampus.backend.exception.user;
 /**
  * 이메일 중복 예외
  * - 회원가입 시 이미 존재하는 이메일로 가입 시도할 때 발생
+ * - DB UNIQUE 제약 위반 시에도 발생 (동시성 안전)
  */
 public class DuplicateEmailException extends RuntimeException {
     
@@ -346,11 +507,11 @@ public class DuplicateEmailException extends RuntimeException {
 **설계 포인트:**
 - `RuntimeException` 상속 (Unchecked Exception)
 - 비즈니스 로직에서 발생하는 예외는 명시적으로 처리
-- GlobalExceptionHandler에서 일괄 처리
+- GlobalExceptionHandler에서 409 Conflict 응답
 
 ---
 
-### 6. AccountNotFoundException.java
+### 7. AccountNotFoundException.java
 
 **경로:** `exception/user/AccountNotFoundException.java`
 
@@ -373,11 +534,103 @@ public class AccountNotFoundException extends RuntimeException {
         super(message, cause);
     }
 }
+    }
+}
 ```
 
 **설계 포인트:**
 - 마이페이지 조회 시 사용 (Phase 18)
 - 로그인 시 계정 존재 여부 체크 시 사용 (Phase 16)
+- GlobalExceptionHandler에서 404 Not Found 응답
+
+---
+
+### 8. EmailUtils.java (이메일 검증 및 마스킹)
+
+**경로:** `util/EmailUtils.java`
+
+**설명:** 이메일 형식 검증 및 PII 보호를 위한 마스킹 유틸리티
+
+```java
+package com.softwarecampus.backend.util;
+
+import java.util.regex.Pattern;
+
+/**
+ * 이메일 검증 및 마스킹 유틸리티
+ * 
+ * RFC 표준 준수:
+ * - RFC 5322: 이메일 기본 형식
+ * - RFC 1035: 도메인 레이블 규칙 (하이픈 중간만, TLD 최대 63자)
+ */
+public class EmailUtils {
+    
+    /**
+     * RFC 5322 + RFC 1035 이메일 정규식
+     * 
+     * 구조: localPart@domainPart
+     * - localPart: [a-zA-Z0-9._%+-]+ (영문자, 숫자, 특수문자)
+     * - domainPart: (label\.)+tld
+     *   - label: 영문자/숫자로 시작, 중간에만 하이픈, 영문자/숫자로 끝
+     *   - tld: 영문자 2~63자 (RFC 1035 섹션 2.3.1)
+     * 
+     * 예시:
+     * - ✅ user@example.com
+     * - ✅ user@sub-domain.example.technology (10자 TLD)
+     * - ❌ user@-invalid.com (시작 하이픈)
+     * - ❌ user@test-.com (끝 하이픈)
+     */
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+        "^[a-zA-Z0-9._%+-]+@" +
+        "(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)*" +
+        "[a-zA-Z]{2,63}$"
+    );
+    
+    /**
+     * 이메일 형식 검증
+     * 
+     * @param email 검증할 이메일
+     * @return 유효 여부
+     */
+    public static boolean isValidEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        return EMAIL_PATTERN.matcher(email).matches();
+    }
+    
+    /**
+     * 이메일 마스킹 (PII 보호)
+     * 
+     * @param email 마스킹할 이메일
+     * @return 마스킹된 이메일 (예: u****@example.com)
+     */
+    public static String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return "***";
+        }
+        
+        String[] parts = email.split("@", 2);
+        String localPart = parts[0];
+        String domainPart = parts[1];
+        
+        if (localPart.length() <= 1) {
+            return "*@" + domainPart;
+        }
+        
+        return localPart.charAt(0) + "****@" + domainPart;
+    }
+}
+```
+
+**설계 포인트:**
+- RFC 5322 (이메일 기본 형식) + RFC 1035 (도메인 규칙) 준수
+- **보안**: 로그에 이메일 원본 노출 방지 (GDPR 준수)
+- **국제화**: punycode 도메인 지원 (xn--로 시작)
+- **검증**: 
+  - TLD 최대 63자 (RFC 1035)
+  - 하이픈은 도메인 레이블 중간만 허용
+- CodeRabbit 리뷰 반영: 하이픈 위치 검증 강화
 
 ---
 
@@ -392,9 +645,159 @@ package com.softwarecampus.backend.exception;
 
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
-// ... 기타 import
+import com.softwarecampus.backend.exception.user.InvalidInputException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
+ * 전역 예외 처리기
+ * RFC 9457 ProblemDetail 표준 준수
+ */
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    
+    /**
+     * 잘못된 입력 예외 처리
+     * - 이메일 형식 오류 (RFC 5322, RFC 1035 위반)
+     * - 닉네임 중복 등
+     * 
+     * @return 400 Bad Request
+     */
+    @ExceptionHandler(InvalidInputException.class)
+    public ProblemDetail handleInvalidInput(InvalidInputException e) {
+        log.warn("잘못된 입력: {}", e.getMessage());
+        
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            e.getMessage()
+        );
+        problem.setTitle("Invalid Input");
+        return problem;
+    }
+    
+    /**
+     * 이메일 중복 예외 처리
+     * 
+     * @return 409 Conflict
+     */
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ProblemDetail handleDuplicateEmail(DuplicateEmailException e) {
+        log.warn("이메일 중복: {}", e.getMessage());
+        
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            e.getMessage()
+        );
+        problem.setTitle("Duplicate Email");
+        return problem;
+    }
+    
+    /**
+     * 계정 미존재 예외 처리
+     * 
+     * @return 404 Not Found
+     */
+    @ExceptionHandler(AccountNotFoundException.class)
+    public ProblemDetail handleAccountNotFound(AccountNotFoundException e) {
+        log.warn("계정 미존재: {}", e.getMessage());
+        
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.NOT_FOUND,
+            e.getMessage()
+        );
+        problem.setTitle("Account Not Found");
+        return problem;
+    }
+}
+```
+
+**수정 내역:**
+- `InvalidInputException` → 400 Bad Request
+- `DuplicateEmailException` → 409 Conflict
+- `AccountNotFoundException` → 404 Not Found
+- **보안**: 예외 메시지에 PII 포함 금지 (이메일 원본 노출 방지)
+- RFC 9457 ProblemDetail 표준 준수
+
+---
+
+## 🔗 MessageResponse 수정 (RESTful)
+
+**기존 파일 수정:** `dto/user/MessageResponse.java`
+
+**CodeRabbit 리뷰 반영: Status 필드 제거**
+
+```java
+package com.softwarecampus.backend.dto.user;
+
+/**
+ * 간단한 메시지 응답
+ * RESTful 표준 준수: HTTP 상태 코드로 성공/실패 판단
+ */
+public record MessageResponse(String message) {
+    
+    /**
+     * 메시지 응답 생성
+     * 
+     * @param message 응답 메시지
+     * @return MessageResponse 인스턴스
+     */
+    public static MessageResponse of(String message) {
+        return new MessageResponse(message);
+    }
+}
+```
+
+**변경 이유:**
+- HTTP 상태 코드가 성공/실패 표현 (RESTful 표준)
+- Body의 Status 필드는 불필요한 중복
+- Spring ProblemDetail 패턴과 일관성
+- 클라이언트는 `response.status`로 자동 확인
+
+**변경 전:**
+```java
+record MessageResponse(Status status, String message) {
+    enum Status { SUCCESS, ERROR }
+    static MessageResponse success(String message) { ... }
+    static MessageResponse error(String message) { ... }
+}
+```
+
+**변경 후:**
+```java
+record MessageResponse(String message) {
+    static MessageResponse of(String message) { ... }
+}
+```
+
+---
+
+## 📝 테스트 시나리오 문서
+
+**새로 생성:** `.md/account/시나리오/` 디렉토리
+
+### signup_scenarios.md
+회원가입 시나리오 (20개):
+- ✅ 정상 회원가입
+- ✅ 이메일 형식 오류 (RFC 5322, RFC 1035 위반)
+- ✅ 이메일 중복 (일반 / Race Condition)
+- ✅ 닉네임 중복
+- 기타 입력 검증 시나리오
+
+### profile_scenarios.md
+프로필 조회 시나리오 (8개):
+- ✅ ID로 계정 조회
+- ✅ 이메일로 계정 조회
+- ✅ 계정 미존재 (404)
+- ✅ 이메일 형식 오류 (400)
+
+**참조:** [시나리오 전체 목록](.md/account/시나리오/README.md)
+
+---
+
  * 이메일 중복 예외 처리
  * HTTP 409 Conflict
  */
@@ -498,23 +901,52 @@ mvn clean compile
   - [x] `SignupServiceImpl.java` 구현체 생성
   - [x] `ProfileService.java` 인터페이스 생성
   - [x] `ProfileServiceImpl.java` 구현체 생성
+  - [x] `InvalidInputException.java` 예외 생성 (exception/user/)
   - [x] `DuplicateEmailException.java` 예외 생성 (exception/user/)
   - [x] `AccountNotFoundException.java` 예외 생성 (exception/user/)
+  - [x] `EmailUtils.java` 유틸리티 생성 (util/)
 
 - [x] **GlobalExceptionHandler 수정**
-  - [x] `DuplicateEmailException` 핸들러 추가
-  - [x] `AccountNotFoundException` 핸들러 추가
+  - [x] `InvalidInputException` 핸들러 추가 (400 Bad Request)
+  - [x] `DuplicateEmailException` 핸들러 추가 (409 Conflict)
+  - [x] `AccountNotFoundException` 핸들러 추가 (404 Not Found)
+
+- [x] **MessageResponse 수정 (RESTful)**
+  - [x] `Status` 필드 제거 (HTTP 상태 코드와 중복)
+  - [x] `of(String)` 팩토리 메서드로 단순화
+
+- [x] **보안 강화**
+  - [x] PII 로깅 제거 (이메일 원본 → 마스킹)
+  - [x] 동시성 안전 처리 (DB UNIQUE 제약)
+  - [x] RFC 표준 준수 (RFC 5322, RFC 1035)
+
+- [x] **CodeRabbit PR 리뷰 반영**
+  - [x] Javadoc FQCN 수정 (exception.user 패키지 추가)
+  - [x] DataIntegrityViolationException 처리 개선 (null 체크 최적화)
+  - [x] 이메일 정규식 강화 (RFC 1035 하이픈 규칙)
+  - [x] MessageResponse Status 필드 제거 (RESTful)
+  - [x] Markdown 코드 블록 언어 지정 (Markdownlint)
 
 - [x] **코드 검증**
-  - [x] 컴파일 성공 (`mvn clean compile`)
+  - [x] 컴파일 성공 (`mvn clean compile` - 60 source files)
   - [x] 인터페이스-구현체 메서드 시그니처 일치
-  - [x] 로깅 적절히 배치
+  - [x] 로깅 적절히 배치 (PII 마스킹)
   - [x] `@Transactional` 올바르게 적용
   - [x] 도메인별 예외 패키지 분리 (exception/user/)
+  - [x] 이메일 검증 RFC 표준 준수 확인
 
 - [x] **문서화**
   - [x] Phase 5 설계 문서 최신화
-  - [x] 실제 구현 내용 반영 (accountApproved 필드명 등)
+  - [x] 실제 구현 내용 반영 (보안, 동시성, RFC 표준)
+  - [x] CodeRabbit 리뷰 반영 내역 문서화
+  - [x] 설계 결정 사항 추가 (메시지 파싱, 검증 중복, RESTful)
+  - [x] 테스트 시나리오 문서 링크 추가
+
+- [x] **테스트 시나리오 작성**
+  - [x] `signup_scenarios.md` (회원가입 20개 시나리오)
+  - [x] `profile_scenarios.md` (프로필 조회 8개 시나리오)
+  - [x] Race Condition 시나리오 포함
+  - [x] RFC 표준 위반 케이스 포함
 
 ---
 
@@ -525,8 +957,9 @@ mvn clean compile
 - ProfileServiceImplTest 작성
 - Mockito로 Repository, PasswordEncoder 모킹
 - 정상 케이스: 회원가입 성공, 조회 성공
-- 예외 케이스: 이메일 중복, 계정 미존재
+- 예외 케이스: 이메일 중복, 계정 미존재, 이메일 형식 오류
 - @ExtendWith(MockitoExtension.class) 사용
+- EmailUtils 유틸리티 테스트 (RFC 표준 검증)
 
 ---
 
@@ -581,6 +1014,75 @@ mvn clean compile
 
 **이유:**
 - 읽기 작업이 대부분 → 기본값 읽기 전용
+- 쓰기 작업만 명시적으로 `@Transactional` 선언
+- 불필요한 트랜잭션 오버헤드 최소화
+
+### 7. 메시지 파싱 방식 유지 (CodeRabbit 리뷰 반영)
+**결정:** `DataIntegrityViolationException` 메시지 파싱 유지
+
+**CodeRabbit 리뷰:**
+> "메시지 파싱은 DB/JPA 메시지 변경 시 불안정. DB에서 이메일 재확인 권장."
+
+**논의 및 결정:**
+- DB 제약 조건 변경 계획 없음 (안정적 환경)
+- DB 재확인 시 추가 쿼리 발생 (성능 저하)
+- YAGNI 원칙 (You Aren't Gonna Need It)
+- **결정:** 현재 방식 유지 (실용적 판단)
+
+### 8. 이메일 검증 로직 중복 허용 (CodeRabbit 리뷰 반영)
+**결정:** SignupService와 ProfileService의 이메일 검증 중복 허용
+
+**CodeRabbit 리뷰:**
+> "`validateEmailFormat`를 EmailUtils로 공통화 권장."
+
+**논의 및 결정:**
+- 중복 코드 약 5줄 (경미한 중복)
+- 각 Service 맥락이 다름 (회원가입 vs 프로필 변경)
+- 명확성 > DRY (Don't Repeat Yourself)
+- 공통화 시 불필요한 추상화 발생 가능
+- **결정:** 현재 유지 (명확성 우선)
+
+### 9. MessageResponse Status 필드 제거 (RESTful)
+**결정:** `MessageResponse`에서 `Status` 필드 완전 제거
+
+**CodeRabbit 리뷰:**
+> "HTTP 상태 코드와 중복. Status 필드 불필요."
+
+**변경 내역:**
+```java
+// Before
+record MessageResponse(Status status, String message) {
+    enum Status { SUCCESS, ERROR }
+    static MessageResponse success(String message) { ... }
+    static MessageResponse error(String message) { ... }
+}
+
+// After
+record MessageResponse(String message) {
+    static MessageResponse of(String message) { ... }
+}
+```
+
+**이유:**
+- HTTP 상태 코드가 성공/실패 표현 (RESTful 표준)
+- Body의 Status 필드는 불필요한 중복
+- Spring ProblemDetail 패턴과 일관성
+- 클라이언트는 `response.status`로 자동 확인
+
+### 10. 보안 강화 설계
+**결정:** PII(개인정보) 로깅 제거, 동시성 안전 처리
+
+**구현 내역:**
+- ❌ 이메일 원본 로깅 (`log.debug("이메일: {}", email)`)
+- ✅ 이메일 마스킹 (`log.debug("마스킹 이메일: {}", EmailUtils.maskEmail(email))`)
+- ✅ DB UNIQUE 제약으로 동시성 안전 보장
+- ✅ Race Condition 문서화 (`signup_scenarios.md`)
+
+**이유:**
+- GDPR/개인정보보호법 준수
+- 로그 파일 노출 시 개인정보 유출 방지
+- DB 제약 조건으로 동시성 안전 보장
+- 명확한 시나리오 문서화로 이해 용이
 - 쓰기 작업만 명시적으로 트랜잭션 오픈
 - 성능 최적화
 

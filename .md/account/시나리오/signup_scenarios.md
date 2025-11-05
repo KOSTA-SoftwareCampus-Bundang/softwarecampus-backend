@@ -362,7 +362,7 @@ Content-Type: application/problem+json
 ## 테스트 데이터
 
 ### 유효한 이메일 예시
-```
+```text
 user@example.com
 test@test.co.kr
 name+tag@domain.com
@@ -371,7 +371,7 @@ user@example.xn--3e0b707e    (국제화 도메인)
 ```
 
 ### 유효하지 않은 이메일 예시
-```
+```text
 invalid-email              (@ 없음)
 @example.com               (local part 없음)
 user@                      (domain 없음)
