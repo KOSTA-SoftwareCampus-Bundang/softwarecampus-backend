@@ -2,33 +2,16 @@ package com.softwarecampus.backend.dto.user;
 
 /**
  * 간단한 메시지 응답 DTO
+ * HTTP 상태 코드로 성공/실패를 판단하므로 별도 status 필드 불필요
  * 
- * @param status 응답 상태 (SUCCESS 또는 ERROR)
  * @param message 응답 메시지
  */
-public record MessageResponse(
-    Status status,
-    String message
-) {
-    /**
-     * 응답 상태 열거형
-     */
-    public enum Status {
-        SUCCESS,
-        ERROR
-    }
+public record MessageResponse(String message) {
     
     /**
-     * 정적 팩토리 메서드 - 성공 메시지
+     * 정적 팩토리 메서드
      */
-    public static MessageResponse success(String message) {
-        return new MessageResponse(Status.SUCCESS, message);
-    }
-    
-    /**
-     * 정적 팩토리 메서드 - 에러 메시지
-     */
-    public static MessageResponse error(String message) {
-        return new MessageResponse(Status.ERROR, message);
+    public static MessageResponse of(String message) {
+        return new MessageResponse(message);
     }
 }
