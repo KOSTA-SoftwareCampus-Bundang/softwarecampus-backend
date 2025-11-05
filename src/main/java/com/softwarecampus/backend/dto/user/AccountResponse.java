@@ -10,7 +10,7 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
  * @param email 이메일
  * @param userName 사용자명
  * @param phoneNumber 전화번호
- * @param accountType 계정 타입 (USER, INSTRUCTOR, ACADEMY, ADMIN)
+ * @param accountType 계정 타입 (USER, ACADEMY, ADMIN)
  * @param approvalStatus 승인 상태 (PENDING, APPROVED, REJECTED)
  * @param address 주소
  * @param affiliation 소속
