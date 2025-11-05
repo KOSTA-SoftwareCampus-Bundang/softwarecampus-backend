@@ -1,5 +1,7 @@
 package com.softwarecampus.backend.exception;
 
+import com.softwarecampus.backend.exception.user.AccountNotFoundException;
+import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -81,6 +83,42 @@ public class GlobalExceptionHandler {
     // ========================================
     // Account 도메인 예외 처리
     // ========================================
+    
+    /**
+     * 이메일 중복 예외 처리
+     * HTTP 409 Conflict
+     */
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ProblemDetail handleDuplicateEmailException(DuplicateEmailException ex) {
+        log.warn("이메일 중복: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-email"));
+        problemDetail.setTitle("Duplicate Email");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 계정 미존재 예외 처리
+     * HTTP 404 Not Found
+     */
+    @ExceptionHandler(AccountNotFoundException.class)
+    public ProblemDetail handleAccountNotFoundException(AccountNotFoundException ex) {
+        log.warn("계정 미존재: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.NOT_FOUND,
+            ex.getMessage()
+        );
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/account-not-found"));
+        problemDetail.setTitle("Account Not Found");
+        
+        return problemDetail;
+    }
     
     // ========================================
     // 여기에 다른 도메인 예외 추가
