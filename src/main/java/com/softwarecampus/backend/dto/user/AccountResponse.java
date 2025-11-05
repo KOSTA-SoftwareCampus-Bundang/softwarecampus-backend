@@ -1,4 +1,4 @@
-package com.softwarecampus.backend.dto.user.response;
+package com.softwarecampus.backend.dto.user;
 
 import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;

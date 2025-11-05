@@ -1,4 +1,4 @@
-package com.softwarecampus.backend.dto.user.request;
+package com.softwarecampus.backend.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
