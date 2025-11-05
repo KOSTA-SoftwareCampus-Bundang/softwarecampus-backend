@@ -6,18 +6,22 @@ import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
+import com.softwarecampus.backend.exception.user.InvalidInputException;
 import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.util.EmailUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 회원가입 Service 구현체
- * - 이메일 중복 체크
+ * - 이메일 형식 검증
  * - 비밀번호 암호화
  * - Account 엔티티 생성 및 저장
+ * - DB UNIQUE 제약을 통한 동시성 안전 보장
  */
 @Slf4j
 @Service
@@ -30,14 +34,16 @@ public class SignupServiceImpl implements SignupService {
     
     /**
      * 회원가입 처리
+     * - DB UNIQUE 제약을 활용하여 동시성 안전 보장
+     * - DataIntegrityViolationException 캐치로 중복 처리
      */
     @Override
     @Transactional
     public AccountResponse signup(SignupRequest request) {
-        log.info("회원가입 시도: email={}", request.email());
+        log.info("회원가입 시도 시작");
         
-        // 1. 이메일 중복 체크
-        validateEmailNotDuplicate(request.email());
+        // 1. 이메일 형식 검증
+        validateEmailFormat(request.email());
         
         // 2. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.password());
@@ -45,28 +51,50 @@ public class SignupServiceImpl implements SignupService {
         // 3. Account 엔티티 생성
         Account account = createAccount(request, encodedPassword);
         
-        // 4. 저장
-        Account savedAccount = accountRepository.save(account);
-        log.info("회원가입 완료: accountId={}, email={}", savedAccount.getId(), savedAccount.getEmail());
-        
-        // 5. DTO 변환
-        return toAccountResponse(savedAccount);
+        // 4. 저장 (DB UNIQUE 제약으로 동시성 안전)
+        try {
+            Account savedAccount = accountRepository.save(account);
+            log.info("회원가입 완료: accountId={}", savedAccount.getId());
+            
+            // 5. DTO 변환
+            return toAccountResponse(savedAccount);
+        } catch (DataIntegrityViolationException ex) {
+            // DB UNIQUE 제약 위반 = 이메일 중복
+            log.warn("Email duplicate detected during database insert");
+            if (log.isDebugEnabled()) {
+                log.debug("DataIntegrityViolationException details", ex);
+            }
+            throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
+        }
     }
     
     /**
-     * 이메일 중복 체크
+     * 이메일 형식 검증
      */
-    private void validateEmailNotDuplicate(String email) {
-        if (accountRepository.existsByEmail(email)) {
-            log.warn("이메일 중복: {}", email);
-            throw new DuplicateEmailException("이미 사용 중인 이메일입니다: " + email);
+    private void validateEmailFormat(String email) {
+        if (email == null || email.isBlank()) {
+            log.warn("Invalid email input: null or blank");
+            throw new InvalidInputException("이메일을 입력해주세요.");
+        }
+        
+        if (!EmailUtils.isValidFormat(email)) {
+            log.warn("Invalid email format detected: {}", EmailUtils.maskEmail(email));
+            throw new InvalidInputException("올바른 이메일 형식이 아닙니다.");
         }
     }
     
     /**
      * Account 엔티티 생성
+     * - USER: 즉시 승인 (APPROVED)
+     * - ACADEMY: 관리자 승인 대기 (PENDING)
      */
     private Account createAccount(SignupRequest request, String encodedPassword) {
+        // 계정 타입별 승인 상태 결정
+        AccountType accountType = determineAccountType(request);
+        ApprovalStatus approvalStatus = (accountType == AccountType.USER) 
+            ? ApprovalStatus.APPROVED   // 일반 사용자: 즉시 승인
+            : ApprovalStatus.PENDING;   // 기관: 관리자 승인 대기
+        
         return Account.builder()
             .email(request.email())
             .password(encodedPassword)
@@ -75,9 +103,22 @@ public class SignupServiceImpl implements SignupService {
             .address(request.address())
             .affiliation(request.affiliation())
             .position(request.position())
-            .accountType(AccountType.USER)                 // 기본값: USER
-            .accountApproved(ApprovalStatus.APPROVED)      // 기본값: APPROVED
+            .accountType(accountType)
+            .accountApproved(approvalStatus)
             .build();
+    }
+    
+    /**
+     * 계정 타입 결정
+     * - affiliation이 있으면 ACADEMY (기관)
+     * - 없으면 USER (일반 사용자)
+     */
+    private AccountType determineAccountType(SignupRequest request) {
+        // 소속이 있으면 기관으로 간주
+        if (request.affiliation() != null && !request.affiliation().isBlank()) {
+            return AccountType.ACADEMY;
+        }
+        return AccountType.USER;
     }
     
     /**

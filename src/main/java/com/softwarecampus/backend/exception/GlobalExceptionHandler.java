@@ -2,6 +2,7 @@ package com.softwarecampus.backend.exception;
 
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
+import com.softwarecampus.backend.exception.user.InvalidInputException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -85,16 +86,40 @@ public class GlobalExceptionHandler {
     // ========================================
     
     /**
+     * 잘못된 입력값 예외 처리
+     * HTTP 400 Bad Request
+     */
+    @ExceptionHandler(InvalidInputException.class)
+    public ProblemDetail handleInvalidInputException(InvalidInputException ex) {
+        log.warn("Invalid input detected for a request");
+        if (log.isDebugEnabled()) {
+            log.debug("InvalidInputException details", ex);
+        }
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()  // 이미 일반화된 메시지 사용
+        );
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-input"));
+        problemDetail.setTitle("Invalid Input");
+        
+        return problemDetail;
+    }
+    
+    /**
      * 이메일 중복 예외 처리
      * HTTP 409 Conflict
      */
     @ExceptionHandler(DuplicateEmailException.class)
     public ProblemDetail handleDuplicateEmailException(DuplicateEmailException ex) {
-        log.warn("이메일 중복: {}", ex.getMessage());
+        log.warn("Email duplicate detected for a request");
+        if (log.isDebugEnabled()) {
+            log.debug("DuplicateEmailException details", ex);
+        }
         
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.CONFLICT,
-            ex.getMessage()
+            "이메일이 이미 등록되었습니다."
         );
         problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-email"));
         problemDetail.setTitle("Duplicate Email");
@@ -108,11 +133,14 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AccountNotFoundException.class)
     public ProblemDetail handleAccountNotFoundException(AccountNotFoundException ex) {
-        log.warn("계정 미존재: {}", ex.getMessage());
+        log.warn("Account not found for a request");
+        if (log.isDebugEnabled()) {
+            log.debug("AccountNotFoundException details", ex);
+        }
         
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.NOT_FOUND,
-            ex.getMessage()
+            "요청한 계정을 찾을 수 없습니다."
         );
         problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/account-not-found"));
         problemDetail.setTitle("Account Not Found");

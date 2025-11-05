@@ -3,7 +3,9 @@ package com.softwarecampus.backend.service.user.profile;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
+import com.softwarecampus.backend.exception.user.InvalidInputException;
 import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.util.EmailUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +29,7 @@ public class ProfileServiceImpl implements ProfileService {
      */
     @Override
     public AccountResponse getAccountById(Long accountId) {
-        log.info("계정 조회: accountId={}", accountId);
+        log.info("계정 조회 시도: accountId={}", accountId);
         
         Account account = accountRepository.findById(accountId)
             .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다: " + accountId));
@@ -40,12 +42,31 @@ public class ProfileServiceImpl implements ProfileService {
      */
     @Override
     public AccountResponse getAccountByEmail(String email) {
-        log.info("계정 조회: email={}", email);
+        // 1. 입력 검증
+        validateEmailInput(email);
+        
+        // 2. 계정 조회 (PII 마스킹 로깅)
+        log.info("계정 조회 시도: email={}", EmailUtils.maskEmail(email));
         
         Account account = accountRepository.findByEmail(email)
-            .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다: " + email));
+            .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
         
         return toAccountResponse(account);
+    }
+    
+    /**
+     * 이메일 입력 검증
+     */
+    private void validateEmailInput(String email) {
+        if (email == null || email.isBlank()) {
+            log.warn("Invalid email input: null or blank");
+            throw new InvalidInputException("이메일을 입력해주세요.");
+        }
+        
+        if (!EmailUtils.isValidFormat(email)) {
+            log.warn("Invalid email format: {}", EmailUtils.maskEmail(email));
+            throw new InvalidInputException("올바른 이메일 형식이 아닙니다.");
+        }
     }
     
     /**

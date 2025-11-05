@@ -92,7 +92,7 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
-import com.softwarecampus.backend.exception.DuplicateEmailException;
+import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -177,7 +177,7 @@ public class SignupServiceImpl implements SignupService {
             account.getUserName(),
             account.getPhoneNumber(),
             account.getAccountType(),
-            account.getApprovalStatus(),
+            account.getAccountApproved(),
             account.getAddress(),
             account.getAffiliation(),
             account.getPosition()
@@ -427,9 +427,8 @@ public ProblemDetail handleAccountNotFoundException(AccountNotFoundException ex)
     problemDetail.setTitle("Account Not Found");
     problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/account-not-found"));
     
-    return problemDetail;;
-}
-```
+    return problemDetail;
+}```
 
 **HTTP 상태 코드 매핑:**
 - `DuplicateEmailException` → `409 Conflict`
