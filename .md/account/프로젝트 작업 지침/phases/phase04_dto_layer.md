@@ -2,7 +2,7 @@
 
 **목표:** 회원가입에 필요한 DTO 작성 및 Bean Validation 적용  
 **담당자:** 태윤  
-**상태:** 진행 예정
+**상태:** ✅ 완료 (2025-11-05)
 
 ---
 
@@ -202,18 +202,21 @@ return ResponseEntity.ok(MessageResponse.success("작업이 완료되었습니�
 ## 📝 Phase 완료 기준
 
 - [x] **파일 생성 완료**
-  - [ ] `SignupRequest.java` 생성
-  - [ ] `AccountResponse.java` 생성
-  - [ ] `MessageResponse.java` 생성
+  - [x] `SignupRequest.java` 생성
+  - [x] `AccountResponse.java` 생성
+  - [x] `MessageResponse.java` 생성
 
 - [x] **코드 검증**
-  - [ ] 컴파일 성공 (`./mvnw clean compile`)
-  - [ ] Record 문법 정상 동작 확인
-  - [ ] Bean Validation 어노테이션 올바르게 적용
+  - [x] 컴파일 성공 (`mvn clean compile` - BUILD SUCCESS)
+  - [x] Record 문법 정상 동작 확인
+  - [x] Bean Validation 어노테이션 올바르게 적용
 
 - [x] **문서화**
-  - [ ] 작업 기록에 Phase 4 완료 기록
-  - [ ] implementation_plan.md 체크리스트 업데이트
+  - [x] 작업 기록에 Phase 4 완료 기록
+  - [x] implementation_plan.md 체크리스트 업데이트
+
+- [x] **의존성 추가**
+  - [x] `spring-boot-starter-validation` 추가 (pom.xml)
 
 ---
 
@@ -229,4 +232,32 @@ return ResponseEntity.ok(MessageResponse.success("작업이 완료되었습니�
 
 **작성일:** 2025-11-05  
 **최종 수정:** 2025-11-05  
-**상태:** 설계 완료, 구현 대기
+**상태:** ✅ 구현 완료
+
+---
+
+## 📊 구현 결과
+
+### 생성된 파일 (3개)
+- ✅ `src/main/java/com/softwarecampus/backend/dto/user/request/SignupRequest.java`
+- ✅ `src/main/java/com/softwarecampus/backend/dto/user/response/AccountResponse.java`
+- ✅ `src/main/java/com/softwarecampus/backend/dto/user/response/MessageResponse.java`
+
+### 의존성 추가
+- ✅ `pom.xml`: `spring-boot-starter-validation` 추가
+  - Jakarta Bean Validation API 제공
+  - Hibernate Validator 구현체 제공
+  - Spring Boot 2.3 이후 별도 추가 필요
+
+### 빌드 결과
+```
+[INFO] BUILD SUCCESS
+[INFO] Total time:  3.365 s
+[INFO] Compiling 35 source files
+```
+
+### 검증 완료 항목
+- ✅ Java 17 Record 문법 정상 작동
+- ✅ Bean Validation 어노테이션 컴파일 성공
+- ✅ Account 엔티티 필드와 DTO 매핑 완료
+- ✅ RFC 9457 Problem Details 연동 준비 완료
