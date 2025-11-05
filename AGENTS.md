@@ -39,8 +39,9 @@
 - 빌드 도구: Maven(wrapper 포함, `mvnw`, `pom.xml`).
 - 애플리케이션 코드 루트: `src/main/java/com/softwarecampus/backend/`
   - `controller` REST 컨트롤러(@RestController). DTO만 노출하고, 엔티티를 직접 노출하지 않습니다.
-  - `service` 서비스 인터페이스, 트랜잭션 경계.
-  - `service/impl` 서비스 구현체(@Service). 명명: `XxxServiceImpl`.
+  - `service` 서비스 계층 - 기능 성격별 1차 폴더 구분 후 세부 기능별 2차 폴더 구분.
+    - 각 세부 기능 폴더 내에 인터페이스와 구현체를 함께 배치합니다.
+    - 명명 규칙: `XxxService.java` (인터페이스), `XxxServiceImpl.java` (구현체).
   - `repository` Spring Data JPA 리포지토리. 명명: `XxxRepository`(`JpaRepository<Entity, ID>` 상속).
   - `domain` JPA 엔티티/값객체/enum.
   - `dto` 요청/응답 DTO 및 매퍼.
@@ -51,12 +52,55 @@
 - 리소스: `src/main/resources/` (`application.properties`, 프로필, `static/`, `templates/`).
 - 테스트: `src/test/java/com/softwarecampus/backend/` — 메인 패키지 구조 미러링.
 
-예시
+### Service 계층 패키지 구조 규칙
+- 1차 분류: 기능 성격별 폴더 구분 (`user`, `academy`, `community`, `course` 등).
+- 2차 분류: 세부 기능별 폴더 구분 (`signup`, `login`, `profile` 등).
+- 인터페이스와 구현체는 동일 폴더 내 위치.
+
+예시:
+```
+service/
+  ├── user/
+  │   ├── signup/
+  │   │   ├── SignupService.java
+  │   │   └── SignupServiceImpl.java
+  │   ├── login/
+  │   │   ├── LoginService.java
+  │   │   └── LoginServiceImpl.java
+  │   └── profile/
+  │       ├── ProfileService.java
+  │       └── ProfileServiceImpl.java
+  ├── academy/
+  │   ├── registration/
+  │   │   ├── AcademyRegistrationService.java
+  │   │   └── AcademyRegistrationServiceImpl.java
+  │   └── search/
+  │       ├── AcademySearchService.java
+  │       └── AcademySearchServiceImpl.java
+  └── community/
+      ├── post/
+      │   ├── PostService.java
+      │   └── PostServiceImpl.java
+      └── comment/
+          ├── CommentService.java
+          └── CommentServiceImpl.java
+```
+
+전체 구조 예시:
 ```
 src/
   main/
-    java/com/softwarecampus/backend/...   # controller, service, domain
-    resources/                            # application-*.properties, static, templates
+    java/com/softwarecampus/backend/
+      ├── controller/          # REST 컨트롤러
+      ├── service/             # 서비스 계층 (기능별 계층 구조)
+      ├── repository/          # JPA 리포지토리
+      ├── domain/              # 엔티티, 값객체, enum
+      ├── dto/                 # 요청/응답 DTO
+      ├── config/              # 전역 설정
+      ├── exception/           # 예외 클래스
+      ├── security/            # 보안 설정
+      └── util/                # 공용 유틸
+    resources/                 # application-*.properties, static, templates
   test/
     java/com/softwarecampus/backend/...   # unit/integration tests
 ```
@@ -84,6 +128,7 @@ API 규칙은 `.md/API_GUIDELINES.md`를 따르며, 오류 응답은 RFC 9457 Pr
 - 트랜잭션은 서비스 계층에서 관리(`@Transactional`).
 - 컨트롤러는 DTO만 입출력하며, 엔티티를 직렬화하지 않습니다.
 - 명명 규칙: `XxxController`, `XxxService`, `XxxServiceImpl`, `XxxRepository`, `XxxRequest/Response`.
+- Service 패키지 구조: 기능 성격별 1차 폴더 → 세부 기능별 2차 폴더 → 인터페이스/구현체 동일 위치.
 
 ## 테스트 가이드
 
