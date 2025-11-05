@@ -1,28 +1,32 @@
-package com.softwarecampus.backend.domain.academy;
+package com.softwarecampus.backend.domain.academy.qna;
 
+import com.softwarecampus.backend.domain.academy.Academy;
+import com.softwarecampus.backend.domain.academy.ApprovalStatus;
 import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
+@Table(name = "academy_qna")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AcademyQuestion extends BaseSoftDeleteSupportEntity {
+public class AcademyQA extends BaseSoftDeleteSupportEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String questionNumber;
     private String title;
-    @Column(columnDefinition = "TEXT")
-    private String text;
+
+    @Column(name = "question_text", columnDefinition = "TEXT", nullable = false)
+    private String questionText;
+
+    @Column(name = "answer_text", columnDefinition = "TEXT", nullable = true)
+    private String answerText;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "is_approved", nullable = false)
@@ -36,8 +40,15 @@ public class AcademyQuestion extends BaseSoftDeleteSupportEntity {
     @JoinColumn(name = "academy_id", nullable = false)
     private Academy academy;
 
-    @OneToMany(mappedBy = "academyQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AcademyAnswer> answers = new ArrayList<>();
+    // 답변 등록/수정
+    public void updateAnswer(String answerText) {
+        this.answerText = answerText;
+    }
+
+    // 답변 삭제
+    public void deleteAnswer() {
+        this.answerText = null;
+    }
 
     // ✅ 승인 처리
     public void approve() {
