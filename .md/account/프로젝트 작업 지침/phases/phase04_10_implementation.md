@@ -1,6 +1,6 @@
 # Phase 4-10: 구현 상세 (링크 참조)
 
-> 각 Phase별 상세 내용은 원본 `implementation_plan.md`를 참고하세요.  
+> 각 Phase별 상세 내용은 원본 [implementation_plan.md](../implementation_plan.md)를 참고하세요.  
 > 이 파일들은 Phase 10 완료 후 상세 계획이 확정되면 분리할 예정입니다.
 
 ---
@@ -14,7 +14,7 @@
 - `dto/user/response/AccountResponse.java`  
 - `dto/user/response/MessageResponse.java`
 
-**상세 내용:** `implementation_plan.md` 참조
+**상세 내용:** [implementation_plan.md](../implementation_plan.md) 참조
 
 ---
 
@@ -28,7 +28,7 @@
 - `exception/DuplicateEmailException.java`
 - `exception/AccountNotFoundException.java`
 
-**상세 내용:** `implementation_plan.md` 참조
+**상세 내용:** [implementation_plan.md](../implementation_plan.md) 참조
 
 ---
 
@@ -37,9 +37,9 @@
 **목표:** Mockito로 의존성 모킹 및 정상/예외 케이스 검증
 
 **생성 파일:**
-- `test/.../service/user/AccountServiceImplTest.java`
+- `test/java/com/softwarecampus/backend/service/user/AccountServiceImplTest.java`
 
-**상세 내용:** `implementation_plan.md` 참조
+**상세 내용:** [implementation_plan.md](../implementation_plan.md) 참조
 
 ---
 
@@ -50,7 +50,7 @@
 **생성 파일:**
 - `controller/user/AuthController.java`
 
-**상세 내용:** `implementation_plan.md` 참조
+**상세 내용:** [implementation_plan.md](../implementation_plan.md) 참조
 
 ---
 
@@ -59,9 +59,9 @@
 **목표:** MockMvc로 HTTP 요청/응답 테스트
 
 **생성 파일:**
-- `test/.../controller/user/AuthControllerTest.java`
+- `test/java/com/softwarecampus/backend/controller/user/AuthControllerTest.java`
 
-**상세 내용:** `implementation_plan.md` 참조
+**상세 내용:** [implementation_plan.md](../implementation_plan.md) 참조
 
 ---
 
@@ -70,9 +70,9 @@
 **목표:** Repository 쿼리 메서드 동작 검증 (실제 DB 사용)
 
 **생성 파일:**
-- `test/.../repository/user/AccountRepositoryTest.java`
+- `test/java/com/softwarecampus/backend/repository/user/AccountRepositoryTest.java`
 
-**상세 내용:** `implementation_plan.md` 참조
+**상세 내용:** [implementation_plan.md](../implementation_plan.md) 참조
 
 ---
 
@@ -81,9 +81,9 @@
 **목표:** 실제 Spring Context로 전체 플로우 검증
 
 **생성 파일:**
-- `test/.../integration/SignupIntegrationTest.java`
+- `test/java/com/softwarecampus/backend/integration/SignupIntegrationTest.java`
 
-**상세 내용:** `implementation_plan.md` 참조
+**상세 내용:** [implementation_plan.md](../implementation_plan.md) 참조
 
 ---
 
