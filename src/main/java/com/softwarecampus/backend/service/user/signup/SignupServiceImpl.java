@@ -59,12 +59,45 @@ public class SignupServiceImpl implements SignupService {
             // 5. DTO 변환
             return toAccountResponse(savedAccount);
         } catch (DataIntegrityViolationException ex) {
-            // DB UNIQUE 제약 위반 = 이메일 중복
-            log.warn("Email duplicate detected during database insert");
+            // 제약 조건 이름 또는 메시지를 확인하여 이메일 중복 여부 판단
+            String message = ex.getMessage();
+            if (message != null && message.contains("email")) {
+        } catch (DataIntegrityViolationException ex) {
+            // 제약 조건 이름 또는 메시지를 확인하여 이메일 중복 여부 판단
+            String message = ex.getMessage();
+            if (message != null && message.contains("email")) {
+                log.warn("Email duplicate detected during database insert");
+                if (log.isDebugEnabled()) {
+                    log.debug("DataIntegrityViolationException details", ex);
+                }
+                throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
+            }
+            // 다른 무결성 제약 위반인 경우
+            log.error("Unexpected data integrity violation during signup", ex);
             if (log.isDebugEnabled()) {
                 log.debug("DataIntegrityViolationException details", ex);
             }
-            throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
+            throw new InvalidInputException("회원가입 처리 중 오류가 발생했습니다.");
+        }            log.error("Unexpected data integrity violation during signup", ex);
+            if (log.isDebugEnabled()) {
+                log.debug("DataIntegrityViolationException details", ex);
+            }
+            throw new InvalidInputException("회원가입 처리 중 오류가 발생했습니다.");
+        }            // 이메일 중복 확인 (제약 조건 이름: uk_account_email)
+            if (message != null && (message.contains("uk_account_email") || message.contains("email"))) {
+                log.warn("Email duplicate detected during database insert");
+                throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
+            }
+            
+            // 전화번호 중복 확인 (제약 조건 이름: uk_account_phone)
+            if (message != null && (message.contains("uk_account_phone") || message.contains("phoneNumber"))) {
+                log.warn("Phone number duplicate detected during database insert");
+                throw new InvalidInputException("이미 사용 중인 전화번호입니다.");
+            }
+            
+            // 그 외 알 수 없는 무결성 제약 위반
+            log.error("Unexpected data integrity violation during signup", ex);
+            throw new InvalidInputException("회원가입 처리 중 오류가 발생했습니다.");
         }
     }
     
