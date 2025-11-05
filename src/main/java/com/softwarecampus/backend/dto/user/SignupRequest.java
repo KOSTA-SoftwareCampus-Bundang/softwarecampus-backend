@@ -27,7 +27,7 @@ public record SignupRequest(
     @Pattern(
         regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,20}$",
         message = "비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다"
-    )    String password,
+    ) String password,
     
     @NotBlank(message = "사용자명은 필수입니다")
     @Size(min = 2, max = 50, message = "사용자명은 2~50자여야 합니다")
