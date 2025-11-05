@@ -23,7 +23,7 @@
 ## 📂 생성/수정 파일
 
 ### 새로 생성된 파일:
-```
+```text
 src/main/java/com/softwarecampus/backend/
 ├─ service/user/
 │  ├─ signup/
@@ -46,7 +46,7 @@ src/main/java/com/softwarecampus/backend/
 ```
 
 ### 수정된 파일:
-```
+```text
 src/main/java/com/softwarecampus/backend/
 ├─ exception/
 │  └─ GlobalExceptionHandler.java        ✅ InvalidInputException 핸들러 추가
@@ -97,8 +97,6 @@ public interface SignupService {
 
 **경로:** `service/user/signup/SignupServiceImpl.java`
 
-**경로:** `service/user/signup/SignupServiceImpl.java`
-
 **설명:** 회원가입 비즈니스 로직 전담
 
 ```java
@@ -123,10 +121,9 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 회원가입 Service
  * - 이메일 형식 검증 (RFC 5322, RFC 1035)
- * - 이메일 중복 체크
  * - 비밀번호 암호화
  * - Account 엔티티 생성 및 저장
- * - PII 로깅 보호 (이메일 마스킹)
+ * - DB UNIQUE 제약을 통한 동시성 안전 보장
  */
 @Slf4j
 @Service
@@ -139,122 +136,83 @@ public class SignupServiceImpl implements SignupService {
     
     /**
      * 회원가입 처리
-     * 
-     * @throws InvalidInputException 이메일 형식 오류
-     * @throws DuplicateEmailException 이메일 중복
+     * - DB UNIQUE 제약을 활용하여 동시성 안전 보장
+     * - DataIntegrityViolationException 캐치로 중복 처리
      */
     @Override
     @Transactional
     public AccountResponse signup(SignupRequest request) {
-        String maskedEmail = EmailUtils.maskEmail(request.email());
-        log.info("회원가입 시도: maskedEmail={}", maskedEmail);
+        log.info("회원가입 시도 시작");
         
-        // 1. 이메일 형식 검증 (RFC 5322 + RFC 1035)
+        // 1. 이메일 형식 검증
         validateEmailFormat(request.email());
         
-        // 2. 이메일 중복 체크
-        validateEmailNotDuplicate(request.email());
-        
-        // 3. 비밀번호 암호화
+        // 2. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.password());
         
-        // 4. Account 엔티티 생성
+        // 3. Account 엔티티 생성
         Account account = createAccount(request, encodedPassword);
         
-        // 5. DB 저장 (동시성 안전 처리)
-        Account savedAccount = saveAccountSafely(account, maskedEmail);
-        
-        log.info("회원가입 완료: accountId={}, maskedEmail={}", 
-                savedAccount.getAccountId(), maskedEmail);
-        return AccountResponse.from(savedAccount);
+        // 4. 저장 (DB UNIQUE 제약으로 동시성 안전)
+        try {
+            Account savedAccount = accountRepository.save(account);
+            log.info("회원가입 완료: accountId={}", savedAccount.getId());
+            
+            // 5. DTO 변환
+            return toAccountResponse(savedAccount);
+        } catch (DataIntegrityViolationException ex) {
+            // DB 제약 조건 위반 - 어떤 제약인지 확인
+            String message = ex.getMessage();
+            if (log.isDebugEnabled()) {
+                log.debug("DataIntegrityViolationException details", ex);
+            }
+            
+            if (message != null) {
+                // 이메일 중복 확인 (제약 조건 이름: uk_account_email)
+                if (message.contains("uk_account_email") || message.contains("email")) {
+                    log.warn("Email duplicate detected during database insert");
+                    throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
+                }
+                // 전화번호 중복 확인 (제약 조건 이름: uk_account_phone)
+                if (message.contains("uk_account_phone") || message.contains("phoneNumber")) {
+                    log.warn("Phone number duplicate detected during database insert");
+                    throw new InvalidInputException("이미 사용 중인 전화번호입니다.");
+                }
+            }
+            
+            // 그 외 알 수 없는 무결성 제약 위반
+            log.error("Unexpected data integrity violation during signup", ex);
+            throw new InvalidInputException("회원가입 처리 중 오류가 발생했습니다.");
+        }
     }
     
     /**
      * 이메일 형식 검증
-     * RFC 5322 (이메일 기본 형식) + RFC 1035 (도메인 레이블 규칙)
      */
     private void validateEmailFormat(String email) {
-        if (!EmailUtils.isValidEmail(email)) {
-            log.warn("잘못된 이메일 형식: maskedEmail={}", EmailUtils.maskEmail(email));
-            throw new InvalidInputException("잘못된 이메일 형식입니다.");
+        if (email == null || email.isBlank()) {
+            log.warn("Invalid email input: null or blank");
+            throw new InvalidInputException("이메일을 입력해주세요.");
         }
-    }
-    
-    /**
-     * 이메일 중복 체크
-     */
-    private void validateEmailNotDuplicate(String email) {
-        if (accountRepository.existsByEmail(email)) {
-            String maskedEmail = EmailUtils.maskEmail(email);
-            log.warn("이메일 중복: maskedEmail={}", maskedEmail);
-            throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
+        
+        if (!EmailUtils.isValidFormat(email)) {
+            log.warn("Invalid email format detected: {}", EmailUtils.maskEmail(email));
+            throw new InvalidInputException("올바른 이메일 형식이 아닙니다.");
         }
     }
     
     /**
      * Account 엔티티 생성
+     * - USER: 즉시 승인 (APPROVED)
+     * - ACADEMY: 관리자 승인 대기 (PENDING)
      */
     private Account createAccount(SignupRequest request, String encodedPassword) {
-        return Account.builder()
-                .email(request.email())
-                .password(encodedPassword)
-                .name(request.name())
-                .accountType(AccountType.USER)
-                .accountApproved(ApprovalStatus.APPROVED)
-                .build();
-    }
-    
-    /**
-     * DB 저장 (동시성 안전 처리)
-     * 
-     * Race Condition 방어:
-     * - DB의 UNIQUE 제약 조건이 동시성 안전 보장
-     * - 중복 체크와 저장 사이 간극은 DB가 처리
-     */
-    private Account saveAccountSafely(Account account, String maskedEmail) {
-        try {
-            return accountRepository.save(account);
-        } catch (DataIntegrityViolationException e) {
-            String message = e.getMessage();
-            if (message != null) {
-                // CodeRabbit 리뷰: 중복 null 체크 최적화
-                if (message.contains("uk_account_email")) {
-                    log.warn("동시 요청 감지: maskedEmail={}", maskedEmail);
-                    throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
-                }
-                if (message.contains("uk_account_name")) {
-                    log.warn("닉네임 중복: name={}", account.getName());
-                    throw new InvalidInputException("이미 사용 중인 닉네임입니다.");
-                }
-            }
-            log.error("DB 제약 조건 위반: maskedEmail={}", maskedEmail, e);
-            throw new RuntimeException("회원가입 처리 중 오류가 발생했습니다.", e);
-        }
-    }
-}
+        // 계정 타입별 승인 상태 결정
+        AccountType accountType = determineAccountType(request);
+        ApprovalStatus approvalStatus = (accountType == AccountType.USER) 
+            ? ApprovalStatus.APPROVED   // 일반 사용자: 즉시 승인
+            : ApprovalStatus.PENDING;   // 기관: 관리자 승인 대기
         
-        // 4. 저장
-        Account savedAccount = accountRepository.save(account);
-        log.info("회원가입 완료: accountId={}, email={}", savedAccount.getId(), savedAccount.getEmail());
-        
-        // 5. DTO 변환
-        return toAccountResponse(savedAccount);
-    }
-    
-    /**
-     * 이메일 중복 체크
-     */
-    private void validateEmailNotDuplicate(String email) {
-        if (accountRepository.existsByEmail(email)) {
-            log.warn("이메일 중복: {}", email);
-            throw new DuplicateEmailException("이미 사용 중인 이메일입니다: " + email);
-        }
-    }
-    
-    /**
-     * Account 엔티티 생성
-     */
-    private Account createAccount(SignupRequest request, String encodedPassword) {
         return Account.builder()
             .email(request.email())
             .password(encodedPassword)
@@ -263,9 +221,22 @@ public class SignupServiceImpl implements SignupService {
             .address(request.address())
             .affiliation(request.affiliation())
             .position(request.position())
-            .accountType(AccountType.USER)                 // 기본값: USER
-            .accountApproved(ApprovalStatus.APPROVED)  // 기본값: APPROVED
+            .accountType(accountType)
+            .accountApproved(approvalStatus)
             .build();
+    }
+    
+    /**
+     * 계정 타입 결정
+     * - affiliation이 있으면 ACADEMY (기관)
+     * - 없으면 USER (일반 사용자)
+     */
+    private AccountType determineAccountType(SignupRequest request) {
+        // 소속이 있으면 기관으로 간주
+        if (request.affiliation() != null && !request.affiliation().isBlank()) {
+            return AccountType.ACADEMY;
+        }
+        return AccountType.USER;
     }
     
     /**
@@ -290,11 +261,12 @@ public class SignupServiceImpl implements SignupService {
 **설계 포인트:**
 - 회원가입 로직만 집중 (단일 책임)
 - private 메서드로 로직 분리 (가독성)
-- **보안**: PII 로깅 제거 (이메일 마스킹)
 - **동시성**: DB UNIQUE 제약으로 Race Condition 방어
 - **입력 검증**: RFC 5322, RFC 1035 표준 준수
-- **예외 처리**: `DataIntegrityViolationException` null 체크 최적화
-- 파일 크기 약 130줄
+- **계정 타입 자동 결정**: affiliation 유무로 USER/ACADEMY 판단
+- **예외 처리**: `DataIntegrityViolationException` 상세 처리
+- **PII 보호**: 이메일 마스킹 (`EmailUtils.maskEmail`)
+- 파일 크기 약 150줄
 
 ---
 
@@ -445,7 +417,7 @@ public class ProfileServiceImpl implements ProfileService {
 
 ---
 
-### 5. DuplicateEmailException.java
+### 5. InvalidInputException.java
 
 **경로:** `exception/user/InvalidInputException.java`
 
@@ -534,8 +506,7 @@ public class AccountNotFoundException extends RuntimeException {
         super(message, cause);
     }
 }
-    }
-}
+
 ```
 
 **설계 포인트:**
@@ -659,68 +630,134 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * Bean Validation 실패 처리 (@Valid)
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail handleValidationException(MethodArgumentNotValidException ex) {
+        if (log.isDebugEnabled()) {
+            var failedFields = ex.getBindingResult().getFieldErrors()
+                .stream()
+                .map(error -> error.getField())
+                .toList();
+            log.debug("Validation failed. Fields: {}", failedFields);
+        }
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            "요청 본문에 유효하지 않은 필드가 있습니다."
+        );
+        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/validation-error"));
+        problemDetail.setTitle("Validation Failed");
+        
+        // 필드별 오류 수집
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error -> 
+            errors.put(error.getField(), error.getDefaultMessage())
+        );
+        problemDetail.setProperty("errors", errors);
+        
+        return problemDetail;
+    }
+
+    /**
+     * 일반 예외 처리 (fallback)
+     */
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail handleGenericException(Exception ex) {
+        log.error("Unexpected error occurred", ex);
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "서버 내부 오류가 발생했습니다."
+        );
+        problemDetail.setType(URI.create("about:blank"));
+        problemDetail.setTitle("Internal Server Error");
+        
+        return problemDetail;
+    }
+
+    // ========================================
+    // Account 도메인 예외 처리
+    // ========================================
     
     /**
-     * 잘못된 입력 예외 처리
-     * - 이메일 형식 오류 (RFC 5322, RFC 1035 위반)
-     * - 닉네임 중복 등
-     * 
-     * @return 400 Bad Request
+     * 잘못된 입력값 예외 처리
+     * HTTP 400 Bad Request
      */
     @ExceptionHandler(InvalidInputException.class)
-    public ProblemDetail handleInvalidInput(InvalidInputException e) {
-        log.warn("잘못된 입력: {}", e.getMessage());
+    public ProblemDetail handleInvalidInputException(InvalidInputException ex) {
+        log.warn("Invalid input detected for a request");
+        if (log.isDebugEnabled()) {
+            log.debug("InvalidInputException details", ex);
+        }
         
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
-            e.getMessage()
+            ex.getMessage()  // 이미 일반화된 메시지 사용
         );
-        problem.setTitle("Invalid Input");
-        return problem;
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-input"));
+        problemDetail.setTitle("Invalid Input");
+        
+        return problemDetail;
     }
     
     /**
      * 이메일 중복 예외 처리
-     * 
-     * @return 409 Conflict
+     * HTTP 409 Conflict
      */
     @ExceptionHandler(DuplicateEmailException.class)
-    public ProblemDetail handleDuplicateEmail(DuplicateEmailException e) {
-        log.warn("이메일 중복: {}", e.getMessage());
+    public ProblemDetail handleDuplicateEmailException(DuplicateEmailException ex) {
+        log.warn("Email duplicate detected for a request");
+        if (log.isDebugEnabled()) {
+            log.debug("DuplicateEmailException details", ex);
+        }
         
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.CONFLICT,
-            e.getMessage()
+            "이메일이 이미 등록되었습니다."
         );
-        problem.setTitle("Duplicate Email");
-        return problem;
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-email"));
+        problemDetail.setTitle("Duplicate Email");
+        
+        return problemDetail;
     }
     
     /**
      * 계정 미존재 예외 처리
-     * 
-     * @return 404 Not Found
+     * HTTP 404 Not Found
      */
     @ExceptionHandler(AccountNotFoundException.class)
-    public ProblemDetail handleAccountNotFound(AccountNotFoundException e) {
-        log.warn("계정 미존재: {}", e.getMessage());
+    public ProblemDetail handleAccountNotFoundException(AccountNotFoundException ex) {
+        log.warn("Account not found for a request");
+        if (log.isDebugEnabled()) {
+            log.debug("AccountNotFoundException details", ex);
+        }
         
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.NOT_FOUND,
-            e.getMessage()
+            "요청한 계정을 찾을 수 없습니다."
         );
-        problem.setTitle("Account Not Found");
-        return problem;
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/account-not-found"));
+        problemDetail.setTitle("Account Not Found");
+        
+        return problemDetail;
     }
+    
+    // ========================================
+    // 여기에 다른 도메인 예외 추가
+    // ========================================
 }
 ```
 
 **수정 내역:**
-- `InvalidInputException` → 400 Bad Request
-- `DuplicateEmailException` → 409 Conflict
-- `AccountNotFoundException` → 404 Not Found
-- **보안**: 예외 메시지에 PII 포함 금지 (이메일 원본 노출 방지)
-- RFC 9457 ProblemDetail 표준 준수
+- **3개 예외 핸들러**: `InvalidInputException`, `DuplicateEmailException`, `AccountNotFoundException`
+- **공통 핸들러**: Bean Validation 실패, 일반 예외 처리
+- **보안 강화**: PII 로깅 제거 (디버그 레벨로 마스킹), 일반화된 메시지 사용
+- **RFC 9457 준수**: `type` URI 설정, `title` 필드 추가
+- **HTTP 상태 코드**: 400 Bad Request, 409 Conflict, 404 Not Found
+- **로깅 전략**: WARN 레벨 + 디버그 레벨 상세 로그
 
 ---
 
@@ -728,7 +765,7 @@ public class GlobalExceptionHandler {
 
 **기존 파일 수정:** `dto/user/MessageResponse.java`
 
-**CodeRabbit 리뷰 반영: Status 필드 제거**
+### CodeRabbit 리뷰 반영: Status 필드 제거
 
 ```java
 package com.softwarecampus.backend.dto.user;
@@ -798,50 +835,9 @@ record MessageResponse(String message) {
 
 ---
 
- * 이메일 중복 예외 처리
- * HTTP 409 Conflict
- */
-@ExceptionHandler(DuplicateEmailException.class)
-public ProblemDetail handleDuplicateEmailException(DuplicateEmailException ex) {
-    log.warn("이메일 중복: {}", ex.getMessage());
-    
-    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-        HttpStatus.CONFLICT,
-        ex.getMessage()
-    );
-    problemDetail.setTitle("Duplicate Email");
-    problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-email"));
-    
-    return problemDetail;
-}
-
-/**
- * 계정 미존재 예외 처리
- * HTTP 404 Not Found
- */
-@ExceptionHandler(AccountNotFoundException.class)
-public ProblemDetail handleAccountNotFoundException(AccountNotFoundException ex) {
-    log.warn("계정 미존재: {}", ex.getMessage());
-    
-    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-        HttpStatus.NOT_FOUND,
-        ex.getMessage()
-    );
-    problemDetail.setTitle("Account Not Found");
-    problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/account-not-found"));
-    
-    return problemDetail;
-}```
-
-**HTTP 상태 코드 매핑:**
-- `DuplicateEmailException` → `409 Conflict`
-- `AccountNotFoundException` → `404 Not Found`
-
----
-
 ## 📊 의존성 관계도
 
-```
+```text
 Controller (Phase 7)
     ↓
 SignupService (인터페이스)
@@ -952,7 +948,7 @@ mvn clean compile
 
 ## 🔜 다음 단계
 
-**Phase 6: Service 단위 테스트 (Mockito)**
+## Phase 6: Service 단위 테스트 (Mockito)
 - SignupServiceImplTest 작성
 - ProfileServiceImplTest 작성
 - Mockito로 Repository, PasswordEncoder 모킹

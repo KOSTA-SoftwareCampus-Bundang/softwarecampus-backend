@@ -41,7 +41,9 @@ Phase 20: 통합 테스트 (전체 플로우)
 - **[Phase 2: GlobalExceptionHandler 기본 틀](./phases/phase02_exception_handler.md)** ✅
 - **[Phase 3: 기본 보안 설정](./phases/phase03_security_config.md)** ✅
 - **[Phase 4: DTO Layer](./phases/phase04_dto_layer.md)** ✅
-- **[Phase 4-10: DTO~통합테스트 (구현 상세)](./phases/phase04_10_implementation.md)**
+- **[Phase 5: Service Layer](./phases/phase05_service_layer.md)** ✅
+- **[Phase 6: Service 단위 테스트 (Mockito)](./phases/phase06_service_unit_test.md)** 🚧
+- **[Phase 7-10: Controller~통합테스트](./phases/phase04_10_implementation.md)** (Phase 6 완료 후 분리 예정)
 - **[Phase 11-20: JWT 및 로그인/마이페이지](./phases/phase11_20_jwt_login_mypage.md)** (Phase 10 완료 후 설계)
 
 > 💡 **참고**: Phase 4-10의 상세 구현 코드는 `phase04_10_implementation.md` 파일에 포함되어 있습니다.  
@@ -55,8 +57,8 @@ Phase 20: 통합 테스트 (전체 플로우)
 - [x] Phase 2: GlobalExceptionHandler 기본 틀
 - [x] Phase 3: 기본 보안 설정
 - [x] Phase 4: DTO Layer
-- [ ] Phase 5: Service Layer + 도메인 예외
-- [ ] Phase 6: Service 단위 테스트
+- [x] Phase 5: Service Layer + 도메인 예외
+- [ ] Phase 6: Service 단위 테스트 (Mockito)
 - [ ] Phase 7: Controller Layer
 - [ ] Phase 8: Controller 슬라이스 테스트
 - [ ] Phase 9: Repository 테스트
@@ -82,4 +84,4 @@ Phase 20: 통합 테스트 (전체 플로우)
 
 **작성일:** 2025-10-29  
 **최종 수정:** 2025-11-05  
-**상태:** Phase 1-4 완료, Phase 5 진행 예정
+**상태:** Phase 1-5 완료, Phase 6 진행 예정
