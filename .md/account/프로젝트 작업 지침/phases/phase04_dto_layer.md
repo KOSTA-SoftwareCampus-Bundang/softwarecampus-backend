@@ -18,11 +18,9 @@
 src/main/java/com/softwarecampus/backend/
 └─ dto/
    └─ user/
-      ├─ request/
-      │  └─ SignupRequest.java
-      └─ response/
-         ├─ AccountResponse.java
-         └─ MessageResponse.java
+      ├─ SignupRequest.java
+      ├─ AccountResponse.java
+      └─ MessageResponse.java
 ```
 
 ---
@@ -31,12 +29,12 @@ src/main/java/com/softwarecampus/backend/
 
 ### 1. SignupRequest.java
 
-**경로:** `dto/user/request/SignupRequest.java`
+**경로:** `dto/user/SignupRequest.java`
 
 **설명:** 회원가입 요청 데이터를 담는 DTO
 
 ```java
-package com.softwarecampus.backend.dto.user.request;
+package com.softwarecampus.backend.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -63,7 +61,7 @@ public record SignupRequest(
     @NotBlank(message = "비밀번호는 필수입니다")
     @Size(min = 8, max = 20, message = "비밀번호는 8~20자여야 합니다")
     @Pattern(
-        regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
+        regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,20}$",
         message = "비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다"
     )
     String password,
@@ -97,12 +95,12 @@ public record SignupRequest(
 
 ### 2. AccountResponse.java
 
-**경로:** `dto/user/response/AccountResponse.java`
+**경로:** `dto/user/AccountResponse.java`
 
 **설명:** 계정 정보 응답 DTO
 
 ```java
-package com.softwarecampus.backend.dto.user.response;
+package com.softwarecampus.backend.dto.user;
 
 import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
@@ -114,7 +112,7 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
  * @param email 이메일
  * @param userName 사용자명
  * @param phoneNumber 전화번호
- * @param accountType 계정 타입 (USER, INSTRUCTOR, ACADEMY, ADMIN)
+ * @param accountType 계정 타입 (USER, ACADEMY, ADMIN)
  * @param approvalStatus 승인 상태 (PENDING, APPROVED, REJECTED)
  * @param address 주소
  * @param affiliation 소속
@@ -143,12 +141,12 @@ public record AccountResponse(
 
 ### 3. MessageResponse.java
 
-**경로:** `dto/user/response/MessageResponse.java`
+**경로:** `dto/user/MessageResponse.java`
 
 **설명:** 간단한 메시지 응답 DTO
 
 ```java
-package com.softwarecampus.backend.dto.user.response;
+package com.softwarecampus.backend.dto.user;
 
 /**
  * 간단한 메시지 응답 DTO
@@ -239,9 +237,9 @@ return ResponseEntity.ok(MessageResponse.success("작업이 완료되었습니�
 ## 📊 구현 결과
 
 ### 생성된 파일 (3개)
-- ✅ `src/main/java/com/softwarecampus/backend/dto/user/request/SignupRequest.java`
-- ✅ `src/main/java/com/softwarecampus/backend/dto/user/response/AccountResponse.java`
-- ✅ `src/main/java/com/softwarecampus/backend/dto/user/response/MessageResponse.java`
+- ✅ `src/main/java/com/softwarecampus/backend/dto/user/SignupRequest.java`
+- ✅ `src/main/java/com/softwarecampus/backend/dto/user/AccountResponse.java`
+- ✅ `src/main/java/com/softwarecampus/backend/dto/user/MessageResponse.java`
 
 ### 의존성 추가
 - ✅ `pom.xml`: `spring-boot-starter-validation` 추가
