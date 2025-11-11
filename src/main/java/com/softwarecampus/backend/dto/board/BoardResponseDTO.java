@@ -30,7 +30,7 @@ public class BoardResponseDTO {
 
     private String userNickName;
 
-    private boolean isLike;
+    private boolean like;
 
     @Builder.Default
     private List<BoardAttachResponseDTO> boardAttachs = new ArrayList<>();

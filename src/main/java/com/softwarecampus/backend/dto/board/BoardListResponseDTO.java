@@ -18,11 +18,11 @@ public class BoardListResponseDTO {
 
     private String title;
 
-    private boolean isSecret;
+    private boolean secret;
 
     private String userNickName;
 
-    private boolean isLike;
+    private boolean like;
 
     private String createdAt;
 

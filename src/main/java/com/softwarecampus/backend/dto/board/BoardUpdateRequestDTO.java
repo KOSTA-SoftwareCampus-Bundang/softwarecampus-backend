@@ -24,16 +24,13 @@ public class BoardUpdateRequestDTO {
 
     private String text;
 
-    private boolean isSecret;
-
-    @Builder.Default
-    private List<BoardAttach> boardAttachs = new ArrayList<>();
+    private boolean secret;
 
     public void updateEntity(Board board){
-        if(this.title == null){
+        if(this.title != null){
             board.setTitle(this.getTitle());
         }
-        if(this.text == null){
+        if(this.text != null){
             board.setText(this.getText());
         }
         board.setSecret(this.isSecret());

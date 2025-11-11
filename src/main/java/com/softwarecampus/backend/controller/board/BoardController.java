@@ -33,8 +33,8 @@ public class BoardController {
     }
 
     //게시글 하나 조회 with 댓글
-    @GetMapping("/{id:\\d+}")
-    public ResponseEntity<?> getBoard(Long boardId) {
+    @GetMapping("/{boardId:\\d+}")
+    public ResponseEntity<?> getBoard(@PathVariable Long boardId) {
 
         //게시글 하나 조회 service 메서드 호출
         Board board = boardService.getBoardById(boardId);
@@ -43,7 +43,7 @@ public class BoardController {
 
     //게시글 생성 with 첨부파일
     @PostMapping
-    public ResponseEntity<?> createBoard(@Valid @RequestBody BoardCreateRequestDTO boardCreateRequestDTO, MultipartFile[] files) {
+    public ResponseEntity<?> createBoard(@Valid BoardCreateRequestDTO boardCreateRequestDTO, MultipartFile[] files) {
 
         //게시글 생성 service 메서드 호출
         boardService.createBoard(boardCreateRequestDTO, files);
@@ -52,16 +52,16 @@ public class BoardController {
     }
 
     //게시글 수정 with 첨부파일
-    @PatchMapping
-    public ResponseEntity<?> updateBoard(@Valid @RequestBody BoardUpdateRequestDTO boardUpdateRequestDTO) {
+    @PatchMapping("/{boardId:\\d+}")
+    public ResponseEntity<?> updateBoard(@Valid BoardUpdateRequestDTO boardUpdateRequestDTO,MultipartFile[] files) {
         //게시글 수정 service 메서드 호출
-        boardService.updateBoard(boardUpdateRequestDTO);
+        boardService.updateBoard(boardUpdateRequestDTO,files);
         return ResponseEntity.noContent().build();
     }
 
     //게시글 하나 삭제
-    @DeleteMapping
-    public ResponseEntity<?> deleteBoard(Long boardId) {
+    @DeleteMapping("/{boardId:\\d+}")
+    public ResponseEntity<?> deleteBoard(@PathVariable Long boardId) {
 
         //게시글 삭제 service 메서드 호출
         boardService.deleteBoardById(boardId);
@@ -69,13 +69,13 @@ public class BoardController {
     }
 
     //댓글 하나 생성
-    @PostMapping("/boards/{id:\\d+}/comments")
+    @PostMapping("/{id:\\d+}/comments")
     public ResponseEntity<?> createComment(@PathVariable Long id, @Valid @RequestBody CommentCreateRequestDTO commentCreateRequestDTO) {
         return ResponseEntity.created(URI.create("/boards/" + id)).build();
     }
 
     //댓글 수정
-    @PatchMapping("/boards/{boardId:\\d+}/comments/{commentId:\\d+}")
+    @PatchMapping("/{boardId:\\d+}/comments/{commentId:\\d+}")
     public ResponseEntity<?> updateComment(@PathVariable Long boardId, @PathVariable Long commentId, @Valid @RequestBody CommentUpdateRequestDTO commentUpdateRequestDTO) {
 
 
@@ -83,7 +83,7 @@ public class BoardController {
     }
 
     //댓글 삭제
-    @DeleteMapping("/boards/{boardId:\\d+}/comments/{commentId:\\d+}")
+    @DeleteMapping("/{boardId:\\d+}/comments/{commentId:\\d+}")
     public ResponseEntity<?> deleteComment(@PathVariable Long boardId, @PathVariable Long commentId) {
 
 
@@ -91,13 +91,13 @@ public class BoardController {
     }
 
     //게시글 추천/비추천
-    @PostMapping("/boards/{boardId:\\d+}/recommends")
+    @PostMapping("/{boardId:\\d+}/recommends")
     public ResponseEntity<?> recommendBoard(@PathVariable Long boardId) {
         return ResponseEntity.created(URI.create("/boards/" + boardId)).build();
     }
 
     //댓글 추천/비추천
-    @PostMapping("/boards/{boardId:\\d+}/comments/{commentId:\\d+}/recommends")
+    @PostMapping("/{boardId:\\d+}/comments/{commentId:\\d+}/recommends")
     public ResponseEntity<?> recommendComment(@PathVariable Long boardId, @PathVariable Long commentId) {
         return ResponseEntity.created(URI.create("/boards/" + boardId + "/comments/" + commentId)).build();
     }

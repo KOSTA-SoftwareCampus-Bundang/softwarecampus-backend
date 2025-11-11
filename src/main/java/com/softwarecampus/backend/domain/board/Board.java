@@ -36,7 +36,7 @@ public class Board extends BaseSoftDeleteSupportEntity {
     private long hits;
 
     @Column(nullable = false)
-    private boolean isSecret;
+    private boolean secret;
 
     @OneToMany(mappedBy = "board")
     @Builder.Default

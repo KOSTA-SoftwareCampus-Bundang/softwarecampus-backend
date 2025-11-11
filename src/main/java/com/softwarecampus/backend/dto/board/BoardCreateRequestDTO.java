@@ -16,9 +16,7 @@ import java.util.List;
 @Builder
 public class BoardCreateRequestDTO {
 
-    private Long id;
 
-    private Long accountId;
 
     @Pattern(regexp = "NOTICE|QUESTION|COURSE_STORY|CODING_STORY", message = "게시판 카테고리는 NOTICE,QUESTION,COURSE_STORY,CODING_STORY 중 하나여야 합니다")
     private String category;
@@ -32,7 +30,5 @@ public class BoardCreateRequestDTO {
     @NotNull
     private boolean isSecret;
 
-    @Builder.Default
-    private List<BoardAttach> boardAttachs = new ArrayList<>();
 
 }

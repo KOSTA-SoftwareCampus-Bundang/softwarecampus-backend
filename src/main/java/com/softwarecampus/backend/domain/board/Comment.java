@@ -38,7 +38,7 @@ public class Comment extends BaseSoftDeleteSupportEntity {
 
     @OneToMany(mappedBy = "comment",cascade = CascadeType.REMOVE,orphanRemoval = true)
     @Builder.Default
-    private List<CommentRecommend> comments = new ArrayList<>();
+    private List<CommentRecommend> commentRecommends = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="account_id",nullable = false)

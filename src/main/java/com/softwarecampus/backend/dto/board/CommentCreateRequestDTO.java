@@ -13,7 +13,7 @@ import lombok.*;
 @Builder
 public class CommentCreateRequestDTO {
 
-    private Long id;
+
     @NotNull
     private Long boardId;
     private Long topCommentId;

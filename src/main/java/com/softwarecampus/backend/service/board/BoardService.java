@@ -12,24 +12,24 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
-@Service
+
 public interface BoardService {
 
     //전체 게시글 조회
-    public List<Board> getBoards(int pageNo, BoardCategory category , String searchType, String searchText);
+    public List<Board> getBoards(int pageNo, BoardCategory category, String searchType, String searchText);
 
     //게시글 하나 조회
     public Board getBoardById(Long id);
 
     //게시글 생성
-    public Long createBoard(BoardCreateRequestDTO boardCreateRequestDTO,MultipartFile[] files);
+    public Long createBoard(BoardCreateRequestDTO boardCreateRequestDTO, MultipartFile[] files);
 
     //게시글 수정
-    public void updateBoard(BoardUpdateRequestDTO boardUpdateRequestDTO);
+    public void updateBoard(BoardUpdateRequestDTO boardUpdateRequestDTO, MultipartFile[] files);
 
     //게시글 삭제
     public void deleteBoardById(Long id);
 
-    public BoardAttach uploadFile(MultipartFile file, Long boardId) throws IOException;
+    public BoardAttach uploadFile(MultipartFile file) throws IOException;
 
 }

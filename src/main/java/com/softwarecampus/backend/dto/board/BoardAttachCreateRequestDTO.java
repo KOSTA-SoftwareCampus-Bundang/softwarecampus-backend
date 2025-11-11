@@ -9,8 +9,6 @@ import lombok.*;
 @Builder
 public class BoardAttachCreateRequestDTO {
 
-    private Long id;
-
     private Long boardId;
 
     private String originalFilename;

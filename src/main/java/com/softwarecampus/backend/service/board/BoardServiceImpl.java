@@ -5,6 +5,7 @@ import com.softwarecampus.backend.domain.board.BoardAttach;
 import com.softwarecampus.backend.domain.board.BoardCategory;
 import com.softwarecampus.backend.dto.board.BoardCreateRequestDTO;
 import com.softwarecampus.backend.dto.board.BoardUpdateRequestDTO;
+import com.softwarecampus.backend.repository.board.BoardAttachRepository;
 import com.softwarecampus.backend.repository.board.BoardRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.List;
 public class BoardServiceImpl implements BoardService {
 
     private final BoardRepository boardRepository;
+    private final BoardAttachRepository boardAttachRepository;
 
     @Override
     public List<Board> getBoards(int pageNo, BoardCategory category, String searchType, String searchText) {
@@ -40,25 +42,29 @@ public class BoardServiceImpl implements BoardService {
     @Transactional
     @Override
     public Long createBoard(BoardCreateRequestDTO boardCreateRequestDTO, MultipartFile[] files) {
+
         //파일업로드 코드 작성
         List<BoardAttach> boardAttachList = new ArrayList<>();
         for (MultipartFile file : files) {
             try {
-                boardAttachList.add(uploadFile(file, boardCreateRequestDTO.getId()));
+                boardAttachList.add(uploadFile(file));
             } catch (IOException e) {
                 e.printStackTrace();
                 throw new IllegalStateException("파일업로드 중 오류가 발생하였습니다");
             }
         }
         //사용자 조회하는 코드 작성
-        //
+        
+        //조회된 사용자 boardEntity에 세팅 후 save로 저장
+        
+        //저장된 boardEntity(영속화완료) BoardAttach 엔티티에 세팅후 BoardAttach 저장
         return null;
     }
 
     //게시글 수정
     @Transactional
     @Override
-    public void updateBoard(BoardUpdateRequestDTO boardUpdateRequestDTO) {
+    public void updateBoard(BoardUpdateRequestDTO boardUpdateRequestDTO,MultipartFile[] files) {
         Board board = boardRepository.findById(boardUpdateRequestDTO.getId()).orElseThrow(() -> new IllegalStateException("게시글을 찾지 못했습니다"));
         boardUpdateRequestDTO.updateEntity(board);
 
@@ -73,7 +79,7 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
-    public BoardAttach uploadFile(MultipartFile file, Long boardId) throws IOException {
+    public BoardAttach uploadFile(MultipartFile file) throws IOException {
 
 
     }
