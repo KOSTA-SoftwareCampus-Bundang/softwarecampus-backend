@@ -13,7 +13,7 @@ public interface CourseService {
     List<CourseResponseDTO> searchCourses(CategoryType type, String keyword);
 
     /** 관리자 - 요청 승인 후 등록 */
-    CourseResponseDTO createCourse(Long courseId);
+    CourseResponseDTO approveCourse(Long courseId);
 
     CourseResponseDTO updateCourse(Long courseId, CourseRequestDTO dto);
 

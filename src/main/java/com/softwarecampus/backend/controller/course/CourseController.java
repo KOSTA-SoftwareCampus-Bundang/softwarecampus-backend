@@ -4,6 +4,7 @@ import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
 import com.softwarecampus.backend.service.course.CourseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,31 +26,23 @@ public class CourseController {
 
     @GetMapping("/search")
     public ResponseEntity<List<CourseResponseDTO>> searchCourses(
-            @PathVariable("type") String typeStr,
+            @PathVariable CategoryType type,
             @RequestParam String keyword) {
-
-        CategoryType type;
-        try {
-            type = CategoryType.valueOf(typeStr.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("잘못된 카테고리 타입입니다. type=" + typeStr);
-        }
-
         return ResponseEntity.ok(courseService.searchCourses(type, keyword));
     }
 
 
     /** 관리자 - 과정 등록 승인 */
     @PostMapping("/{courseId}/approve")
-    public ResponseEntity<CourseResponseDTO> createCourse(@PathVariable Long courseId) {
-        return ResponseEntity.ok(courseService.createCourse(courseId));
+    public ResponseEntity<CourseResponseDTO> approveCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(courseService.approveCourse(courseId));
     }
 
     /** 과정 수정 */
     @PutMapping("/{courseId}")
     public ResponseEntity<CourseResponseDTO> updateCourse(
             @PathVariable Long courseId,
-            @RequestBody CourseRequestDTO dto) {
+            @RequestBody @Valid CourseRequestDTO dto) {
         return ResponseEntity.ok(courseService.updateCourse(courseId, dto));
     }
 
@@ -62,7 +55,7 @@ public class CourseController {
 
     /** 기관유저 - 과정 등록 요청 */
     @PostMapping("/request")
-    public ResponseEntity<CourseResponseDTO> requestCourse(@RequestBody CourseRequestDTO dto) {
+    public ResponseEntity<CourseResponseDTO> requestCourse(@RequestBody @Valid CourseRequestDTO dto) {
         return ResponseEntity.ok(courseService.requestCourseRegistration(dto));
     }
 }

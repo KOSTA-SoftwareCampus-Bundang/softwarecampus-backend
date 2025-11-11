@@ -135,6 +135,6 @@ public class Course extends BaseSoftDeleteSupportEntity {
 
     public void reject() {
         this.isApproved = ApprovalStatus.REJECTED;
-        this.approvedAt = LocalDateTime.now();
+        this.approvedAt = null;
     }
 }

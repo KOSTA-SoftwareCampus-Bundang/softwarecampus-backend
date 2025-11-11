@@ -26,8 +26,6 @@ public class CourseServiceImpl implements CourseService {
     private final AcademyRepository academyRepository;
     private final CourseCategoryRepository courseCategoryRepository;
 
-    @Autowired
-    private EntityManager em;
 
     @Override
     public List<CourseResponseDTO> getAllCourses(CategoryType type) {
@@ -53,7 +51,7 @@ public class CourseServiceImpl implements CourseService {
     /** 관리자 - 요청 승인 후 등록 */
     @Override
     @Transactional
-    public CourseResponseDTO createCourse(Long courseId) {
+    public CourseResponseDTO approveCourse(Long courseId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
 
