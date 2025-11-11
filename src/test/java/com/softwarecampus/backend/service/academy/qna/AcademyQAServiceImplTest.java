@@ -2,7 +2,9 @@ package com.softwarecampus.backend.service.academy.qna;
 
 import com.softwarecampus.backend.domain.academy.Academy;
 import com.softwarecampus.backend.domain.academy.qna.AcademyQA;
+import com.softwarecampus.backend.dto.academy.qna.QACreateRequest;
 import com.softwarecampus.backend.dto.academy.qna.QAResponse;
+import com.softwarecampus.backend.dto.academy.qna.QAUpdateRequest;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.repository.academy.academyQA.AcademyQARepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
@@ -91,6 +94,68 @@ class AcademyQAServiceImplTest {
     @Test
     @DisplayName("질문 등록 성공")
     void createQuestion_success() {
+        QACreateRequest request = new  QACreateRequest();
+        request.setTitle("새 질문");
+        request.setQuestionText("새 질문 내용");
+        request.setAcademyId(academyId);
 
+        when(academyRepository.findById(academyId)).thenReturn(Optional.of(testAcademy));
+        when(qaRepository.save(any(AcademyQA.class))).thenReturn(testQA);
+
+        QAResponse response = qaService.createQuestion(request);
+
+        assertEquals(academyId, response.getAcademyId(), "저장된 Q/A의 Academy ID가 일치해야 합니다.");
+        verify(qaRepository, times(1)).save(any(AcademyQA.class));
+    }
+
+    @Test
+    @DisplayName("질문 수정 성공")
+    void updateQuestion_success() {
+        QAUpdateRequest request = new QAUpdateRequest();
+        request.setTitle("수정된 제목");
+        request.setQuestionText("수정된 내용");
+
+        when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
+
+        QAResponse response = qaService.updateQuestion(academyId, qaId, request);
+
+        assertEquals("수정된 제목", response.getTitle(), "제목이 수정되어야 합니다.");
+        assertEquals("수정된 내용", response.getQuestionText(), "질문 내용이 수정되어야 합니다.");
+
+        assertEquals("수정된 제목", testQA.getTitle());
+    }
+
+    @Test
+    @DisplayName("Q/A 전체 삭제 성공 (소속 검증 통과)")
+    void deleteQA_success() {
+        when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
+
+        qaService.deleteQuestion(qaId, academyId);
+
+        verify(qaRepository, times(1)).delete(testQA);
+    }
+
+    @Test
+    @DisplayName("답변 등록/수정 성공")
+    void updateAnswer_success() {
+        QAUpdateRequest request = new QAUpdateRequest();
+        String newAnswer = "새로 작성된 답변입니다.";
+        request.setAnswerText(newAnswer);
+
+        when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
+
+        QAResponse response = qaService.updateAnswer(qaId, academyId, request);
+
+        assertEquals(newAnswer, response.getAnswerText(), "응답 DTO의 답변 필드는 NULL이어야 합니다.");
+        assertEquals(newAnswer, testQA.getAnswerText(), "엔티티의 답변 필드가 NULL로 업데이트되어야 합니다.");
+    }
+
+    @Test
+    @DisplayName("답변 삭제 실패 (삭제할 답변이 없음)")
+    void deleteAnswer_fail_noAnswer() {
+        testQA.setAnswerText(null);
+        when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
+
+        assertThrows(NoSuchElementException.class, () -> qaService.deleteAnswer(qaId, academyId));
     }
 }

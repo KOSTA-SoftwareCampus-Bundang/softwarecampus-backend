@@ -1,7 +1,6 @@
 package com.softwarecampus.backend.dto.academy.qna;
 
 import com.softwarecampus.backend.domain.academy.qna.AcademyQA;
-import com.softwarecampus.backend.dto.academyAnswer.AnswerResponse;
 import lombok.Builder;
 import lombok.Getter;
 
