@@ -21,7 +21,7 @@ public interface AcademyQAService {
     /**
      * 질문 등록
      */
-    QAResponse createQuestion(QACreateRequest request);
+    QAResponse createQuestion(Long academyId, QACreateRequest request);
 
     /**
      * 질문 수정

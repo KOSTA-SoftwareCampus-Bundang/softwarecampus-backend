@@ -4,9 +4,12 @@ import com.softwarecampus.backend.dto.academy.qna.QACreateRequest;
 import com.softwarecampus.backend.dto.academy.qna.QAResponse;
 import com.softwarecampus.backend.dto.academy.qna.QAUpdateRequest;
 import com.softwarecampus.backend.service.academy.qna.AcademyQAService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,9 +43,8 @@ public class AcademyQAController {
      *  훈련기관 질문 등록
      */
     @PostMapping
-    public ResponseEntity<QAResponse> createQuestion(@PathVariable Long academyId, @RequestBody QACreateRequest request) {
-        request.setAcademyId(academyId);
-        QAResponse response = academyQAService.createQuestion(request);
+    public ResponseEntity<QAResponse> createQuestion(@PathVariable @Positive Long academyId, @RequestBody @Valid QACreateRequest request) {
+        QAResponse response = academyQAService.createQuestion(academyId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

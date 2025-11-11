@@ -23,11 +23,11 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     private final AcademyQARepository academyQARepository;
     private final AcademyRepository academyRepository;
 
-    private AcademyQA findQAAndValidateAcademy(Long qaId, Long questionId) {
+    private AcademyQA findQAAndValidateAcademy(Long qaId, Long academyId) {
         AcademyQA qa = academyQARepository.findById(qaId)
                 .orElseThrow(() -> new NoSuchElementException("Academy QA Not Found"));
 
-        if (!qa.getAcademy().getId().equals(questionId)) {
+        if (!qa.getAcademy().getId().equals(academyId)) {
             throw new IllegalArgumentException("Question Id and Academy Id do not match");
         }
         return qa;
@@ -57,8 +57,8 @@ public class AcademyQAServiceImpl implements AcademyQAService {
      */
     @Override
     @Transactional
-    public QAResponse createQuestion(QACreateRequest request) {
-        Academy academy = academyRepository.findById(request.getAcademyId())
+    public QAResponse createQuestion(Long academyId, QACreateRequest request) {
+        Academy academy = academyRepository.findById(academyId)
                 .orElseThrow(() -> new NoSuchElementException("Academy Not Found"));
 
         AcademyQA qa = AcademyQA.builder()
@@ -99,7 +99,7 @@ public class AcademyQAServiceImpl implements AcademyQAService {
      */
     @Override
     @Transactional
-    public QAResponse updateAnswer(Long qaId, Long academyId, QAUpdateRequest request) {
+    public QAResponse updateAnswer(Long academyId, Long qaId,  QAUpdateRequest request) {
         if (request.getAnswerText() == null) {
             throw new IllegalArgumentException("Answer Text Not Found");
         }
@@ -119,17 +119,10 @@ public class AcademyQAServiceImpl implements AcademyQAService {
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
 
         if (qa.getAnswerText() == null) {
-            throw new NoSuchElementException("Answer Text Not Found");
+            throw new IllegalStateException("No answer exists to delete");
         }
 
         qa.deleteAnswer();
         return QAResponse.from(qa);
     }
-
-
-
-
-
-
-
 }

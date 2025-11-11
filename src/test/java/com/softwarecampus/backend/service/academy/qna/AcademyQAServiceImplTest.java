@@ -102,7 +102,7 @@ class AcademyQAServiceImplTest {
         when(academyRepository.findById(academyId)).thenReturn(Optional.of(testAcademy));
         when(qaRepository.save(any(AcademyQA.class))).thenReturn(testQA);
 
-        QAResponse response = qaService.createQuestion(request);
+        QAResponse response = qaService.createQuestion(academyId, request);
 
         assertEquals(academyId, response.getAcademyId(), "저장된 Q/A의 Academy ID가 일치해야 합니다.");
         verify(qaRepository, times(1)).save(any(AcademyQA.class));

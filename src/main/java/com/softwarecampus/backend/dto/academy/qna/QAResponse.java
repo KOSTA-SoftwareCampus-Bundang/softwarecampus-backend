@@ -3,6 +3,7 @@ package com.softwarecampus.backend.dto.academy.qna;
 import com.softwarecampus.backend.domain.academy.qna.AcademyQA;
 import lombok.Builder;
 import lombok.Getter;
+import org.antlr.v4.runtime.misc.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -22,6 +23,10 @@ public class QAResponse {
     private Long academyId;
 
     public static QAResponse from(AcademyQA qa) {
+
+        if (qa.getAcademy() == null) {
+            throw new IllegalStateException("Academy relationship is required for QA");
+        }
 
         return QAResponse.builder()
                 .id(qa.getId())
