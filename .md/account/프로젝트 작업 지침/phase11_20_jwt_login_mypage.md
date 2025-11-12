@@ -67,7 +67,7 @@
 
 **CORS 설정:**
 - WebConfig.java 생성
-- 프론트엔드 Origin 허용 (http://localhost:3000)
+- 프론트엔드 Origin 허용 (`http://localhost:3000`)
 - allowedMethods, allowedHeaders, allowCredentials 설정
 
 **문서화:**
@@ -133,7 +133,7 @@
    - 단점: 인메모리 제한, 분산 환경 불가
 
 **CORS 정책:**
-- 프론트엔드 도메인: http://localhost:3000 (개발), https://prod-domain.com (운영)
+- 프론트엔드 도메인: `http://localhost:3000` (개발), `https://prod-domain.com` (운영)
 - allowedMethods: GET, POST, PUT, DELETE, PATCH
 - allowCredentials: true
 
