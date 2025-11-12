@@ -113,14 +113,35 @@ public class ProfileServiceImpl implements ProfileService {
     }
     
     /**
-     * 이메일 형식 검증
-     * RFC 5322 (이메일 기본 형식) + RFC 1035 (도메인 레이블 규칙)
+     * 이메일 입력 검증
      */
-    private void validateEmailFormat(String email) {
-        if (!EmailUtils.isValidEmail(email)) {
-            log.warn("잘못된 이메일 형식: maskedEmail={}", EmailUtils.maskEmail(email));
-            throw new InvalidInputException("잘못된 이메일 형식입니다.");
+    private void validateEmailInput(String email) {
+        if (email == null || email.isBlank()) {
+            log.warn("Invalid email input: null or blank");
+            throw new InvalidInputException("이메일을 입력해주세요.");
         }
+        
+        if (!EmailUtils.isValidFormat(email)) {
+            log.warn("Invalid email format: {}", EmailUtils.maskEmail(email));
+            throw new InvalidInputException("올바른 이메일 형식이 아닙니다.");
+        }
+    }
+    
+    /**
+     * Entity → DTO 변환
+     */
+    private AccountResponse toAccountResponse(Account account) {
+        return new AccountResponse(
+            account.getId(),
+            account.getEmail(),
+            account.getUserName(),
+            account.getPhoneNumber(),
+            account.getAccountType(),
+            account.getAccountApproved(),
+            account.getAddress(),
+            account.getAffiliation(),
+            account.getPosition()
+        );
     }
     
     // Phase 18에서 추가 예정:

@@ -20,60 +20,64 @@ import java.util.regex.Pattern;
  */
 public class EmailUtils {
     
-    /**
-     * RFC 5322 + RFC 1035 이메일 정규식
-     * 
-     * 구조: localPart@domainPart
-     * - localPart: [a-zA-Z0-9._%+-]+ (영문자, 숫자, 특수문자)
-     * - domainPart: (label\.)+tld
-     *   - label: 영문자/숫자로 시작, 중간에만 하이픈, 영문자/숫자로 끝
-     *   - tld: 영문자 2~63자 (RFC 1035 섹션 2.3.1)
-     * 
-     * 예시:
-     * - ✅ user@example.com
-     * - ✅ user@sub-domain.example.technology (10자 TLD)
-     * - ❌ user@-invalid.com (시작 하이픈)
-     * - ❌ user@test-.com (끝 하이픈)
-     */
+    // RFC 5322 간소화 버전 + RFC 1035 표준 준수
+    // - TLD 최대 63자
+    // - 국제화 도메인(punycode, xn--) 지원
+    // - 도메인 레이블: 영문자/숫자로 시작/끝, 중간에만 하이픈 허용 (RFC 1035 섹션 2.3.1)
+    // - 로컬 파트: 영숫자/특수문자로 시작, 점은 중간에만 허용 (연속 점 불가, 선행/후행 점 불가)
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
-        "^[a-zA-Z0-9._%+-]+@" +
-        "(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)*" +
-        "[a-zA-Z]{2,63}$"
+        "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$"
     );
+    
+    private EmailUtils() {
+        throw new UnsupportedOperationException("Utility class");
+    }
     
     /**
      * 이메일 형식 검증
-     * 
-     * @param email 검증할 이메일
-     * @return 유효 여부
+     * RFC 5321: 로컬 파트 최대 64자
      */
-    public static boolean isValidEmail(String email) {
+    public static boolean isValidFormat(String email) {
         if (email == null || email.isBlank()) {
             return false;
         }
+        
+        // 로컬 파트 길이 검증 (RFC 5321)
+        int atIndex = email.indexOf('@');
+        if (atIndex > 64) {
+            return false;
+        }
+        
         return EMAIL_PATTERN.matcher(email).matches();
     }
     
     /**
-     * 이메일 마스킹 (PII 보호)
-     * 
-     * @param email 마스킹할 이메일
-     * @return 마스킹된 이메일 (예: u****@example.com)
+     * 이메일 마스킹 (로깅용)
+     * 예: "user@example.com" → "u***@example.com"
      */
     public static String maskEmail(String email) {
-        if (email == null || !email.contains("@")) {
+        if (email == null || email.isBlank()) {
             return "***";
         }
         
-        String[] parts = email.split("@", 2);
-        String localPart = parts[0];
-        String domainPart = parts[1];
-        
-        if (localPart.length() <= 1) {
-            return "*@" + domainPart;
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 0) {
+            return "***";
         }
         
-        return localPart.charAt(0) + "****@" + domainPart;
+        String localPart = email.substring(0, atIndex);
+        String domain = email.substring(atIndex + 1);
+        
+        // 로컬 파트만 마스킹 (길이에 따라)
+        String maskedLocal;
+        if (localPart.length() <= 3) {
+            maskedLocal = localPart.charAt(0) + "***";
+        } else {
+            int visibleChars = localPart.length() / 3;
+            maskedLocal = localPart.substring(0, visibleChars) + "***";
+        }
+        
+        return maskedLocal + "@" + domain;
     }
 }
 ```

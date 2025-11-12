@@ -237,6 +237,8 @@ class AuthControllerTest {
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.status").value(409))
             .andExpect(jsonPath("$.detail").value("이미 사용 중인 이메일입니다."));
+        
+        verify(signupService).signup(any(SignupRequest.class));
     }
     
     @Test
@@ -262,6 +264,8 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.detail").value("이미 사용 중인 전화번호입니다."));
+        
+        verify(signupService).signup(any(SignupRequest.class));
     }
     
     @Test
@@ -287,6 +291,8 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.detail").value("관리자 계정은 회원가입으로 생성할 수 없습니다."));
+        
+        verify(signupService).signup(any(SignupRequest.class));
     }
     
     @Test
@@ -314,6 +320,8 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.detail").value("기관 회원은 기관 ID가 필수입니다."));
+        
+        verify(signupService).signup(any(SignupRequest.class));
     }
     
     @Test
@@ -358,6 +366,8 @@ class AuthControllerTest {
                 .param("email", "invalid-email"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.detail").value("올바른 이메일 형식이 아닙니다."));
+        
+        verify(signupService).isEmailAvailable("invalid-email");
     }
     
     @Test

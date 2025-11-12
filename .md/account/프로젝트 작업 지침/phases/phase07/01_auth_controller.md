@@ -1,4 +1,4 @@
-# 1. AuthController 구현
+ # 1. AuthController 구현
 
 **경로:** `src/main/java/com/softwarecampus/backend/controller/user/AuthController.java`
 
@@ -83,6 +83,16 @@ public class AuthController {
     /**
      * 이메일 중복 확인 API
      * 
+     * ⚠️ 보안 고려사항:
+     * - Rate Limiting 필수 (이메일 열거 공격 방지)
+     * - IP 기반 제한 권장: 60 req/min per IP
+     * - 로깅 및 모니터링 필요
+     * 
+     * TODO Phase 8: Rate Limiter 구현
+     * - Bucket4j + Redis 또는 Spring Cloud Gateway rate limiter
+     * - IP 기반 제한: @RateLimit(permits=60, window=1, unit=MINUTES)
+     * - 초과 시: 429 Too Many Requests 응답
+     * 
      * @param email 확인할 이메일
      * @return 200 OK - 사용 가능 여부
      * 
@@ -90,7 +100,7 @@ public class AuthController {
      */
     @GetMapping("/check-email")
     public ResponseEntity<MessageResponse> checkEmail(@RequestParam String email) {
-        log.debug("이메일 중복 확인 요청");
+        log.info("이메일 중복 확인 요청: email={}", EmailUtils.maskEmail(email));
         
         boolean available = signupService.isEmailAvailable(email);
         
@@ -98,7 +108,7 @@ public class AuthController {
             ? "사용 가능한 이메일입니다." 
             : "이미 사용 중인 이메일입니다.";
         
-        log.debug("이메일 중복 확인 결과 - available: {}", available);
+        log.info("이메일 중복 확인 결과 - available: {}", available);
         
         return ResponseEntity.ok(MessageResponse.of(message));
     }
@@ -172,6 +182,63 @@ if (log.isDebugEnabled()) {
 - GlobalExceptionHandler에서 처리
 - RFC 9457 ProblemDetail 응답
 
+### 5. 보안 고려사항 (Phase 8에서 구현 예정)
+
+#### 5.1 Rate Limiting - 이메일 중복 확인 API
+
+**보안 위험:**
+- 이메일 열거 공격 (Email Enumeration)
+- DoS 공격 (무제한 요청)
+- 브루트 포스 공격
+
+**권장 구현 (Phase 8):**
+
+```java
+// Option 1: Bucket4j + Redis (추천)
+@RateLimit(
+    permits = 60,           // 분당 60회
+    window = 1,
+    unit = TimeUnit.MINUTES,
+    keyType = KeyType.IP    // IP 기반 제한
+)
+@GetMapping("/check-email")
+public ResponseEntity<MessageResponse> checkEmail(@RequestParam String email) {
+    // ...
+}
+
+// Option 2: Spring Cloud Gateway
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-routes
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 60
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@ipKeyResolver}"
+```
+
+**Rate Limit 정책:**
+- **임계값**: 60 req/min per IP
+- **초과 시**: `429 Too Many Requests`
+- **헤더 추가**:
+  - `X-RateLimit-Limit: 60`
+  - `X-RateLimit-Remaining: 45`
+  - `X-RateLimit-Reset: 1699876543`
+
+**모니터링:**
+```java
+// 로깅 레벨 변경: DEBUG → INFO (보안 감사용)
+log.info("이메일 중복 확인 요청: email={}", EmailUtils.maskEmail(email));
+```
+
+**추가 방어 기법:**
+- CAPTCHA 추가 (과도한 요청 시)
+- 응답 시간 균일화 (Timing Attack 방지)
+- IP 블랙리스트 관리
+
 ---
 
 ## 🔗 Service 확장
@@ -222,7 +289,7 @@ public interface SignupService {
 @Override
 public boolean isEmailAvailable(String email) {
     // 이메일 형식 검증
-    if (!EmailUtils.isValidEmail(email)) {
+    if (!EmailUtils.isValidFormat(email)) {
         throw new InvalidInputException("올바른 이메일 형식이 아닙니다.");
     }
     
@@ -235,6 +302,11 @@ public boolean isEmailAvailable(String email) {
 - 이메일 형식 검증 (RFC 5322, RFC 1035)
 - `existsByEmail()` 호출 (Repository)
 - 반환: `true` (사용 가능), `false` (중복)
+
+**보안 참고:**
+- 현재는 인증 없이 접근 가능 (Phase 7)
+- Phase 8에서 Rate Limiting 추가 필수
+- 로그 레벨: `DEBUG` → `INFO` (보안 감사)
 
 ---
 
@@ -293,6 +365,7 @@ return ResponseEntity
 
 ## ✅ 구현 체크리스트
 
+### Phase 7 (현재)
 - [ ] `AuthController.java` 생성
 - [ ] `@RestController`, `@RequestMapping` 적용
 - [ ] `@RequiredArgsConstructor` DI
@@ -305,10 +378,26 @@ return ResponseEntity
 - [ ] `isEmailAvailable()` Service 메서드 추가
 - [ ] `MessageResponse` DTO 생성
 
+### Phase 8 (보안 강화 - TODO)
+- [ ] **Rate Limiting 구현 (필수)**
+  - [ ] Bucket4j + Redis 설정
+  - [ ] IP 기반 제한: 60 req/min
+  - [ ] 429 Too Many Requests 응답
+  - [ ] Rate limit 헤더 추가
+- [ ] **모니터링 강화**
+  - [ ] 이메일 중복 확인 로그: DEBUG → INFO
+  - [ ] 이상 트래픽 알림 설정
+  - [ ] IP 블랙리스트 관리
+- [ ] **추가 방어 기법**
+  - [ ] CAPTCHA 통합 (과도한 요청 시)
+  - [ ] 응답 시간 균일화 (Timing Attack 방지)
+  - [ ] 계정 잠금 정책 (연속 실패 시)
+
 ---
 
 ## 🔗 관련 문서
 
 - [API 명세서](02_api_specification.md) - 요청/응답 예시
 - [Controller 테스트](03_controller_test.md) - AuthControllerTest 구현
+- [보안 & RESTful](04_security_restful.md) - Rate Limiting 상세 구현
 - [보안 및 RESTful 원칙](04_security_restful.md) - 보안 가이드
