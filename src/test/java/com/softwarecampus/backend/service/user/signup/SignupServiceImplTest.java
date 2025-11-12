@@ -267,6 +267,15 @@ class SignupServiceImplTest {
     }
     
     @Test
+    @DisplayName("null 요청 - NullPointerException")
+    void signup_null요청() {
+        // When & Then
+        assertThatThrownBy(() -> signupService.signup(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessage("SignupRequest must not be null");
+    }
+    
+    @Test
     @DisplayName("비밀번호 암호화 확인")
     void signup_비밀번호암호화() {
         // Given

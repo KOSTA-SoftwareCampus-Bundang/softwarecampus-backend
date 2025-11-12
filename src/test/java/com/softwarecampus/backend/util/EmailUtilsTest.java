@@ -87,14 +87,16 @@ class EmailUtilsTest {
     
     @ParameterizedTest
     @CsvSource({
-        "user@example.com, u***@example.com",
-        "a@example.com, a***@example.com",
-        "ab@example.com, a***@example.com",
-        "abc@example.com, a***@example.com",
-        "abcd@example.com, a***@example.com",
-        "longuser@example.com, lo***@example.com"
+        "user@example.com, u***@example.com",           // 4자: 4/3=1, min(1,3)=1
+        "a@example.com, a***@example.com",              // 1자: 1/3=0, max(1,0)=1
+        "ab@example.com, a***@example.com",             // 2자: 2/3=0, max(1,0)=1
+        "abc@example.com, a***@example.com",            // 3자: 3/3=1, min(1,3)=1
+        "abcd@example.com, a***@example.com",           // 4자: 4/3=1, min(1,3)=1
+        "longuser@example.com, lo***@example.com",      // 8자: 8/3=2, min(2,3)=2
+        "verylonguser@example.com, ver***@example.com", // 12자: 12/3=4, min(4,3)=3 (캡 적용)
+        "extremelylongusername@example.com, ext***@example.com" // 22자: 22/3=7, min(7,3)=3 (캡 적용)
     })
-    @DisplayName("이메일 마스킹 - 로컬 파트 길이별")
+    @DisplayName("이메일 마스킹 - 로컬 파트 길이별 (최소 1자, 최대 3자 노출)")
     void maskEmail_정상케이스(String original, String expected) {
         // When
         String masked = EmailUtils.maskEmail(original);
