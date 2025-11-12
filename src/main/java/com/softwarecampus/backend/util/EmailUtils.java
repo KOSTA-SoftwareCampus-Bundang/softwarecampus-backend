@@ -23,40 +23,43 @@ public class EmailUtils {
     
     /**
      * 이메일 형식 검증
+     * RFC 5321: 로컬 파트 최대 64자
      */
     public static boolean isValidFormat(String email) {
         if (email == null || email.isBlank()) {
             return false;
         }
+        
+        // 로컬 파트 길이 검증 (RFC 5321)
+        int atIndex = email.indexOf('@');
+        if (atIndex > 64) {
+            return false;
+        }
+        
         return EMAIL_PATTERN.matcher(email).matches();
     }
     
     /**
      * 이메일 마스킹 (로깅용)
-     * 예: "user@example.com" → "u***@e***.com"
+     * 예: "user@example.com" → "u***@example.com"
      */
     public static String maskEmail(String email) {
         if (email == null || email.isBlank()) {
-            return "[empty]";
+            return "***";
         }
         
         int atIndex = email.indexOf('@');
         if (atIndex <= 0) {
-            return "[invalid]";
+            return "***";
         }
         
         String localPart = email.substring(0, atIndex);
         String domain = email.substring(atIndex + 1);
         
-        String maskedLocal = localPart.length() > 1 
-            ? localPart.charAt(0) + "***" 
-            : localPart;
+        // 로컬 파트만 마스킹 (최소 1자, 최대 3자 노출)
+        int visibleChars = Math.max(1, Math.min(localPart.length() / 3, 3));
+        String maskedLocal = localPart.substring(0, visibleChars) + "***";
         
-        int dotIndex = domain.indexOf('.');
-        String maskedDomain = dotIndex > 0
-            ? domain.charAt(0) + "***" + domain.substring(dotIndex)
-            : domain.charAt(0) + "***";
-        
-        return maskedLocal + "@" + maskedDomain;
+        return maskedLocal + "@" + domain;
     }
 }
