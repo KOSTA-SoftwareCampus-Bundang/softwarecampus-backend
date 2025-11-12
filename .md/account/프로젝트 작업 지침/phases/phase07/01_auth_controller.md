@@ -192,7 +192,7 @@ if (log.isDebugEnabled()) {
 - DoS 공격 (무제한 요청)
 - 브루트 포스 공격
 
-**⚠️ Phase 8 대기 중 - 현재 엔드포인트 취약점 존재**
+### ⚠️ Phase 8 대기 중 - 현재 엔드포인트 취약점 존재
 
 현재 `/check-email` 엔드포인트는 Rate Limiting이 적용되지 않아 이메일 열거 공격에 노출되어 있습니다.
 
