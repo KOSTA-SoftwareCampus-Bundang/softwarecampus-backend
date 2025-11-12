@@ -15,6 +15,7 @@ import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.MessageResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
 import com.softwarecampus.backend.service.user.signup.SignupService;
+import com.softwarecampus.backend.util.EmailUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

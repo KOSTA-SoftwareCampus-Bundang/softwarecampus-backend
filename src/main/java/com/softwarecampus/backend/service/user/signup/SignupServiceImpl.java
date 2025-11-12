@@ -187,4 +187,18 @@ public class SignupServiceImpl implements SignupService {
                 account.getAffiliation(),
                 account.getPosition());
     }
+    
+    /**
+     * 이메일 중복 확인
+     */
+    @Override
+    public boolean isEmailAvailable(String email) {
+        // 이메일 형식 검증
+        if (!EmailUtils.isValidFormat(email)) {
+            throw new InvalidInputException("올바른 이메일 형식이 아닙니다.");
+        }
+        
+        // 중복 확인
+        return !accountRepository.existsByEmail(email);
+    }
 }
