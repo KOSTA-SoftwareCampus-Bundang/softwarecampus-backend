@@ -56,14 +56,9 @@ public class EmailUtils {
         String localPart = email.substring(0, atIndex);
         String domain = email.substring(atIndex + 1);
         
-        // 로컬 파트만 마스킹 (길이에 따라)
-        String maskedLocal;
-        if (localPart.length() <= 3) {
-            maskedLocal = localPart.charAt(0) + "***";
-        } else {
-            int visibleChars = localPart.length() / 3;
-            maskedLocal = localPart.substring(0, visibleChars) + "***";
-        }
+        // 로컬 파트만 마스킹 (최소 1자, 최대 3자 노출)
+        int visibleChars = Math.max(1, Math.min(localPart.length() / 3, 3));
+        String maskedLocal = localPart.substring(0, visibleChars) + "***";
         
         return maskedLocal + "@" + domain;
     }
