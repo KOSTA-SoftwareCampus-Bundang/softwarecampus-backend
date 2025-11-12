@@ -16,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
+
 /**
  * 회원가입 Service 구현체
  * - 이메일 형식 검증
@@ -71,13 +73,18 @@ public class SignupServiceImpl implements SignupService {
             }
 
             if (message != null) {
+                // 대소문자 무시 비교를 위해 소문자로 정규화
+                String normalizedMessage = message.toLowerCase(Locale.ROOT);
+                
                 // 이메일 중복 확인 (제약 조건 이름: uk_account_email)
-                if (message.contains("uk_account_email") || message.contains("email")) {
+                if (normalizedMessage.contains("uk_account_email") || normalizedMessage.contains("email")) {
                     log.warn("Email duplicate detected during database insert");
                     throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
                 }
                 // 전화번호 중복 확인 (제약 조건 이름: uk_account_phone)
-                if (message.contains("uk_account_phone") || message.contains("phoneNumber")) {
+                if (normalizedMessage.contains("uk_account_phone")
+                        || normalizedMessage.contains("phonenumber")
+                        || normalizedMessage.contains("phone_number")) {
                     log.warn("Phone number duplicate detected during database insert");
                     throw new InvalidInputException("이미 사용 중인 전화번호입니다.");
                 }
