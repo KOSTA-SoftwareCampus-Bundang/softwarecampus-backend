@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 /**
  * 애플리케이션 시작 시 초기 ADMIN 계정 생성
  * - 최초 실행 시에만 ADMIN 계정 자동 생성
@@ -31,11 +33,19 @@ public class AdminAccountInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        // .env 파일에서 ADMIN 설정값 읽기
-        String adminEmail = env.getProperty("ADMIN_EMAIL", "admin@softwarecampus.com");
-        String adminPassword = env.getProperty("ADMIN_PASSWORD", "Admin!2024@SoftCampus#Init");
-        String adminName = env.getProperty("ADMIN_NAME", "시스템 관리자");
-        String adminPhone = env.getProperty("ADMIN_PHONE", "010-0000-0000");
+        // .env 파일에서 ADMIN 설정값 읽기 (필수값)
+        String adminEmail = env.getProperty("ADMIN_EMAIL");
+        String adminPassword = env.getProperty("ADMIN_PASSWORD");
+        String adminName = env.getProperty("ADMIN_NAME");
+        String adminPhone = env.getProperty("ADMIN_PHONE");
+        
+        // 필수 환경변수 검증 - 없으면 애플리케이션 시작 실패
+        if (Objects.isNull(adminEmail) || adminEmail.isBlank()) {
+            throw new IllegalStateException("ADMIN_EMAIL 환경 변수를 반드시 설정해야 합니다.");
+        }
+        if (Objects.isNull(adminPassword) || adminPassword.isBlank()) {
+            throw new IllegalStateException("ADMIN_PASSWORD 환경 변수를 반드시 설정해야 합니다.");
+        }
 
         // ADMIN 계정이 이미 존재하는지 확인
         if (accountRepository.existsByEmail(adminEmail)) {
@@ -47,8 +57,8 @@ public class AdminAccountInitializer implements ApplicationRunner {
         Account admin = Account.builder()
                 .email(adminEmail)
                 .password(passwordEncoder.encode(adminPassword))
-                .userName(adminName)
-                .phoneNumber(adminPhone)
+                .userName(adminName != null ? adminName : "시스템 관리자")
+                .phoneNumber(adminPhone != null ? adminPhone : "010-0000-0000")
                 .accountType(AccountType.ADMIN)
                 .accountApproved(ApprovalStatus.APPROVED)
                 .build();
@@ -59,7 +69,6 @@ public class AdminAccountInitializer implements ApplicationRunner {
         log.warn("초기 ADMIN 계정이 생성되었습니다!");
         log.warn("이메일: {}", adminEmail);
         log.warn("⚠️  최초 로그인 후 반드시 비밀번호를 변경하세요!");
-        log.warn("⚠️  .env 파일에서 초기 비밀번호 설정 가능");
         log.warn("====================================================");
     }
 }
