@@ -1,4 +1,4 @@
-# Phase 6: Service 단위 테스트 (Mockito)
+# Phase 6: Service 단위 테스트 (Mockito) - 인덱스
 
 **목표:** Mockito를 사용한 Service Layer 단위 테스트 작성  
 **담당자:** 태윤  
@@ -34,7 +34,97 @@ src/test/java/com/softwarecampus/backend/
 
 ---
 
-## 🔧 구현 내용
+## 📚 상세 문서
+
+### 1. [SignupServiceImplTest 구현](./phase06/01_signup_service_test.md)
+- 회원가입 Service 단위 테스트 (8개)
+- 정상 회원가입 (USER, ACADEMY)
+- 이메일 형식 오류 (RFC 5322, RFC 1035)
+- 이메일 중복 (일반 + Race Condition)
+- 비밀번호 암호화 검증
+
+### 2. [ProfileServiceImplTest 구현](./phase06/02_profile_service_test.md)
+- 프로필 조회 Service 단위 테스트 (6개)
+- ID로 계정 조회 (성공, 실패)
+- 이메일로 계정 조회 (성공, 실패)
+- 이메일 형식 검증
+
+### 3. [EmailUtilsTest 구현](./phase06/03_email_utils_test.md)
+- 이메일 유틸리티 단위 테스트 (12개)
+- 이메일 검증 (유효/무효 패턴)
+- 이메일 마스킹 (PII 보호)
+- Parameterized Test 활용
+
+### 4. [Mockito 패턴 및 검증 방법](./phase06/04_mockito_patterns.md)
+- Given-When-Then 구조
+- Mock 설정 (`when()`)
+- 행위 검증 (`verify()`)
+- ArgumentMatchers 활용
+- 테스트 실행 및 커버리지
+
+---
+
+## ✅ 완료 기준
+
+- [ ] **테스트 파일 생성**
+  - [ ] `SignupServiceImplTest.java` (8개 테스트)
+  - [ ] `ProfileServiceImplTest.java` (6개 테스트)
+  - [ ] `EmailUtilsTest.java` (12개 테스트)
+
+- [ ] **정상 케이스 테스트**
+  - [ ] 회원가입 성공
+  - [ ] ID로 계정 조회 성공
+  - [ ] 이메일로 계정 조회 성공
+  - [ ] 이메일 검증 성공 (유효한 이메일 7개)
+  - [ ] 이메일 마스킹 성공
+
+- [ ] **예외 케이스 테스트**
+  - [ ] 이메일 형식 오류 (RFC 5322, RFC 1035)
+  - [ ] 이메일 중복 (일반 + Race Condition)
+  - [ ] 전화번호 중복
+  - [ ] 계정 미존재 (ID, 이메일)
+  - [ ] 이메일 검증 실패 (무효한 이메일 8개)
+
+- [ ] **Mockito 패턴 적용**
+  - [ ] `@ExtendWith(MockitoExtension.class)` 사용
+  - [ ] `@Mock`, `@InjectMocks` 애노테이션 적용
+  - [ ] `when()` Mock 설정
+  - [ ] `verify()` 행위 검증
+  - [ ] `ArgumentMatchers` 활용
+
+- [ ] **테스트 실행 및 검증**
+  - [ ] 모든 테스트 PASS (`mvn test`)
+  - [ ] 커버리지 80% 이상
+  - [ ] 빌드 성공 (`mvn clean verify`)
+  - [ ] Given-When-Then 구조 준수
+
+---
+
+## � 다음 단계
+
+**Phase 7: Controller Layer (회원가입 API)**
+- `AuthController.java` 작성
+- POST /api/v1/auth/signup 엔드포인트 구현
+- `@RestController`, `@PostMapping` 사용
+- Bean Validation 적용 (`@Valid`)
+- HTTP 201 Created + Location 헤더
+
+---
+
+## 📊 테스트 통계
+
+**총 테스트 개수:** 26개
+- SignupServiceImplTest: 8개
+- ProfileServiceImplTest: 6개
+- EmailUtilsTest: 12개
+
+**커버리지 목표:**
+- Line Coverage: 80% 이상
+- Branch Coverage: 70% 이상
+- Method Coverage: 90% 이상
+
+**예상 소요 시간:** 3-4시간
+
 
 ### 1. SignupServiceImplTest.java
 
