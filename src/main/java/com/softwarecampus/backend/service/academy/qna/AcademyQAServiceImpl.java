@@ -81,7 +81,6 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     @Transactional
     public QAResponse updateQuestion(Long academyId, Long qaId, QAUpdateRequest request) {
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
-
         qa.updateQuestion(request.getTitle(), request.getQuestionText());
 
         return QAResponse.from(qa);

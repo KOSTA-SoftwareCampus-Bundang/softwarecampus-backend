@@ -69,6 +69,4 @@ public class AcademyQA extends BaseSoftDeleteSupportEntity {
             this.questionText = questionText;
         }
     }
-
-
 }
