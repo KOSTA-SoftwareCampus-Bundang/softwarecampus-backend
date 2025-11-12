@@ -81,6 +81,6 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public BoardAttach uploadFile(MultipartFile file) throws IOException {
 
-
+        return null;
     }
 }
