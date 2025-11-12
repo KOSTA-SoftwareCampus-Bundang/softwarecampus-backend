@@ -40,23 +40,28 @@ public class SignupServiceImpl implements SignupService {
     @Override
     @Transactional
     public AccountResponse signup(SignupRequest request) {
-        log.info("회원가입 시도 시작");
+        log.info("회원가입 시도 시작: accountType={}", request.accountType());
         
         // 1. 이메일 형식 검증
         validateEmailFormat(request.email());
         
-        // 2. 비밀번호 암호화
+        // 2. 계정 타입별 추가 검증
+        validateAccountTypeRequirements(request);
+        
+        // 3. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.password());
         
-        // 3. Account 엔티티 생성
+        // 4. Account 엔티티 생성
         Account account = createAccount(request, encodedPassword);
         
-        // 4. 저장 (DB UNIQUE 제약으로 동시성 안전)
+        // 5. 저장 (DB UNIQUE 제약으로 동시성 안전)
         try {
             Account savedAccount = accountRepository.save(account);
-            log.info("회원가입 완료: accountId={}", savedAccount.getId());
+            log.info("회원가입 완료: accountId={}, accountType={}", 
+                savedAccount.getId(), 
+                savedAccount.getAccountType());
             
-            // 5. DTO 변환
+            // 6. DTO 변환
             return toAccountResponse(savedAccount);
         } catch (DataIntegrityViolationException ex) {
             // DB 제약 조건 위반 - 어떤 제약인지 확인
@@ -100,14 +105,29 @@ public class SignupServiceImpl implements SignupService {
     }
     
     /**
+     * 계정 타입별 추가 검증
+     * - ACADEMY 타입: academyId 필수
+     */
+    private void validateAccountTypeRequirements(SignupRequest request) {
+        if (request.accountType() == AccountType.ACADEMY) {
+            if (request.academyId() == null) {
+                log.warn("ACADEMY type signup without academyId");
+                throw new InvalidInputException("기관 회원은 기관 ID가 필수입니다.");
+            }
+            // 향후: Academy 엔티티 존재 여부 검증 추가 가능
+            // academyRepository.findById(request.academyId())
+            //     .orElseThrow(() -> new InvalidInputException("존재하지 않는 기관입니다."));
+        }
+    }
+    
+    /**
      * Account 엔티티 생성
      * - USER: 즉시 승인 (APPROVED)
      * - ACADEMY: 관리자 승인 대기 (PENDING)
      */
     private Account createAccount(SignupRequest request, String encodedPassword) {
         // 계정 타입별 승인 상태 결정
-        AccountType accountType = determineAccountType(request);
-        ApprovalStatus approvalStatus = (accountType == AccountType.USER) 
+        ApprovalStatus approvalStatus = (request.accountType() == AccountType.USER) 
             ? ApprovalStatus.APPROVED   // 일반 사용자: 즉시 승인
             : ApprovalStatus.PENDING;   // 기관: 관리자 승인 대기
         
@@ -119,22 +139,10 @@ public class SignupServiceImpl implements SignupService {
             .address(request.address())
             .affiliation(request.affiliation())
             .position(request.position())
-            .accountType(accountType)
+            .accountType(request.accountType())
+            .academyId(request.academyId())
             .accountApproved(approvalStatus)
             .build();
-    }
-    
-    /**
-     * 계정 타입 결정
-     * - affiliation이 있으면 ACADEMY (기관)
-     * - 없으면 USER (일반 사용자)
-     */
-    private AccountType determineAccountType(SignupRequest request) {
-        // 소속이 있으면 기관으로 간주
-        if (request.affiliation() != null && !request.affiliation().isBlank()) {
-            return AccountType.ACADEMY;
-        }
-        return AccountType.USER;
     }
     
     /**

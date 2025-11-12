@@ -34,6 +34,11 @@ public class ProfileServiceImpl implements ProfileService {
         Account account = accountRepository.findById(accountId)
             .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다: " + accountId));
         
+        log.info("계정 조회 완료: accountId={}, email={}, accountType={}", 
+            account.getId(),
+            EmailUtils.maskEmail(account.getEmail()),
+            account.getAccountType());
+        
         return toAccountResponse(account);
     }
     
@@ -50,6 +55,11 @@ public class ProfileServiceImpl implements ProfileService {
         
         Account account = accountRepository.findByEmail(email)
             .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
+        
+        log.info("계정 조회 완료: accountId={}, accountType={}, userName={}", 
+            account.getId(),
+            account.getAccountType(),
+            account.getUserName());
         
         return toAccountResponse(account);
     }
