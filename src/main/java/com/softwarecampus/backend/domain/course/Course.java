@@ -1,0 +1,95 @@
+package com.softwarecampus.backend.domain.course;
+
+import com.softwarecampus.backend.domain.academy.Academy;
+import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Entity
+@Table(name = "course")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Course extends BaseSoftDeleteSupportEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "academy_id", nullable = false)
+    private Academy academy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private CourseCategory category;
+
+    @Column(nullable = false)
+    private String name;
+
+    private LocalDate recruitStart;
+    private LocalDate recruitEnd;
+    private LocalDate courseStart;
+    private LocalDate courseEnd;
+    private Integer cost;
+    private String classDay;
+    private String location;
+    private boolean isKdt;
+    private boolean isNailbaeum;
+    private boolean isOffline = true;
+    private String requirement;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ApprovalStatus isApproved = ApprovalStatus.WAITING;
+
+    private LocalDateTime approvedAt;
+
+    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @Builder.Default
+    private List<CourseReview> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @Builder.Default
+    private List<CourseQuestion> questions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @Builder.Default
+    private List<CourseFavorite> favorites = new ArrayList<>();
+
+    // ✅ 연관관계 편의 메서드들
+    public void addReview(CourseReview review) {
+        reviews.add(review);
+        review.setCourse(this);
+    }
+
+    public void removeReview(CourseReview review) {
+        reviews.remove(review);
+        review.setCourse(null);
+    }
+
+    public void addQuestion(CourseQuestion question) {
+        questions.add(question);
+        question.setCourse(this);
+    }
+
+    public void removeQuestion(CourseQuestion question) {
+        questions.remove(question);
+        question.setCourse(null);
+    }
+
+    public void addFavorite(CourseFavorite favorite) {
+        favorites.add(favorite);
+        favorite.setCourse(this);
+    }
+
+    public void removeFavorite(CourseFavorite favorite) {
+        favorites.remove(favorite);
+        favorite.setCourse(null);
+    }
+}
