@@ -19,7 +19,6 @@ public class CourseImage extends BaseSoftDeleteSupportEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 1000, nullable = false)
     private String imageUrl;
 
     private boolean isThumbnail;
