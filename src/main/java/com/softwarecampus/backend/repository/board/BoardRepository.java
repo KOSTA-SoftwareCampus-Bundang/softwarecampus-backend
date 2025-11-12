@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface BoardRepository extends JpaRepository<Board, Long> {
 
-    List<Board> findBoardsByCategory(BoardCategory category);
+    List<Board> findBoardsByCategoryAndIsDeletedFalse(BoardCategory category);
 
 //    @Query
 //    List<Board> findBoardsBySearchText(String searchType, String searchText);

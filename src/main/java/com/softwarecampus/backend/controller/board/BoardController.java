@@ -48,7 +48,7 @@ public class BoardController {
 
     //게시글 생성 with 첨부파일
     @PostMapping
-    public ResponseEntity<?> createBoard(@Valid BoardCreateRequestDTO boardCreateRequestDTO, MultipartFile[] files) {
+    public ResponseEntity<?> createBoard(@Valid BoardCreateRequestDTO boardCreateRequestDTO,@RequestParam(required = false) MultipartFile[] files) {
 
         //게시글 생성 service 메서드 호출
         boardService.createBoard(boardCreateRequestDTO, files);
@@ -58,9 +58,9 @@ public class BoardController {
 
     //게시글 수정 with 첨부파일
     @PatchMapping("/{boardId:\\d+}")
-    public ResponseEntity<?> updateBoard(@Valid BoardUpdateRequestDTO boardUpdateRequestDTO,MultipartFile[] files) {
+    public ResponseEntity<?> updateBoard(@PathVariable Long boardId, @Valid BoardUpdateRequestDTO boardUpdateRequestDTO,@RequestParam(required = false) MultipartFile[] files) {
         //게시글 수정 service 메서드 호출
-        boardService.updateBoard(boardUpdateRequestDTO,files);
+        boardService.updateBoard(boardUpdateRequestDTO, files);
         return ResponseEntity.noContent().build();
     }
 

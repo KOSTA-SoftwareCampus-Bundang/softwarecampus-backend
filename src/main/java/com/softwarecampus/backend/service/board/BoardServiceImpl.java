@@ -26,7 +26,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public List<Board> getBoards(int pageNo, BoardCategory category, String searchType, String searchText) {
         if (searchType == null || "".equals(searchType) || searchText == null || "".equals(searchText)) {
-            return boardRepository.findBoardsByCategory(category);
+            return boardRepository.findBoardsByCategoryAndIsDeletedFalse(category);
         } else {
             return null;
         }
@@ -75,7 +75,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public void deleteBoardById(Long id) {
         Board board = boardRepository.findById(id).orElseThrow(() -> new IllegalStateException("게시글을 찾지 못했습니다"));
-        boardRepository.delete(board);
+        board.markDeleted();
     }
 
     @Override
