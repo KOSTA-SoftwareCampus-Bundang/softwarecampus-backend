@@ -1,10 +1,15 @@
 package com.softwarecampus.backend.domain.user;
 
+import com.softwarecampus.backend.domain.board.Board;
+import com.softwarecampus.backend.domain.board.Comment;
 import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 사용자 계정 엔티티
@@ -69,4 +74,14 @@ public class Account extends BaseSoftDeleteSupportEntity {
     // @ManyToOne(fetch = FetchType.LAZY)
     // @JoinColumn(name = "academy_id")
     // private Academy academy;
+
+    //Board 엔티티와 관계 매핑을 위해 추가
+    @OneToMany(mappedBy = "account")
+    @Builder.Default
+    private List<Board> boards = new ArrayList<>();
+
+    //Comment 엔티티와 관계 매핑을 위해 추가
+    @OneToMany(mappedBy = "account")
+    @Builder.Default
+    private List<Comment> comments = new ArrayList<>();
 }
