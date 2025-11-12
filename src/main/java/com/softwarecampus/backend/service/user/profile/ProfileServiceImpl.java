@@ -32,7 +32,7 @@ public class ProfileServiceImpl implements ProfileService {
         log.info("계정 조회 시도: accountId={}", accountId);
         
         Account account = accountRepository.findById(accountId)
-            .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다: " + accountId));
+            .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
         
         log.info("계정 조회 완료: accountId={}, email={}, accountType={}", 
             account.getId(),
