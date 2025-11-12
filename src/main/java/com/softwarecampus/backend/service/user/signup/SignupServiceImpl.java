@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * 회원가입 Service 구현체
@@ -42,6 +43,9 @@ public class SignupServiceImpl implements SignupService {
     @Override
     @Transactional
     public AccountResponse signup(SignupRequest request) {
+        // 0. 요청 null 검증
+        Objects.requireNonNull(request, "SignupRequest must not be null");
+        
         log.info("회원가입 시도 시작: accountType={}", request.accountType());
 
         // 1. 이메일 형식 검증
@@ -77,14 +81,12 @@ public class SignupServiceImpl implements SignupService {
                 String normalizedMessage = message.toLowerCase(Locale.ROOT);
                 
                 // 이메일 중복 확인 (제약 조건 이름: uk_account_email)
-                if (normalizedMessage.contains("uk_account_email") || normalizedMessage.contains("email")) {
+                if (normalizedMessage.contains("uk_account_email")) {
                     log.warn("Email duplicate detected during database insert");
                     throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
                 }
                 // 전화번호 중복 확인 (제약 조건 이름: uk_account_phone)
-                if (normalizedMessage.contains("uk_account_phone")
-                        || normalizedMessage.contains("phonenumber")
-                        || normalizedMessage.contains("phone_number")) {
+                if (normalizedMessage.contains("uk_account_phone")) {
                     log.warn("Phone number duplicate detected during database insert");
                     throw new InvalidInputException("이미 사용 중인 전화번호입니다.");
                 }
