@@ -1,4 +1,4 @@
-package com.softwarecampus.backend.service.impl.academy;
+package com.softwarecampus.backend.service.academy;
 
 import com.softwarecampus.backend.domain.academy.Academy;
 import com.softwarecampus.backend.domain.academy.ApprovalStatus;
@@ -6,7 +6,6 @@ import com.softwarecampus.backend.dto.academy.AcademyCreateRequest;
 import com.softwarecampus.backend.dto.academy.AcademyResponse;
 import com.softwarecampus.backend.dto.academy.AcademyUpdateRequest;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
-import com.softwarecampus.backend.service.academy.AcademyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
