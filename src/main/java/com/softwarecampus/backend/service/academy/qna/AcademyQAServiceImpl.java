@@ -27,6 +27,10 @@ public class AcademyQAServiceImpl implements AcademyQAService {
         AcademyQA qa = academyQARepository.findById(qaId)
                 .orElseThrow(() -> new NoSuchElementException("Academy QA Not Found"));
 
+        if (qa.getAcademy() == null) {
+            throw new IllegalStateException("Academy relationship is required for QA");
+        }
+
         if (!qa.getAcademy().getId().equals(academyId)) {
             throw new IllegalArgumentException("Question Id and Academy Id do not match");
         }
@@ -78,8 +82,7 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     public QAResponse updateQuestion(Long academyId, Long qaId, QAUpdateRequest request) {
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
 
-        if (request.getTitle() != null) qa.setTitle(request.getTitle());
-        if (request.getQuestionText() != null) qa.setQuestionText(request.getQuestionText());
+        qa.updateQuestion(request.getTitle(), request.getQuestionText());
 
         return QAResponse.from(qa);
     }

@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 class AcademyQAServiceImplTest {
 
@@ -146,8 +144,8 @@ class AcademyQAServiceImplTest {
 
         QAResponse response = qaService.updateAnswer(qaId, academyId, request);
 
-        assertEquals(newAnswer, response.getAnswerText(), "응답 DTO의 답변 필드는 NULL이어야 합니다.");
-        assertEquals(newAnswer, testQA.getAnswerText(), "엔티티의 답변 필드가 NULL로 업데이트되어야 합니다.");
+        assertEquals(newAnswer, response.getAnswerText(), "응답 DTO의 답변 필드가 새로 작성된 답변과 일치해야 합니다.");
+        assertEquals(newAnswer, testQA.getAnswerText(), "엔티티의 답변 필드가 새로 작성된 답변으로 업데이트되어야 합니다.");
     }
 
     @Test

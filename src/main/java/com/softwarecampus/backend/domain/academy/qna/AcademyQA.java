@@ -61,7 +61,14 @@ public class AcademyQA extends BaseSoftDeleteSupportEntity {
         this.approvedAt = null;
     }
 
-
+    public void updateQuestion(String title, String questionText) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (questionText != null) {
+            this.questionText = questionText;
+        }
+    }
 
 
 }
