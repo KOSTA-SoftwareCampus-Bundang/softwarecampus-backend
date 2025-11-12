@@ -106,22 +106,30 @@ public class EmailUtils {
 ### 검증 예시
 ```java
 // ✅ 유효한 이메일
-isValidEmail("user@example.com")                    → true
-isValidEmail("user@sub-domain.example.technology")  → true
+isValidFormat("user@example.com")                    → true
+isValidFormat("user@sub-domain.example.technology")  → true
 
 // ❌ 무효한 이메일
-isValidEmail("user@-invalid.com")   → false (시작 하이픈)
-isValidEmail("user@test-.com")      → false (끝 하이픈)
-isValidEmail("user@test..com")      → false (연속 점)
+isValidFormat("user@-invalid.com")   → false (시작 하이픈)
+isValidFormat("user@test-.com")      → false (끝 하이픈)
+isValidFormat("user@test..com")      → false (연속 점)
 ```
 
 ### 마스킹 예시
 ```java
-maskEmail("user@example.com")      → "u****@example.com"
-maskEmail("a@test.com")            → "*@test.com"
-maskEmail("invalid")               → "***"
-maskEmail(null)                    → "***"
+maskEmail("a@test.com")              // → "a***@test.com" (1자 노출)
+maskEmail("user@example.com")        // → "u***@example.com" (4/3=1자 노출)
+maskEmail("longuser@example.com")    // → "lo***@example.com" (8/3=2자 노출)
+maskEmail("verylonguser@example.com") // → "ver***@example.com" (3자 상한)
+maskEmail("invalid")                 // → "***"
+maskEmail(null)                      // → "***"
 ```
+
+**노출 문자 수 계산 규칙:**
+- 최소 1자, 최대 3자 노출
+- `Math.max(1, Math.min(localPart.length() / 3, 3))`
+- 마스킹은 항상 고정된 "***" 사용 (가변 길이 아님)
+- 보안 강화: 긴 이메일도 최대 3자만 노출하여 PII 보호
 
 ---
 
