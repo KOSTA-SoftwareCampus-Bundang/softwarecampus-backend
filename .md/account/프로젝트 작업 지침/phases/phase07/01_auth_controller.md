@@ -192,37 +192,26 @@ if (log.isDebugEnabled()) {
 - DoS 공격 (무제한 요청)
 - 브루트 포스 공격
 
-**권장 구현 (Phase 8):**
+**⚠️ Phase 8 대기 중 - 현재 엔드포인트 취약점 존재**
 
-```java
-// Option 1: Bucket4j + Redis (추천)
-@RateLimit(
-    permits = 60,           // 분당 60회
-    window = 1,
-    unit = TimeUnit.MINUTES,
-    keyType = KeyType.IP    // IP 기반 제한
-)
-@GetMapping("/check-email")
-public ResponseEntity<MessageResponse> checkEmail(@RequestParam String email) {
-    // ...
-}
+현재 `/check-email` 엔드포인트는 Rate Limiting이 적용되지 않아 이메일 열거 공격에 노출되어 있습니다.
 
-// Option 2: Spring Cloud Gateway
-spring:
-  cloud:
-    gateway:
-      routes:
-        - id: auth-routes
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 60
-                redis-rate-limiter.burstCapacity: 100
-                key-resolver: "#{@ipKeyResolver}"
-```
+**임시 완화 조치 (Phase 8 이전):**
+1. **게이트웨이/미들웨어 레벨 제한**: Nginx, API Gateway에서 IP 기반 제한
+2. **IP 기반 로깅 및 차단**: 비정상 패턴 감지 시 수동 차단
+3. **모니터링**: 비정상 요청 패턴 알림 설정
 
-**Rate Limit 정책:**
+**Phase 8 구현 계획:**
+- **목표**: IP 기반 Rate Limiting (60 req/min)
+- **응답**: 429 Too Many Requests
+- **구현 방식**: Phase 8 설계 시 결정 (Bucket4j, Spring Cloud Gateway, 또는 Custom Interceptor)
+- **Note**: 현재는 설계/구현하지 않음
+
+**Rate Limit 정책 (예정):**
 - **임계값**: 60 req/min per IP
+- **초과 시**: `429 Too Many Requests`
+- **헤더 추가**:
+  - `X-RateLimit-Limit: 60`
 - **초과 시**: `429 Too Many Requests`
 - **헤더 추가**:
   - `X-RateLimit-Limit: 60`
