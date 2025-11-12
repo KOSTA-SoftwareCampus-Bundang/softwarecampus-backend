@@ -70,12 +70,12 @@ public class Course extends BaseSoftDeleteSupportEntity {
     private List<CourseReview> reviews = new ArrayList<>();
 
     /** Q&A */
-    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<CourseQna> qnaList = new ArrayList<>();
 
     /** 즐겨찾기 */
-    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<CourseFavorite> favorites = new ArrayList<>();
 

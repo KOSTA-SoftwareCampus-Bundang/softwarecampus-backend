@@ -4,6 +4,8 @@ import com.softwarecampus.backend.dto.course.CourseFavoriteResponseDTO;
 import com.softwarecampus.backend.service.course.CourseFavoriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,10 +19,21 @@ public class CourseFavoriteController {
 
     /** 찜하기 토글 */
     @PostMapping("/{courseId}")
-    public ResponseEntity<CourseFavoriteResponseDTO> toggleFavorite(@RequestParam Long accountId,
-                                                                    @PathVariable("type") String type,
-                                                                    @PathVariable Long courseId) {
-        return ResponseEntity.ok(favoriteService.toggleFavorite(accountId, courseId));
+    public ResponseEntity<CourseFavoriteResponseDTO> toggleFavorite(
+            @PathVariable("type") String type,
+            @PathVariable Long courseId,
+            @RequestParam(required = false) Long accountId
+    ) {
+        // TODO: Security 이후 아래 코드로 교체
+        // Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        // Long accountId = userDetails.getId();
+
+        if (accountId == null) {
+            accountId = 1L; // 임시 ID
+        }
+
+        return ResponseEntity.ok(favoriteService.toggleFavorite(type, accountId, courseId));
     }
 
     /** 찜 목록 조회 (선택사항) */

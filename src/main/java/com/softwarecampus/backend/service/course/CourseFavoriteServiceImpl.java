@@ -30,7 +30,10 @@ public class CourseFavoriteServiceImpl implements CourseFavoriteService {
      */
     @Override
     @Transactional
-    public CourseFavoriteResponseDTO toggleFavorite(Long accountId, Long courseId) {
+    public CourseFavoriteResponseDTO toggleFavorite(String type, Long accountId, Long courseId) {
+
+        System.out.println("toggleFavorite called with type = " + type);
+
         Optional<CourseFavorite> existing = favoriteRepository.findByAccount_IdAndCourse_Id(accountId, courseId);
 
         if (existing.isPresent()) {
