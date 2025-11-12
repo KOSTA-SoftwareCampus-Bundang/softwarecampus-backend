@@ -1,13 +1,10 @@
 package com.softwarecampus.backend.dto.board;
 
-import com.softwarecampus.backend.domain.board.BoardAttach;
+import com.softwarecampus.backend.domain.board.Board;
+import com.softwarecampus.backend.domain.board.BoardCategory;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
@@ -15,8 +12,6 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class BoardCreateRequestDTO {
-
-
 
     @Pattern(regexp = "NOTICE|QUESTION|COURSE_STORY|CODING_STORY", message = "게시판 카테고리는 NOTICE,QUESTION,COURSE_STORY,CODING_STORY 중 하나여야 합니다")
     private String category;
@@ -27,8 +22,11 @@ public class BoardCreateRequestDTO {
     @NotBlank
     private String text;
 
-    @NotNull
-    private boolean isSecret;
+    private boolean secret;
+
+    public Board toEntity() {
+        return Board.builder().category(BoardCategory.from(this.category)).title(this.title).text(this.text).secret(this.secret).build();
+    }
 
 
 }

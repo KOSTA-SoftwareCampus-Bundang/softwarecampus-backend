@@ -35,7 +35,7 @@ public class Board extends BaseSoftDeleteSupportEntity {
     @ColumnDefault("0")
     private long hits;
 
-    @Column(nullable = false)
+    @Column(name="is_secret",nullable = false)
     private boolean secret;
 
     @OneToMany(mappedBy = "board")

@@ -7,14 +7,19 @@ import com.softwarecampus.backend.dto.board.BoardCreateRequestDTO;
 import com.softwarecampus.backend.dto.board.BoardUpdateRequestDTO;
 import com.softwarecampus.backend.dto.board.CommentCreateRequestDTO;
 import com.softwarecampus.backend.dto.board.CommentUpdateRequestDTO;
+import com.softwarecampus.backend.exception.board.BoardException;
 import com.softwarecampus.backend.service.board.BoardService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -90,16 +95,39 @@ public class BoardController {
         return ResponseEntity.noContent().build();
     }
 
-    //게시글 추천/비추천
+    //게시글 추천
     @PostMapping("/{boardId:\\d+}/recommends")
     public ResponseEntity<?> recommendBoard(@PathVariable Long boardId) {
         return ResponseEntity.created(URI.create("/boards/" + boardId)).build();
     }
 
-    //댓글 추천/비추천
+    //댓글 추천
     @PostMapping("/{boardId:\\d+}/comments/{commentId:\\d+}/recommends")
     public ResponseEntity<?> recommendComment(@PathVariable Long boardId, @PathVariable Long commentId) {
         return ResponseEntity.created(URI.create("/boards/" + boardId + "/comments/" + commentId)).build();
+    }
+
+    //게시글 추천취소
+    @DeleteMapping("/{boardId:\\d+}/recommends")
+    public ResponseEntity<?> recommendBoardCancel(@PathVariable Long boardId) {
+        return ResponseEntity.noContent().build();
+    }
+
+    //댓글 추천취소
+    @DeleteMapping("/{boardId:\\d+}/comments/{commentId:\\d+}/recommends")
+    public ResponseEntity<?> recommendCommentCancel(@PathVariable Long boardId, @PathVariable Long commentId) {
+        return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(BoardException.class)
+    public ProblemDetail handleBoardException(BoardException e, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(e.getErrorCode().getHttpStatus());
+
+        problemDetail.setTitle(e.getErrorCode().toString());
+        problemDetail.setDetail(e.getErrorCode().getDetails());
+        problemDetail.setProperty("timestamp", LocalDateTime.now());
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        return problemDetail;
     }
 
 

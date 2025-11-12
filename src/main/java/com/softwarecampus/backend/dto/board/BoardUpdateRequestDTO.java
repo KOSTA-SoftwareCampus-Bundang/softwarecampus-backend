@@ -18,8 +18,6 @@ public class BoardUpdateRequestDTO {
     @NotNull
     private Long id;
 
-    private Long accountId;
-
     private String title;
 
     private String text;

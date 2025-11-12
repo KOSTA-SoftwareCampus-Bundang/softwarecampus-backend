@@ -15,8 +15,6 @@ public class CommentUpdateRequestDTO {
     @NotNull
     private Long id;
 
-    private Long accountId;
-
     @NotBlank
     private String text;
 
