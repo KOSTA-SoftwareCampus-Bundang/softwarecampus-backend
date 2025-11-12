@@ -396,8 +396,11 @@ Content-Type: application/json
 **예상 응답:**
 ```http
 HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
 
 {
+  "type": "https://api.softwarecampus.com/problems/invalid-account-type",
+  "title": "Invalid Account Type",
   "status": 400,
   "detail": "관리자 계정은 회원가입으로 생성할 수 없습니다."
 }
@@ -423,8 +426,11 @@ Content-Type: application/json
 **예상 응답:**
 ```http
 HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
 
 {
+  "type": "https://api.softwarecampus.com/problems/missing-required-field",
+  "title": "Missing Required Field",
   "status": 400,
   "detail": "기관 회원은 기관 ID가 필수입니다."
 }
