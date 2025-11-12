@@ -329,9 +329,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("GET /check-email - 이메일 형식 오류 (400)")
     void checkEmail_이메일형식오류() throws Exception {
-        // Given
-        when(signupService.isEmailAvailable("invalid-email"))
-            .thenThrow(new InvalidInputException("올바른 이메일 형식이 아닙니다."));
+        // Given - Bean Validation 실패 시 컨트롤러 메서드 호출 안 됨
         
         // When & Then
         mockMvc.perform(get("/api/v1/auth/check-email")
@@ -339,7 +337,8 @@ class AuthControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.detail").value("올바른 이메일 형식이 아닙니다."));
         
-        verify(signupService).isEmailAvailable("invalid-email");
+        // Bean Validation 실패로 서비스 호출 안 됨
+        verifyNoInteractions(signupService);
     }
     
     @Test
