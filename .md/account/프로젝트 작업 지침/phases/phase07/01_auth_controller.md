@@ -212,9 +212,6 @@ if (log.isDebugEnabled()) {
 - **초과 시**: `429 Too Many Requests`
 - **헤더 추가**:
   - `X-RateLimit-Limit: 60`
-- **초과 시**: `429 Too Many Requests`
-- **헤더 추가**:
-  - `X-RateLimit-Limit: 60`
   - `X-RateLimit-Remaining: 45`
   - `X-RateLimit-Reset: 1699876543`
 

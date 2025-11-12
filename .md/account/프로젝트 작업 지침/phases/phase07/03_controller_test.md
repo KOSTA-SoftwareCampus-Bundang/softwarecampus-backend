@@ -32,6 +32,7 @@ import com.softwarecampus.backend.service.user.signup.SignupService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -53,10 +54,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 
  * 테스트 도구:
  * - @WebMvcTest: Controller Layer만 로드
+ * - @AutoConfigureMockMvc(addFilters = false): 보안 필터 비활성화
  * - MockMvc: HTTP 요청/응답 모킹
  * - @MockBean: Service Layer 모킹
  */
 @WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @DisplayName("AuthController 통합 테스트")
 class AuthControllerTest {
     

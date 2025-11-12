@@ -9,7 +9,7 @@
 ## 📋 테스트 개요
 
 EmailUtils의 정적 메서드를 검증합니다:
-- `isValidEmail(String)`: RFC 5322, RFC 1035 기반 이메일 형식 검증
+- `isValidFormat(String)`: RFC 5322, RFC 1035 기반 이메일 형식 검증
 - `maskEmail(String)`: 이메일 주소 마스킹 (PII 보호)
 
 ---
@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.*;
  * EmailUtils 단위 테스트
  * 
  * 테스트 대상:
- * - isValidEmail(String): RFC 5322, RFC 1035 기반 이메일 검증
+ * - isValidFormat(String): RFC 5322, RFC 1035 기반 이메일 검증
  * - maskEmail(String): 이메일 마스킹 (로깅용)
  * 
  * 특징:
@@ -51,9 +51,9 @@ class EmailUtilsTest {
         "email+tag@example.com"
     })
     @DisplayName("유효한 이메일 형식 - 성공")
-    void isValidEmail_유효한형식(String email) {
+    void isValidFormat_유효한형식(String email) {
         // When & Then
-        assertThat(EmailUtils.isValidEmail(email)).isTrue();
+        assertThat(EmailUtils.isValidFormat(email)).isTrue();
     }
     
     @ParameterizedTest
@@ -70,16 +70,16 @@ class EmailUtilsTest {
         ""                         // 빈 문자열
     })
     @DisplayName("유효하지 않은 이메일 형식 - 실패")
-    void isValidEmail_유효하지않은형식(String email) {
+    void isValidFormat_유효하지않은형식(String email) {
         // When & Then
-        assertThat(EmailUtils.isValidEmail(email)).isFalse();
+        assertThat(EmailUtils.isValidFormat(email)).isFalse();
     }
     
     @Test
     @DisplayName("null 이메일 - 실패")
-    void isValidEmail_null() {
+    void isValidFormat_null() {
         // When & Then
-        assertThat(EmailUtils.isValidEmail(null)).isFalse();
+        assertThat(EmailUtils.isValidFormat(null)).isFalse();
     }
     
     // ========== 이메일 마스킹 ==========
@@ -127,26 +127,26 @@ class EmailUtilsTest {
     @DisplayName("이메일 마스킹 - 긴 로컬 파트")
     void maskEmail_긴로컬파트() {
         // Given
-        String email = "verylongemail@example.com";
+        String email = "verylongemail@example.com";  // 13글자 → 13/3=4 → min(4,3)=3
         
         // When
         String masked = EmailUtils.maskEmail(email);
         
         // Then
-        assertThat(masked).isEqualTo("v***@example.com");
+        assertThat(masked).isEqualTo("ver***@example.com");  // 3글자 표시
     }
     
     @Test
     @DisplayName("이메일 마스킹 - 점 포함")
     void maskEmail_점포함() {
         // Given
-        String email = "first.last@example.com";
+        String email = "first.last@example.com";  // 10글자 → 10/3=3
         
         // When
         String masked = EmailUtils.maskEmail(email);
         
         // Then
-        assertThat(masked).isEqualTo("f***@example.com");
+        assertThat(masked).isEqualTo("fir***@example.com");  // 3글자 표시
     }
     
     @Test
@@ -185,7 +185,7 @@ class EmailUtilsTest {
 
 ## 📊 테스트 시나리오
 
-### 이메일 검증 (`isValidEmail`)
+### 이메일 검증 (`isValidFormat`)
 
 | 번호 | 입력 | 검증 규칙 | 예상 결과 |
 |------|------|----------|----------|
@@ -202,16 +202,18 @@ class EmailUtilsTest {
 
 ### 이메일 마스킹 (`maskEmail`)
 
-| 번호 | 입력 | 출력 | 설명 |
-|------|------|------|------|
-| 1 | `user@example.com` | `u***@example.com` | 첫 글자 + *** |
-| 2 | `ab@example.com` | `a***@example.com` | 2글자 → 1글자 표시 |
-| 3 | `a@example.com` | `a***@example.com` | 1글자 → 그대로 표시 |
-| 4 | `verylongemail@example.com` | `v***@example.com` | 긴 이메일 |
-| 5 | `first.last@example.com` | `f***@example.com` | 점 포함 |
-| 6 | `null` | 예외 발생 | IllegalArgumentException |
-| 7 | `invalid-email` | 예외 발생 | @ 없음 |
-| 8 | `""` | 예외 발생 | 빈 문자열 |
+**마스킹 규칙:** 로컬 파트 길이의 1/3, 최소 1자, 최대 3자 표시
+
+| 번호 | 입력 | 로컬 파트 길이 | 표시 글자 수 | 출력 | 계산 |
+|------|------|--------------|------------|------|------|
+| 1 | `user@example.com` | 4 | 1 | `u***@example.com` | 4/3=1 |
+| 2 | `ab@example.com` | 2 | 1 | `a***@example.com` | 2/3=0 → max(1,0)=1 |
+| 3 | `a@example.com` | 1 | 1 | `a***@example.com` | 1/3=0 → max(1,0)=1 |
+| 4 | `verylongemail@example.com` | 13 | 3 | `ver***@example.com` | 13/3=4 → min(4,3)=3 |
+| 5 | `first.last@example.com` | 10 | 3 | `fir***@example.com` | 10/3=3 |
+| 6 | `null` | - | - | 예외 발생 | IllegalArgumentException |
+| 7 | `invalid-email` | - | - | 예외 발생 | @ 없음 |
+| 8 | `""` | - | - | 예외 발생 | 빈 문자열 |
 
 ---
 
@@ -254,11 +256,15 @@ void testMultipleInputs(String email) {
 
 ### 4. 마스킹 규칙
 ```java
-// 로컬 파트 첫 글자 + *** + @ + 도메인 (원본 유지)
-"user@example.com" → "u***@example.com"
+// 로컬 파트 길이의 1/3, 최소 1자, 최대 3자 표시
+// visibleChars = Math.max(1, Math.min(localPart.length() / 3, 3))
+
+"user@example.com" → "u***@example.com"        // 4/3=1글자
+"verylongemail@example.com" → "ver***@example.com"  // 13/3=4 → min(4,3)=3글자
+"first.last@example.com" → "fir***@example.com"     // 10/3=3글자
 
 // 1글자인 경우도 첫 글자 표시
-"a@example.com" → "a***@example.com"
+"a@example.com" → "a***@example.com"           // max(1, 1/3)=1글자
 ```
 
 ---
@@ -285,8 +291,8 @@ assertThatThrownBy(() -> EmailUtils.maskEmail(null))
 ### Boolean 반환 검증
 ```java
 // true/false 직접 검증
-assertThat(EmailUtils.isValidEmail(email)).isTrue();
-assertThat(EmailUtils.isValidEmail(invalidEmail)).isFalse();
+assertThat(EmailUtils.isValidFormat(email)).isTrue();
+assertThat(EmailUtils.isValidFormat(invalidEmail)).isFalse();
 ```
 
 ---

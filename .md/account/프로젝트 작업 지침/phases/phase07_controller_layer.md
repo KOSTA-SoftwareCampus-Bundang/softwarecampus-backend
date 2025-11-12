@@ -186,9 +186,9 @@ isEmailAvailable() 메서드 추가가 필요합니다. 자세한 내용은 [Aut
 
 ## 📊 테스트 통계
 
-**총 테스트 개수:** 38개
-- Phase 6 단위 테스트: 26개
-  - SignupServiceImplTest: 9개
+**총 테스트 개수:** 39개
+- Phase 6 단위 테스트: 27개
+  - SignupServiceImplTest: 10개
   - ProfileServiceImplTest: 6개
   - EmailUtilsTest: 12개
 - Phase 7 Controller 통합 테스트: 12개
