@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.domain.board;
 
 import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
+import com.softwarecampus.backend.domain.user.Account;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
@@ -24,6 +25,7 @@ public class Comment extends BaseSoftDeleteSupportEntity {
     private String text;
 
     @OneToMany(mappedBy = "topComment")
+    @Builder.Default
     private List<Comment> subComments = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,7 +36,11 @@ public class Comment extends BaseSoftDeleteSupportEntity {
     @JoinColumn(name="board_id",nullable = false)
     private Board board;
 
-    @OneToMany(mappedBy = "comment",cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "comment",cascade = CascadeType.REMOVE,orphanRemoval = true)
     @Builder.Default
-    private List<CommentRecommend> comments = new ArrayList<>();
+    private List<CommentRecommend> commentRecommends = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="account_id",nullable = false)
+    private Account account;
 }

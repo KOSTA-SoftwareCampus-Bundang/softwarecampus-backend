@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @Getter
 @Setter
-public class BoardAttach {
+public class BoardAttach extends BaseSoftDeleteSupportEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
