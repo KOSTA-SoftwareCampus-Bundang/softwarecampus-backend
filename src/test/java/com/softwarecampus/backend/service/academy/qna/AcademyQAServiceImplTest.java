@@ -20,7 +20,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +37,7 @@ class AcademyQAServiceImplTest {
     private Academy testAcademy;
     private AcademyQA testQA;
     private final Long academyId = 1L;
-    private final Long qaId = 10L;
+    private final Long qaId = 1L;
 
     @BeforeEach
     void setUp() {
@@ -142,7 +141,7 @@ class AcademyQAServiceImplTest {
 
         when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
 
-        QAResponse response = qaService.updateAnswer(qaId, academyId, request);
+        QAResponse response = qaService.updateAnswer(academyId, qaId, request);
 
         assertEquals(newAnswer, response.getAnswerText(), "응답 DTO의 답변 필드가 새로 작성된 답변과 일치해야 합니다.");
         assertEquals(newAnswer, testQA.getAnswerText(), "엔티티의 답변 필드가 새로 작성된 답변으로 업데이트되어야 합니다.");
@@ -154,6 +153,9 @@ class AcademyQAServiceImplTest {
         testQA.setAnswerText(null);
         when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
 
-        assertThrows(NoSuchElementException.class, () -> qaService.deleteAnswer(qaId, academyId));
+        assertThrows(IllegalStateException.class, () -> qaService.deleteAnswer(qaId, academyId),
+                "삭제할 답변이 없을 경우 IllegalStateException이 발생해야 합니다.");
+
+        verify(qaRepository, never()).delete(testQA);
     }
 }
