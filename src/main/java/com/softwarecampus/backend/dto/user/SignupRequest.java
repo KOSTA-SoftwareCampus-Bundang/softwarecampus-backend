@@ -1,7 +1,9 @@
 package com.softwarecampus.backend.dto.user;
 
+import com.softwarecampus.backend.domain.common.AccountType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -15,6 +17,8 @@ import jakarta.validation.constraints.Size;
  * @param address 주소 (선택)
  * @param affiliation 소속 (선택)
  * @param position 직책 (선택)
+ * @param accountType 계정 타입 (필수, USER/ACADEMY/ADMIN)
+ * @param academyId 기관 ID (ACADEMY 타입일 때 필수)
  */
 public record SignupRequest(
     
@@ -42,6 +46,11 @@ public record SignupRequest(
     
     String address,
     String affiliation,
-    String position
+    String position,
+    
+    @NotNull(message = "계정 타입은 필수입니다")
+    AccountType accountType,
+    
+    Long academyId
 ) {
 }
