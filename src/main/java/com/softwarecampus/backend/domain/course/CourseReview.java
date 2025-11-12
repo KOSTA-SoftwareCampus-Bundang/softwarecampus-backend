@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.domain.course;
 
+import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,7 +35,7 @@ public class CourseReview extends BaseSoftDeleteSupportEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ApprovalStatus reviewApproved = ApprovalStatus.WAITING;
+    private ApprovalStatus reviewApproved = ApprovalStatus.PENDING;
 
     private LocalDateTime approvedAt;
 
