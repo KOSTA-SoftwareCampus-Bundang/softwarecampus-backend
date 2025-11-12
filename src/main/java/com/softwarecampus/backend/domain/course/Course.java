@@ -55,6 +55,7 @@ public class Course extends BaseSoftDeleteSupportEntity {
     /** 승인 관련 */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private ApprovalStatus isApproved = ApprovalStatus.PENDING;
 
     private LocalDateTime approvedAt;
