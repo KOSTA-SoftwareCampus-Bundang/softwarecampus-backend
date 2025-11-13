@@ -92,8 +92,16 @@ public class AccountAdminServiceImpl implements AccountAdminService {
 
         account.setUserName(request.getUserName());
         account.setPhoneNumber(request.getPhoneNumber());
-        account.setAffiliation(request.getAffiliation());
-        account.setPosition(request.getPosition());
+
+        if (request.getAffiliation() != null) {
+            account.setAffiliation(request.getAffiliation());
+        }
+        if (request.getPosition() != null) {
+            account.setPosition(request.getPosition());
+        }
+        if (request.getAddress() != null) {
+            account.setAddress(request.getAddress());
+        }
 
         if (request.getAccountApproved() != null) {
             account.setAccountApproved(request.getAccountApproved());
