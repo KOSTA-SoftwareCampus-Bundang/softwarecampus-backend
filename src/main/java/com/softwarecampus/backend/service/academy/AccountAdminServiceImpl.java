@@ -49,12 +49,15 @@ public class AccountAdminServiceImpl implements AccountAdminService {
      *  Page 처리 헬퍼 메서드 : Page의 내용을 Stream으로 필터링/매핑 후, 다시 Page 객체로 재구성
      */
     private Page<AccountResponse> filterAndMapToPage(Page<Account> accountPage, Pageable pageable, String searchKeyword) {
+
+        String normalizedKeyword = searchKeyword == null ? null : searchKeyword.toLowerCase();
+
         List<AccountResponse> filteredList = accountPage.stream()
                 .filter(account -> account.isActive() && (
-                        searchKeyword == null ||
-                                account.getUserName().toLowerCase().contains(searchKeyword) ||
-                                account.getEmail().toLowerCase().contains(searchKeyword) ||
-                                account.getPhoneNumber().contains(searchKeyword)
+                        normalizedKeyword == null ||
+                                (account.getUserName() != null && account.getUserName().toLowerCase().contains(normalizedKeyword)) ||
+                                (account.getEmail() != null && account.getEmail().toLowerCase().contains(normalizedKeyword)) ||
+                                (account.getPhoneNumber() != null && account.getPhoneNumber().contains(normalizedKeyword))
                 ))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -70,9 +73,9 @@ public class AccountAdminServiceImpl implements AccountAdminService {
      */
     @Override
     public Page<AccountResponse> getAllActiveAccounts(Pageable pageable) {
-        Page<Account> accountPage = accountRepository.findAll(pageable);
+        Page<Account> accountPage = accountRepository.findByIsDeletedFalse(pageable);
 
-        return filterAndMapToPage(accountPage, pageable, null);
+        return accountPage.map(this::toResponse);
     }
 
     /**
@@ -80,10 +83,9 @@ public class AccountAdminServiceImpl implements AccountAdminService {
      */
     @Override
     public Page<AccountResponse> searchAccounts(String keyword, Pageable pageable) {
-        Page<Account> accountPage = accountRepository.findAll(pageable);
-        String searchKeyword = (keyword == null || keyword.trim().isEmpty()) ? null : keyword;
+        Page<Account> accountPage = accountRepository.searchActiveAccounts(keyword, pageable);
 
-        return filterAndMapToPage(accountPage, pageable, searchKeyword);
+        return accountPage.map(this::toResponse);
     }
 
     /**
@@ -105,6 +107,11 @@ public class AccountAdminServiceImpl implements AccountAdminService {
     @Transactional
     public AccountResponse updateAccount(Long accountId, AccountUpdateRequest request) {
         Account account = findAccount(accountId);
+
+        // 삭제된 계정이 수정되지 못하도록 조건을 추가해준다.
+        if (account.getIsDeleted()) {
+            throw new NoSuchElementException("Account with id: " + accountId + " not found");
+        }
 
         account.setUserName(request.getUserName());
         account.setPhoneNumber(request.getPhoneNumber());

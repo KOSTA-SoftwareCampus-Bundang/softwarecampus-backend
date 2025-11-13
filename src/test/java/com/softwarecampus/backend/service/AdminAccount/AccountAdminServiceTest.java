@@ -109,11 +109,11 @@ class AccountAdminServiceTest {
     @Test
     @DisplayName("활성 회원 목록 조회 시 삭제된 계정은 제외")
     void getAllActiveAccounts() {
-        List<Account> allAccounts = Arrays.asList(activeUser, deletedUser, academyUser);
+        List<Account> activeAccounts = Arrays.asList(activeUser, academyUser);
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Account> mockPage = new PageImpl<>(allAccounts, pageable, allAccounts.size());
+        Page<Account> mockPage = new PageImpl<>(activeAccounts, pageable, activeAccounts.size());
 
-        when(accountRepository.findAll(any(Pageable.class))).thenReturn(mockPage);
+        when(accountRepository.findByIsDeletedFalse(any(Pageable.class))).thenReturn(mockPage);
 
         // When
         Page<AccountResponse> resultPage = accountAdminService.getAllActiveAccounts(pageable);
@@ -134,12 +134,14 @@ class AccountAdminServiceTest {
     @DisplayName("회원 목록 검색 시 키워드와 Soft Delete 상태를 필터링")
     void searchAccounts_FilterByKeyword() {
         // '사용자'라는 키워드에는 세 명 모두 포함됨.
-        List<Account> allAccounts = Arrays.asList(activeUser, deletedUser, academyUser);
+        List<Account> allAccounts = Arrays.asList(activeUser, academyUser);
         Pageable pageable = PageRequest.of(0, 10);
         Page<Account> mockPage = new PageImpl<>(allAccounts, pageable, allAccounts.size());
-        String keyword = "사용자";
 
-        when(accountRepository.findAll(any(Pageable.class))).thenReturn(mockPage);
+        String keyword = "사용자";
+        String searchKeyword = keyword.toLowerCase();
+
+        when(accountRepository.searchActiveAccounts(eq(searchKeyword), any(Pageable.class))).thenReturn(mockPage);
 
         // When
         Page<AccountResponse> resultPage = accountAdminService.searchAccounts(keyword, pageable);
