@@ -83,7 +83,6 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- Bean Validation: DTO 입력값 검증을 위해 추가 (Spring Boot 2.3 이후 별도 의존성 필요) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>

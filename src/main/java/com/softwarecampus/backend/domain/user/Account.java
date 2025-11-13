@@ -61,8 +61,11 @@ public class Account extends BaseSoftDeleteSupportEntity {
     @Column(name = "account_approved")
     private ApprovalStatus accountApproved;  // 승인 상태 (기관 계정용)
     
+    @Column(name = "academy_id")
+    private Long academyId;               // 기관 ID (ACADEMY 타입일 때 설정, 향후 FK로 변경 예정)
+    
     // ===== 향후 추가 예정 (다른 도메인 작업 후) =====
-    // academy_id는 추후 Academy 엔티티 생성 시 추가 예정
+    // academy_id는 추후 Academy 엔티티 생성 시 @ManyToOne으로 변경 예정
     // @ManyToOne(fetch = FetchType.LAZY)
     // @JoinColumn(name = "academy_id")
     // private Academy academy;
