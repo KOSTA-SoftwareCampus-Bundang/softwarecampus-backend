@@ -50,6 +50,7 @@ src/main/java/com/softwarecampus/backend/
 
 **Bean Validation 애노테이션 사용:**
 ```java
+@ValidAccountType  // 클래스 레벨 커스텀 검증
 public record SignupRequest(
     @NotBlank(message = "이메일은 필수입니다")
     @Email(message = "유효한 이메일 형식이 아닙니다")
@@ -62,7 +63,7 @@ public record SignupRequest(
     @NotNull(message = "계정 타입은 필수입니다")
     AccountType accountType,
     
-    Long academyId
+    Long academyId  // ACADEMY 타입일 때만 필수 (USER/ADMIN은 null 허용)
 ) {}
 
 // Controller에서 @Valid 사용
@@ -72,11 +73,66 @@ public ResponseEntity<AccountResponse> signup(@Valid @RequestBody SignupRequest 
 }
 ```
 
-**커스텀 검증 애노테이션:**
+**커스텀 검증 애노테이션 (`@ValidAccountType`):**
+
+`@ValidAccountType`은 클래스 레벨에서 적용되는 커스텀 Bean Validation 애노테이션으로, 계정 타입에 따른 조건부 필수 필드 검증을 수행합니다.
+
+**구현 파일:**
+- `validation/ValidAccountType.java`: 커스텀 애노테이션 정의
+- `validation/AccountTypeValidator.java`: 실제 검증 로직 구현
+
+**검증 규칙:**
+1. **ACADEMY 타입** → `academyId != null` (필수)
+   - ACADEMY 계정은 반드시 소속 학원 ID를 제공해야 함
+   - `academyId`가 null이면 검증 실패
+   
+2. **USER/ADMIN 타입** → `academyId` 무시 (null 허용)
+   - USER, ADMIN 계정은 학원과 무관하므로 `academyId` 검증하지 않음
+   - `academyId`가 제공되어도 무시됨 (Service에서 null로 설정)
+
+**에러 메시지:**
+- 기본 메시지: `"ACADEMY 타입일 경우 academyId는 필수입니다"`
+- HTTP 응답: GlobalExceptionHandler가 400 Bad Request로 변환
+
+**구현 예시:**
 ```java
-@ValidAccountType  // ACADEMY 타입일 때 academyId 필수 검증
-public record SignupRequest(...) {}
+// ValidAccountType.java (애노테이션 정의)
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = AccountTypeValidator.class)
+public @interface ValidAccountType {
+    String message() default "ACADEMY 타입일 경우 academyId는 필수입니다";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+
+// AccountTypeValidator.java (검증 로직)
+public class AccountTypeValidator implements ConstraintValidator<ValidAccountType, SignupRequest> {
+    @Override
+    public boolean isValid(SignupRequest request, ConstraintValidatorContext context) {
+        if (request == null) {
+            return true;  // null 요청은 @NotNull에서 처리
+        }
+        
+        // ACADEMY 타입일 때만 academyId 필수 검증
+        if (request.accountType() == AccountType.ACADEMY) {
+            return request.academyId() != null;
+        }
+        
+        // USER, ADMIN 타입은 academyId 검증 안 함
+        return true;
+    }
+}
 ```
+
+**검증 시점:**
+- Controller 진입 전 (`@Valid` 애노테이션에 의해 자동 실행)
+- `MethodArgumentNotValidException` 발생 시 GlobalExceptionHandler가 400 응답 생성
+
+**장점:**
+- 선언적 검증: 코드가 깔끔하고 재사용 가능
+- 일관된 에러 처리: GlobalExceptionHandler와 자동 통합
+- 테스트 용이: 단위 테스트로 검증 로직 독립 검증 가능
 
 #### (2) EmailUtils 역할 명확화
 
@@ -272,19 +328,41 @@ private AccountResponse toAccountResponse(Account account) {
 
 **도메인 예외와 HTTP 상태 코드 매핑:**
 
-GlobalExceptionHandler가 다음 규칙에 따라 자동으로 HTTP 응답을 생성합니다:
+GlobalExceptionHandler가 다음 규칙에 따라 자동으로 HTTP 응답을 생성합니다 (참조: `GlobalExceptionHandler.java` 라인 40-142):
 
-| 도메인 예외 | HTTP 상태 코드 | 설명 |
-|-----------|---------------|------|
-| `InvalidInputException` | 400 Bad Request | 이메일 형식 오류, 전화번호 중복, ADMIN 차단, ACADEMY academyId 누락 등 |
-| `DuplicateEmailException` | 409 Conflict | 이메일 중복 |
-| `AccountNotFoundException` | 404 Not Found | 계정을 찾을 수 없음 |
-| 기타 RuntimeException | 500 Internal Server Error | 예상치 못한 서버 오류 |
+| 예외 타입 | HTTP 상태 코드 | 설명 | Handler 라인 |
+|-----------|---------------|------|-------------|
+| `MethodArgumentNotValidException` | 400 Bad Request | Bean Validation 실패 (@Valid 어노테이션) | 40-62 |
+| `ConstraintViolationException` | 400 Bad Request | Request Parameter/Path Variable Validation 실패 | 68-88 |
+| `InvalidInputException` | 400 Bad Request | 이메일 형식 오류, ADMIN 차단, ACADEMY academyId 누락 등 비즈니스 규칙 위반 | 120-135 |
+| `DuplicateEmailException` | 409 Conflict | 이메일 중복 (UNIQUE 제약 위반) | 141-156 |
+| `DataIntegrityViolationException` | 409 Conflict | 데이터베이스 제약 조건 위반 (UNIQUE, FOREIGN KEY 등) - 필요시 추가 |
+| `AccountNotFoundException` | 404 Not Found | 계정을 찾을 수 없음 | 162-177 |
+| `OptimisticLockingFailureException` | 409 Conflict | 낙관적 잠금 실패 (동시성 충돌) - 필요시 추가 | - |
+| `AuthenticationException` | 401 Unauthorized | 인증 실패 (Phase 16 JWT 로그인에서 추가 예정) | - |
+| `AccessDeniedException` | 403 Forbidden | 권한 부족 (Phase 16 이후 추가 예정) | - |
+| `Exception` (fallback) | 500 Internal Server Error | 예상치 못한 서버 오류 | 94-106 |
 
-**참고:**
-- Bean Validation 실패 (`MethodArgumentNotValidException`) → 400 Bad Request
-- GlobalExceptionHandler는 RFC 9457 ProblemDetail 형식으로 응답
-- 모든 예외는 `type`, `title`, `status`, `detail` 필드 포함
+**매핑 우선순위 및 폴백 규칙:**
+1. **구체적인 예외부터 처리**: Spring은 `@ExceptionHandler`를 상속 관계 기준으로 가장 구체적인 핸들러를 먼저 적용
+2. **도메인 예외 우선**: 프로젝트의 커스텀 예외(`InvalidInputException` 등)가 Spring 기본 예외보다 먼저 처리
+3. **폴백 핸들러**: 매핑되지 않은 모든 예외는 `Exception` 핸들러가 500 응답 생성 (라인 94-106)
+4. **데이터베이스 예외**: `DataIntegrityViolationException`은 필요시 명시적으로 추가 가능 (현재는 도메인 예외로 변환하여 처리)
+
+**RFC 9457 ProblemDetail 응답 형식:**
+- 모든 예외 응답은 표준 RFC 9457 형식을 따름
+- **필수 필드**:
+  - `type`: 문제 유형 식별 URI (예: `https://api.softwarecampus.com/problems/invalid-input`)
+  - `title`: 사람이 읽을 수 있는 짧은 요약 (영문, 예: "Invalid Input")
+  - `status`: HTTP 상태 코드 (예: 400)
+  - `detail`: 구체적인 오류 설명 (한글, 예: "이메일 형식이 올바르지 않습니다.")
+- **선택 필드**:
+  - `errors`: Bean Validation 실패 시 필드별 오류 맵 (MethodArgumentNotValidException에서 사용)
+
+**PII 보호:**
+- DEBUG 로그에서 개인정보(이메일 등) 노출 방지
+- `EmailUtils.maskEmail()`을 사용하여 민감 정보 마스킹
+- 프로덕션 환경에서는 상세 예외 메시지 숨김
 
 ### 8. 예외 패키지 구조
 **결정:** 도메인별 예외 패키지 분리 (`exception/user/`)
