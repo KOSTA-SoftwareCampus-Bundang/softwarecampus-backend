@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ProblemDetail handleConstraintViolationException(ConstraintViolationException ex) {
         if (log.isDebugEnabled()) {
-            log.debug("Constraint violation: {}", ex.getMessage());
+            log.debug("Constraint violation detected for request parameters");
         }
         
         // 첫 번째 위반 메시지 추출
