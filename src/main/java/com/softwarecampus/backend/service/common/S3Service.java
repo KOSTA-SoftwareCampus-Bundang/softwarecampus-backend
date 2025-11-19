@@ -17,8 +17,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -167,75 +165,14 @@ public class S3Service {
     }
 
     /**
-     * S3 키에서 안전한 URL을 생성합니다.
-     * 키의 각 경로 세그먼트를 URL 인코딩하여 공백과 특수문자가 포함된 파일명도 올바르게 처리합니다.
+     * S3 키에서 URL을 생성합니다.
+     * UUID 기반 파일명과 enum 기반 폴더명은 URL-safe하므로 별도 인코딩 불필요
      */
     private String getFileUrl(String key) {
-        String encodedKey = encodeS3Key(key);
         return String.format("https://%s.s3.%s.amazonaws.com/%s",
                 bucketName,
                 region,
-                encodedKey);
-    }
-
-    /**
-     * S3 키의 각 경로 세그먼트를 RFC 3986 표준에 따라 퍼센트 인코딩합니다.
-     * 폴더 구분자('/')는 보존하면서 파일명의 공백과 특수문자를 올바르게 인코딩합니다.
-     * URLEncoder는 form encoding(application/x-www-form-urlencoded)을 사용하여
-     * 공백을 '+'로 변환하므로 S3 경로에는 부적합합니다.
-     */
-    private String encodeS3Key(String key) {
-        if (key == null || key.isEmpty()) {
-            return key;
-        }
-        
-        try {
-            // split("/", -1)을 사용해 trailing empty segments 보존
-            String[] segments = key.split("/", -1);
-            StringBuilder encodedKey = new StringBuilder();
-            
-            // 선행 슬래시 감지 (첫 세그먼트가 empty면 key가 "/"로 시작)
-            boolean startsWithSlash = key.startsWith("/");
-            // 후행 슬래시 감지 (마지막 세그먼트가 empty면 key가 "/"로 끝남)
-            boolean endsWithSlash = key.endsWith("/");
-            
-            for (int i = 0; i < segments.length; i++) {
-                String segment = segments[i];
-                
-                // empty segment 처리: 선행/후행/연속 슬래시를 의미
-                if (segment.isEmpty()) {
-                    // 첫 번째 empty segment (선행 슬래시)
-                    if (i == 0 && startsWithSlash) {
-                        encodedKey.append("/");
-                    }
-                    // 중간 empty segment (연속 슬래시 "//")
-                    else if (i > 0 && i < segments.length - 1) {
-                        encodedKey.append("/");
-                    }
-                    // 마지막 empty segment (후행 슬래시)는 루프 후 처리
-                } else {
-                    // non-empty segment만 URI로 인코딩
-                    if (i > 0 && (i > 1 || !startsWithSlash)) {
-                        encodedKey.append("/");
-                    }
-                    // RFC 3986 표준 퍼센트 인코딩 사용
-                    // URI 생성자는 각 세그먼트를 올바르게 인코딩 (공백 -> %20)
-                    String encoded = new URI(null, null, segment, null).getRawPath();
-                    encodedKey.append(encoded);
-                }
-            }
-            
-            // 후행 슬래시 추가
-            if (endsWithSlash && !key.equals("/")) {
-                encodedKey.append("/");
-            }
-            
-            return encodedKey.toString();
-        } catch (URISyntaxException e) {
-            log.error("Failed to encode S3 key: {}", key, e);
-            // 인코딩 실패 시 원본 키 반환 (S3Service에서 추가 검증 필요)
-            throw new IllegalArgumentException("S3 키 인코딩에 실패했습니다: " + key, e);
-        }
+                key);
     }
 
     /**
