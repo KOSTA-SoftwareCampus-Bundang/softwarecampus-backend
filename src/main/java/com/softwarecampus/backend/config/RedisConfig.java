@@ -58,16 +58,20 @@ public class RedisConfig {
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // ObjectMapper 설정 - 타입 정보 활성화
+        // ObjectMapper 설정 - PROPERTY 기반 타입 정보
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         
-        // 타입 정보를 포함한 직렬화 활성화
+        // 타입 정보를 JSON 프로퍼티로 저장 (LinkedHashMap 문제 해결)
         PolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
                 .allowIfBaseType(Object.class)
                 .build();
-        objectMapper.activateDefaultTyping(typeValidator, ObjectMapper.DefaultTyping.NON_FINAL);
+        objectMapper.activateDefaultTyping(
+                typeValidator, 
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY
+        );
 
         GenericJackson2JsonRedisSerializer serializer =
                 new GenericJackson2JsonRedisSerializer(objectMapper);

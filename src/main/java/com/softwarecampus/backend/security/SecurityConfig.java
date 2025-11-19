@@ -23,6 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     /**
      * 보안 필터 체인 설정
@@ -52,6 +53,11 @@ public class SecurityConfig {
                 
                 // 나머지는 인증 필요
                 .anyRequest().authenticated()
+            )
+            
+            // 인증 실패 시 401 Unauthorized 반환
+            .exceptionHandling(exception -> 
+                exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
             )
             
             // Session을 사용하지 않음 (JWT 기반)
