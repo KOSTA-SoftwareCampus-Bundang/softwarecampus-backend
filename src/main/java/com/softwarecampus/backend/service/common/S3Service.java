@@ -85,7 +85,15 @@ public class S3Service {
                     .contentType(file.getContentType())
                     .build();
 
-            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
+            // 스트리밍 방식으로 파일 업로드 (메모리 효율적)
+            // file.getBytes()는 전체 파일을 메모리에 로드하여 대용량 파일 시 OutOfMemoryError 발생 가능
+            // InputStream을 사용하여 스트리밍 방식으로 업로드
+            try (var inputStream = file.getInputStream()) {
+                s3Client.putObject(
+                    putObjectRequest,
+                    RequestBody.fromInputStream(inputStream, file.getSize())
+                );
+            }
 
             String fileUrl = getFileUrl(key);
             log.info("File uploaded successfully to S3: {}", key);
