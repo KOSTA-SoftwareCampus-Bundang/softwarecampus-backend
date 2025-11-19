@@ -4,6 +4,7 @@ import com.softwarecampus.backend.dto.course.ReviewCreateRequest;
 import com.softwarecampus.backend.dto.course.ReviewResponse;
 import com.softwarecampus.backend.dto.course.ReviewUpdateRequest;
 import com.softwarecampus.backend.service.course.CourseReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +36,7 @@ public class CourseReviewController {
     @PostMapping("/reviews/{courseId}")
     public ResponseEntity<Void> createReview(
             @PathVariable Long courseId,
-            @RequestBody ReviewCreateRequest request,
+            @RequestBody @Valid ReviewCreateRequest request,
             @RequestAttribute("accountId") Long accountId // 인증정보에서 가져온다고 가정
     ) {
         Long id = courseReviewService.createReview(courseId, request, accountId);
@@ -49,7 +50,7 @@ public class CourseReviewController {
     @PutMapping("/reviews/{reviewId}")
     public ResponseEntity<Void> updateReview(
             @PathVariable Long reviewId,
-            @RequestBody ReviewUpdateRequest request,
+            @RequestBody @Valid ReviewUpdateRequest request,
             @RequestAttribute("accountId") Long accountId
     ) {
         courseReviewService.updateReview(reviewId, request, accountId);

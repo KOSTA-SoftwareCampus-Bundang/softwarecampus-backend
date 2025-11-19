@@ -10,7 +10,7 @@ import lombok.*;
 @Table(
         name = "review_section",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"review_id", "section_type"})
+                @UniqueConstraint(columnNames = {"review_id", "section_type", "deleted_at"})
         }
 )
 @Getter

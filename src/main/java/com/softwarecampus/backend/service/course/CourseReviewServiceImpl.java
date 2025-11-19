@@ -27,13 +27,40 @@ public class CourseReviewServiceImpl implements CourseReviewService {
     @Override
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviews(Long courseId) {
-        List<CourseReview> reviews = courseReviewRepository
-                .findByCourse_IdAndReviewApproved(courseId, ApprovalStatus.APPROVED);
 
+        // 1) 리뷰 + 섹션 + 작성자 fetch join
+        List<CourseReview> reviews = courseReviewRepository
+                .findByCourseIdWithSections(courseId, ApprovalStatus.APPROVED);
+
+        if (reviews.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 2) 리뷰 ID 추출
+        List<Long> reviewIds = reviews.stream()
+                .map(CourseReview::getId)
+                .toList();
+
+        // 3) 좋아요/싫어요 일괄 조회
+        Map<Long, Long> likeMap = recommendRepository.countLikes(reviewIds).stream()
+                .collect(Collectors.toMap(
+                        row -> ((Number) row[0]).longValue(),
+                        row -> ((Number) row[1]).longValue()
+                ));
+
+        Map<Long, Long> dislikeMap = recommendRepository.countDislikes(reviewIds).stream()
+                .collect(Collectors.toMap(
+                        row -> ((Number) row[0]).longValue(),
+                        row -> ((Number) row[1]).longValue()
+                ));
+
+        // 4) map을 이용해 toResponse 호출 (N+1 방지)
         return reviews.stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+                .map(r -> toResponse(r, likeMap, dislikeMap))
+                .toList();
     }
+
+
 
     @Override
     public Long createReview(Long courseId, ReviewCreateRequest request, Long accountId) {
@@ -46,7 +73,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 .title(request.getTitle())
                 .course(course)
                 .account(account)
-                .reviewApproved(ApprovalStatus.PENDING)
+                .reviewApproved(ApprovalStatus.APPROVED)
                 .build();
 
         for (ReviewSectionRequest s : request.getSections()) {
@@ -101,8 +128,26 @@ public class CourseReviewServiceImpl implements CourseReviewService {
     public ReviewResponse getReviewDetail(Long reviewId) {
         CourseReview review = courseReviewRepository.findById(reviewId)
                 .orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다."));
-        return toResponse(review);
+
+        // 단일 리뷰 ID를 리스트로 만들어 일괄 조회 메서드 사용
+        List<Long> reviewIds = List.of(reviewId);
+
+        Map<Long, Long> likeMap = recommendRepository.countLikes(reviewIds).stream()
+                .collect(Collectors.toMap(
+                        row -> ((Number) row[0]).longValue(),
+                        row -> ((Number) row[1]).longValue()
+                ));
+
+        Map<Long, Long> dislikeMap = recommendRepository.countDislikes(reviewIds).stream()
+                .collect(Collectors.toMap(
+                        row -> ((Number) row[0]).longValue(),
+                        row -> ((Number) row[1]).longValue()
+                ));
+
+        return toResponse(review, likeMap, dislikeMap);
     }
+
+
 
     @Override
     public void recommendReview(Long reviewId, Long accountId, boolean liked) {
@@ -130,14 +175,17 @@ public class CourseReviewServiceImpl implements CourseReviewService {
     // ====================
     // 내부 변환 로직
     // ====================
-    private ReviewResponse toResponse(CourseReview review) {
+    private ReviewResponse toResponse(CourseReview review,
+                                      Map<Long, Long> likeMap,
+                                      Map<Long, Long> dislikeMap) {
+
         List<ReviewSectionResponse> sections = review.getSections().stream()
                 .map(s -> ReviewSectionResponse.builder()
                         .sectionType(s.getSectionType())
                         .point(s.getPoint())
                         .text(s.getText())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
         double avg = review.getSections().stream()
                 .filter(s -> s.getSectionType().isHasRating() && s.getPoint() != null)
@@ -145,8 +193,8 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 .average()
                 .orElse(0.0);
 
-        int likeCount = (int) recommendRepository.countByReview_IdAndLikedTrue(review.getId());
-        int dislikeCount = (int) recommendRepository.countByReview_IdAndLikedFalse(review.getId());
+        long likeCount = likeMap.getOrDefault(review.getId(), 0L);
+        long dislikeCount = dislikeMap.getOrDefault(review.getId(), 0L);
 
         return ReviewResponse.builder()
                 .id(review.getId())
@@ -154,10 +202,11 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 .authorName(review.getAccount() != null ? review.getAccount().getUserName() : "익명")
                 .sections(sections)
                 .averageScore(avg)
-                .likeCount(likeCount)
-                .dislikeCount(dislikeCount)
+                .likeCount((int) likeCount)
+                .dislikeCount((int) dislikeCount)
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
                 .build();
     }
+
 }

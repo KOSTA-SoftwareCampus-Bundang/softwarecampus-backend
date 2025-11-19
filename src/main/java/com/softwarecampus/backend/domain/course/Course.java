@@ -47,6 +47,7 @@ public class Course extends BaseSoftDeleteSupportEntity {
 
     private boolean isKdt;
     private boolean isNailbaeum;
+    @Builder.Default
     private boolean isOffline = true;
 
     @Column(columnDefinition = "TEXT")

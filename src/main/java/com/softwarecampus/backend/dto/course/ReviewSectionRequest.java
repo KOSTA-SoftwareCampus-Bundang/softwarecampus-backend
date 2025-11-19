@@ -3,6 +3,7 @@ package com.softwarecampus.backend.dto.course;
 import com.softwarecampus.backend.domain.course.ReviewSectionType;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 /**
@@ -15,6 +16,7 @@ import lombok.*;
 @Builder
 public class ReviewSectionRequest {
 
+    @NotNull
     private ReviewSectionType sectionType;
 
     @Min(1)
