@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
  * - uploadFile: S3 파일 업로드
  * - deleteFile: S3 파일 삭제
  * - validateFile: 파일 검증
- * - encodeS3Key: S3 키 인코딩
+ * - validateS3Key: S3 키 보안 검증
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("S3Service 단위 테스트")
@@ -327,7 +327,7 @@ class S3ServiceTest {
         // when & then
         assertThatThrownBy(() -> s3Service.deleteFile("invalid-url"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("유효하지 않은 S3 URL 형식입니다");
+                .hasMessageContaining("유효하지 않은 URL 형식입니다");
     }
 
     @Test
@@ -354,75 +354,104 @@ class S3ServiceTest {
     }
 
     @Test
-    @DisplayName("S3 키 인코딩 - 공백 및 특수문자 처리")
-    void testEncodeS3Key() throws Exception {
+    @DisplayName("S3 키 검증 - 정상 키")
+    void testValidateS3Key_Valid() throws Exception {
         // given
-        String key = "folder/test file with spaces.jpg";
+        String validKey = "board/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg";
 
-        // when
-        String encoded = (String) ReflectionTestUtils.invokeMethod(s3Service, "encodeS3Key", key);
-
-        // then
-        assertThat(encoded).isEqualTo("folder/test%20file%20with%20spaces.jpg");
+        // when & then - 예외가 발생하지 않아야 함
+        assertThatNoException().isThrownBy(() ->
+            ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", validKey)
+        );
     }
 
     @Test
-    @DisplayName("S3 키 인코딩 - 선행 슬래시 보존")
-    void testEncodeS3Key_LeadingSlash() throws Exception {
+    @DisplayName("S3 키 검증 - 경로 순회 공격 방지 (..)")
+    void testValidateS3Key_PathTraversal_DoubleDot() throws Exception {
         // given
-        String key = "/folder/file.jpg";
+        String attackKey = "board/../profile/malicious.jpg";
 
-        // when
-        String encoded = (String) ReflectionTestUtils.invokeMethod(s3Service, "encodeS3Key", key);
-
-        // then
-        assertThat(encoded).startsWith("/");
+        // when & then
+        assertThatThrownBy(() ->
+            ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", attackKey)
+        )
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("잘못된 S3 키 형식입니다");
     }
 
     @Test
-    @DisplayName("S3 키 인코딩 - 후행 슬래시 보존")
-    void testEncodeS3Key_TrailingSlash() throws Exception {
+    @DisplayName("S3 키 검증 - 경로 순회 공격 방지 (//)")
+    void testValidateS3Key_PathTraversal_DoubleSlash() throws Exception {
         // given
-        String key = "folder/subfolder/";
+        String attackKey = "board//malicious.jpg";
 
-        // when
-        String encoded = (String) ReflectionTestUtils.invokeMethod(s3Service, "encodeS3Key", key);
-
-        // then
-        assertThat(encoded).endsWith("/");
+        // when & then
+        assertThatThrownBy(() ->
+            ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", attackKey)
+        )
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("잘못된 S3 키 형식입니다");
     }
 
     @Test
-    @DisplayName("S3 키 인코딩 - 연속 슬래시 보존")
-    void testEncodeS3Key_ConsecutiveSlashes() throws Exception {
+    @DisplayName("S3 키 검증 - 경로 순회 공격 방지 (\\\\)")
+    void testValidateS3Key_PathTraversal_Backslash() throws Exception {
         // given
-        String key = "folder//file.jpg";
+        String attackKey = "board\\\\malicious.jpg";
 
-        // when
-        String encoded = (String) ReflectionTestUtils.invokeMethod(s3Service, "encodeS3Key", key);
-
-        // then
-        assertThat(encoded).contains("//");
+        // when & then
+        assertThatThrownBy(() ->
+            ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", attackKey)
+        )
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("잘못된 S3 키 형식입니다");
     }
 
     @Test
-    @DisplayName("S3 키 인코딩 - null 입력")
-    void testEncodeS3Key_Null() throws Exception {
-        // when
-        String encoded = (String) ReflectionTestUtils.invokeMethod(s3Service, "encodeS3Key", (String) null);
+    @DisplayName("S3 키 검증 - 선행 슬래시 방지")
+    void testValidateS3Key_LeadingSlash() throws Exception {
+        // given
+        String attackKey = "/board/malicious.jpg";
 
-        // then
-        assertThat(encoded).isNull();
+        // when & then
+        assertThatThrownBy(() ->
+            ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", attackKey)
+        )
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("잘못된 S3 키 형식입니다");
     }
 
     @Test
-    @DisplayName("S3 키 인코딩 - 빈 문자열")
-    void testEncodeS3Key_Empty() throws Exception {
-        // when
-        String encoded = (String) ReflectionTestUtils.invokeMethod(s3Service, "encodeS3Key", "");
+    @DisplayName("S3 키 검증 - null 입력")
+    void testValidateS3Key_Null() throws Exception {
+        // when & then
+        assertThatThrownBy(() ->
+            ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", (String) null)
+        )
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("S3 키가 비어있습니다");
+    }
 
-        // then
-        assertThat(encoded).isEmpty();
+    @Test
+    @DisplayName("S3 키 검증 - 빈 문자열")
+    void testValidateS3Key_Empty() throws Exception {
+        // when & then
+        assertThatThrownBy(() ->
+            ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", "")
+        )
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("S3 키가 비어있습니다");
+    }
+
+    @Test
+    @DisplayName("S3 키 검증 - 공백 문자열")
+    void testValidateS3Key_Whitespace() throws Exception {
+        // when & then
+        assertThatThrownBy(() ->
+            ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", "   ")
+        )
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("S3 키가 비어있습니다");
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.controller.common;
 
+import com.softwarecampus.backend.exception.GlobalExceptionHandler;
 import com.softwarecampus.backend.exception.S3UploadException;
 import com.softwarecampus.backend.security.SecurityConfig;
 import com.softwarecampus.backend.service.common.FileType;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -29,10 +31,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * - POST /api/files/upload: 파일 업로드 (인증된 사용자만)
  * - DELETE /api/admin/files/delete: 파일 삭제 (관리자만)
  * - 인증 및 권한 검증
- * - 입력 검증 (파일명, 경로 순회 공격 등)
+ * - 예외 처리 (GlobalExceptionHandler 통한 RFC 9457 ProblemDetail 응답)
  */
 @WebMvcTest(FileController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
+@TestPropertySource(properties = {
+    "problem.base-uri=https://api.example.com/problems"
+})
 @DisplayName("FileController 단위 테스트")
 class FileControllerTest {
 
@@ -304,7 +309,7 @@ class FileControllerTest {
         when(s3Service.uploadFile(any(), eq("profile"), eq(FileType.FileTypeEnum.PROFILE)))
                 .thenThrow(new S3UploadException("S3 upload failed"));
 
-        // when & then
+        // when & then - GlobalExceptionHandler가 ProblemDetail 형식으로 응답
         mockMvc.perform(multipart("/api/files/upload")
                         .file(file)
                         .param("folder", "profile")
@@ -312,7 +317,9 @@ class FileControllerTest {
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("파일 업로드 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."));
+                .andExpect(jsonPath("$.title").value("Internal Server Error"))
+                .andExpect(jsonPath("$.detail").value("파일 업로드 중 서버 오류가 발생했습니다."))
+                .andExpect(jsonPath("$.reason").value("INTERNAL_ERROR"));
     }
 
     @Test
@@ -330,7 +337,7 @@ class FileControllerTest {
         when(s3Service.uploadFile(any(), eq("profile"), eq(FileType.FileTypeEnum.PROFILE)))
                 .thenThrow(new IllegalArgumentException("파일 크기가 제한을 초과합니다"));
 
-        // when & then
+        // when & then - GlobalExceptionHandler가 ProblemDetail 형식으로 응답
         mockMvc.perform(multipart("/api/files/upload")
                         .file(file)
                         .param("folder", "profile")
@@ -338,7 +345,8 @@ class FileControllerTest {
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("파일 크기가 제한을 초과합니다"));
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.detail").value("파일 크기가 제한을 초과합니다"));
     }
 
     // ==================== 파일 삭제 테스트 ====================
@@ -418,13 +426,19 @@ class FileControllerTest {
     @DisplayName("파일 삭제 실패 - 빈 URL")
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testDeleteFile_EmptyUrl() throws Exception {
-        // when & then
+        // given
+        doThrow(new S3UploadException("파일 URL이 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR))
+                .when(s3Service).deleteFile("");
+
+        // when & then - Service에서 검증 후 GlobalExceptionHandler가 ProblemDetail 형식으로 응답
         mockMvc.perform(delete("/api/admin/files/delete")
                         .param("fileUrl", "")
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("파일 URL이 비어있습니다."));
+                .andExpect(jsonPath("$.title").value("File Validation Error"))
+                .andExpect(jsonPath("$.detail").value("파일 검증에 실패했습니다. 파일이 비어있거나 유효하지 않습니다."))
+                .andExpect(jsonPath("$.reason").value("VALIDATION_ERROR"));
     }
 
     @Test
@@ -436,13 +450,15 @@ class FileControllerTest {
         doThrow(new S3UploadException("S3 delete failed"))
                 .when(s3Service).deleteFile(fileUrl);
 
-        // when & then
+        // when & then - GlobalExceptionHandler가 ProblemDetail 형식으로 응답
         mockMvc.perform(delete("/api/admin/files/delete")
                         .param("fileUrl", fileUrl)
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("파일 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."));
+                .andExpect(jsonPath("$.title").value("Internal Server Error"))
+                .andExpect(jsonPath("$.detail").value("파일 업로드 중 서버 오류가 발생했습니다."))
+                .andExpect(jsonPath("$.reason").value("INTERNAL_ERROR"));
     }
 
     @Test
@@ -451,15 +467,19 @@ class FileControllerTest {
     void testDeleteFile_InvalidUrlFormat() throws Exception {
         // given
         String fileUrl = "invalid-url";
+        doThrow(new S3UploadException("유효하지 않은 URL 형식입니다.", S3UploadException.FailureReason.VALIDATION_ERROR))
+                .when(s3Service).deleteFile(fileUrl);
 
-        // when & then
+        // when & then - Service에서 검증 후 GlobalExceptionHandler가 ProblemDetail 형식으로 응답
         mockMvc.perform(delete("/api/admin/files/delete")
                         .param("fileUrl", fileUrl)
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("유효하지 않은 URL 형식입니다."));
+                .andExpect(jsonPath("$.title").value("File Validation Error"))
+                .andExpect(jsonPath("$.detail").value("파일 검증에 실패했습니다. 파일이 비어있거나 유효하지 않습니다."))
+                .andExpect(jsonPath("$.reason").value("VALIDATION_ERROR"));
 
-        verify(s3Service, never()).deleteFile(any());
+        verify(s3Service, times(1)).deleteFile(fileUrl);
     }
 }
