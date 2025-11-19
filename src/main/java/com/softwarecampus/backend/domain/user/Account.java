@@ -10,6 +10,7 @@ import lombok.*;
  * 사용자 계정 엔티티
  * - 일반 사용자, 기관, 관리자 모두 이 엔티티를 사용
  * - Soft Delete 지원 (BaseSoftDeleteSupportEntity 상속)
+ * - Redis 캐싱 지원을 위해 Serializable 구현
  */
 @Entity
 @Getter
@@ -26,7 +27,9 @@ import lombok.*;
         @Index(name = "idx_account_type_approved", columnList = "account_type,account_approved")
     }
 )
-public class Account extends BaseSoftDeleteSupportEntity {
+public class Account extends BaseSoftDeleteSupportEntity implements java.io.Serializable {
+    
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
