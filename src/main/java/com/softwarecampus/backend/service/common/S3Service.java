@@ -140,12 +140,12 @@ public class S3Service {
      */
     private String extractKeyFromUrl(String fileUrl) {
         if (fileUrl == null || fileUrl.isBlank()) {
-            throw new IllegalArgumentException("파일 URL이 비어있습니다.");
+            throw new S3UploadException("파일 URL이 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
         
         String expectedPrefix = String.format("https://%s.s3.%s.amazonaws.com/", bucketName, region);
         if (!fileUrl.startsWith(expectedPrefix)) {
-            throw new IllegalArgumentException("유효하지 않은 S3 URL 형식입니다: " + fileUrl);
+            throw new S3UploadException("유효하지 않은 S3 URL 형식입니다: " + fileUrl, S3UploadException.FailureReason.VALIDATION_ERROR);
         }
         
         // URL에서 키 부분 추출
@@ -156,7 +156,7 @@ public class S3Service {
             return URLDecoder.decode(encodedKey, StandardCharsets.UTF_8.name());
         } catch (Exception e) {
             log.error("Failed to decode S3 key from URL: {}", fileUrl, e);
-            throw new IllegalArgumentException("S3 URL 디코딩에 실패했습니다: " + fileUrl, e);
+            throw new S3UploadException("S3 URL 디코딩에 실패했습니다: " + fileUrl, e, S3UploadException.FailureReason.VALIDATION_ERROR);
         }
     }
 
@@ -208,25 +208,25 @@ public class S3Service {
     private void validateFileUrl(String fileUrl) {
         // 1. null 및 빈 문자열 검증
         if (fileUrl == null || fileUrl.isBlank()) {
-            throw new IllegalArgumentException("파일 URL이 비어있습니다.");
+            throw new S3UploadException("파일 URL이 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
 
         // 2. URL 형식 검증 (기본 패턴 체크)
         if (!fileUrl.startsWith("https://") && !fileUrl.startsWith("http://")) {
             log.warn("File delete failed: invalid URL format: {}", fileUrl);
-            throw new IllegalArgumentException("유효하지 않은 URL 형식입니다.");
+            throw new S3UploadException("유효하지 않은 URL 형식입니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
 
         // 3. S3 URL 패턴 검증 (amazonaws.com 포함 여부)
         if (!fileUrl.contains(".s3.") || !fileUrl.contains(".amazonaws.com/")) {
             log.warn("File delete failed: not a valid S3 URL: {}", fileUrl);
-            throw new IllegalArgumentException("유효하지 않은 S3 URL입니다.");
+            throw new S3UploadException("유효하지 않은 S3 URL입니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
 
         // 4. URL 길이 검증 (비정상적으로 긴 URL 차단)
         if (fileUrl.length() > 2048) {
             log.warn("File delete failed: URL too long: {} characters", fileUrl.length());
-            throw new IllegalArgumentException("URL이 너무 깁니다.");
+            throw new S3UploadException("URL이 너무 깁니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
     }
 
@@ -243,19 +243,19 @@ public class S3Service {
      */
     private void validateS3Key(String key) {
         if (key == null || key.isBlank()) {
-            throw new IllegalArgumentException("S3 키가 비어있습니다.");
+            throw new S3UploadException("S3 키가 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
         
         // 경로 순회 패턴 검증 (**중요: URL 디코딩 후 검증**)
         if (key.contains("..") || key.contains("//") || key.contains("\\")) {
             log.warn("Path traversal attempt detected in decoded S3 key: {}", key);
-            throw new IllegalArgumentException("잘못된 S3 키 형식입니다.");
+            throw new S3UploadException("잘못된 S3 키 형식입니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
         
         // 추가 보안: 경로 구분자로 시작하면 안됨
         if (key.startsWith("/") || key.startsWith("\\")) {
             log.warn("S3 key starts with path separator: {}", key);
-            throw new IllegalArgumentException("잘못된 S3 키 형식입니다.");
+            throw new S3UploadException("잘못된 S3 키 형식입니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
     }
 

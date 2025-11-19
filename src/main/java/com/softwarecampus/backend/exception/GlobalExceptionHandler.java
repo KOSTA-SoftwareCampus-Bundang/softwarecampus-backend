@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -66,6 +68,40 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage())
         );
         problemDetail.setProperty("errors", errors);
+        
+        return problemDetail;
+    }
+
+    /**
+     * 필수 요청 파라미터 누락 처리 (@RequestParam required=true)
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ProblemDetail handleMissingParameter(MissingServletRequestParameterException ex) {
+        log.warn("Missing required request parameter: {}", ex.getParameterName());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            String.format("필수 파라미터 '%s'가 누락되었습니다.", ex.getParameterName())
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/missing-parameter"));
+        problemDetail.setTitle("Missing Required Parameter");
+        
+        return problemDetail;
+    }
+
+    /**
+     * 필수 멀티파트 파일 누락 처리 (multipart/form-data의 file part)
+     */
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ProblemDetail handleMissingFilePart(MissingServletRequestPartException ex) {
+        log.warn("Missing required file part: {}", ex.getRequestPartName());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            String.format("필수 파일 '%s'가 누락되었습니다.", ex.getRequestPartName())
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/missing-file"));
+        problemDetail.setTitle("Missing Required File");
         
         return problemDetail;
     }
@@ -200,7 +236,7 @@ public class GlobalExceptionHandler {
         switch (reason) {
             case FILE_TOO_LARGE:
                 status = HttpStatus.PAYLOAD_TOO_LARGE; // 413
-                message = "파일 크기가 너무 큽니다. 최대 허용 크기를 초과했습니다.";
+                message = ex.getMessage(); // 원본 메시지에 구체적인 크기 정보 포함
                 type = problemBaseUri + "/file-too-large";
                 title = "File Too Large";
                 log.warn("S3 upload failed - File too large: {}", ex.getMessage());
@@ -208,7 +244,7 @@ public class GlobalExceptionHandler {
 
             case INVALID_FILE_TYPE:
                 status = HttpStatus.UNSUPPORTED_MEDIA_TYPE; // 415
-                message = "지원하지 않는 파일 형식입니다.";
+                message = ex.getMessage(); // 원본 메시지에 허용된 형식 정보 포함
                 type = problemBaseUri + "/invalid-file-type";
                 title = "Invalid File Type";
                 log.warn("S3 upload failed - Invalid file type: {}", ex.getMessage());
@@ -216,7 +252,7 @@ public class GlobalExceptionHandler {
 
             case VALIDATION_ERROR:
                 status = HttpStatus.BAD_REQUEST; // 400
-                message = "파일 검증에 실패했습니다. 파일이 비어있거나 유효하지 않습니다.";
+                message = ex.getMessage(); // 원본 메시지에 구체적인 검증 실패 이유 포함
                 type = problemBaseUri + "/file-validation-error";
                 title = "File Validation Error";
                 log.warn("S3 upload failed - Validation error: {}", ex.getMessage());
