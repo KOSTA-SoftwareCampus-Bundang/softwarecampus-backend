@@ -5,6 +5,7 @@ import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -36,6 +37,9 @@ import java.util.NoSuchElementException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @Value("${problem.base-uri}")
+    private String problemBaseUri;
+
     /**
      * Bean Validation 실패 처리 (@Valid)
      */
@@ -53,7 +57,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             "요청 본문에 유효하지 않은 필드가 있습니다."
         );
-        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/validation-error"));
+        problemDetail.setType(URI.create(problemBaseUri + "/validation-error"));
         problemDetail.setTitle("Validation Failed");
         
         // 필드별 오류 수집
@@ -86,7 +90,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             detail
         );
-        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/validation-error"));
+        problemDetail.setType(URI.create(problemBaseUri + "/validation-error"));
         problemDetail.setTitle("Validation Failed");
         
         return problemDetail;
@@ -128,7 +132,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             ex.getMessage()  // 이미 일반화된 메시지 사용
         );
-        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-input"));
+        problemDetail.setType(URI.create(problemBaseUri + "/invalid-input"));
         problemDetail.setTitle("Invalid Input");
         
         return problemDetail;
@@ -149,7 +153,7 @@ public class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             "이메일이 이미 등록되었습니다."
         );
-        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-email"));
+        problemDetail.setType(URI.create(problemBaseUri + "/duplicate-email"));
         problemDetail.setTitle("Duplicate Email");
         
         return problemDetail;
@@ -170,7 +174,7 @@ public class GlobalExceptionHandler {
             HttpStatus.NOT_FOUND,
             "요청한 계정을 찾을 수 없습니다."
         );
-        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/account-not-found"));
+        problemDetail.setType(URI.create(problemBaseUri + "/account-not-found"));
         problemDetail.setTitle("Account Not Found");
         
         return problemDetail;
@@ -197,7 +201,7 @@ public class GlobalExceptionHandler {
             case FILE_TOO_LARGE:
                 status = HttpStatus.PAYLOAD_TOO_LARGE; // 413
                 message = "파일 크기가 너무 큽니다. 최대 허용 크기를 초과했습니다.";
-                type = "https://api.softwarecampus.com/problems/file-too-large";
+                type = problemBaseUri + "/file-too-large";
                 title = "File Too Large";
                 log.warn("S3 upload failed - File too large: {}", ex.getMessage());
                 break;
@@ -205,7 +209,7 @@ public class GlobalExceptionHandler {
             case INVALID_FILE_TYPE:
                 status = HttpStatus.UNSUPPORTED_MEDIA_TYPE; // 415
                 message = "지원하지 않는 파일 형식입니다.";
-                type = "https://api.softwarecampus.com/problems/invalid-file-type";
+                type = problemBaseUri + "/invalid-file-type";
                 title = "Invalid File Type";
                 log.warn("S3 upload failed - Invalid file type: {}", ex.getMessage());
                 break;
@@ -213,7 +217,7 @@ public class GlobalExceptionHandler {
             case VALIDATION_ERROR:
                 status = HttpStatus.BAD_REQUEST; // 400
                 message = "파일 검증에 실패했습니다. 파일이 비어있거나 유효하지 않습니다.";
-                type = "https://api.softwarecampus.com/problems/file-validation-error";
+                type = problemBaseUri + "/file-validation-error";
                 title = "File Validation Error";
                 log.warn("S3 upload failed - Validation error: {}", ex.getMessage());
                 break;
@@ -221,7 +225,7 @@ public class GlobalExceptionHandler {
             case AUTHENTICATION_ERROR:
                 status = HttpStatus.FORBIDDEN; // 403
                 message = "파일 저장소 접근 권한이 없습니다.";
-                type = "https://api.softwarecampus.com/problems/s3-access-denied";
+                type = problemBaseUri + "/s3-access-denied";
                 title = "Access Denied";
                 log.error("S3 upload failed - Authentication/Permission error: {}", ex.getMessage(), ex);
                 break;
@@ -229,7 +233,7 @@ public class GlobalExceptionHandler {
             case RESOURCE_NOT_FOUND:
                 status = HttpStatus.NOT_FOUND; // 404
                 message = "파일 저장소를 찾을 수 없습니다.";
-                type = "https://api.softwarecampus.com/problems/s3-resource-not-found";
+                type = problemBaseUri + "/s3-resource-not-found";
                 title = "Resource Not Found";
                 log.error("S3 upload failed - Resource not found: {}", ex.getMessage(), ex);
                 break;
@@ -237,7 +241,7 @@ public class GlobalExceptionHandler {
             case NETWORK_ERROR:
                 status = HttpStatus.BAD_GATEWAY; // 502
                 message = "파일 저장소와의 연결에 실패했습니다. 잠시 후 다시 시도해주세요.";
-                type = "https://api.softwarecampus.com/problems/s3-network-error";
+                type = problemBaseUri + "/s3-network-error";
                 title = "Network Error";
                 log.error("S3 upload failed - Network error: {}", ex.getMessage(), ex);
                 break;
@@ -245,7 +249,7 @@ public class GlobalExceptionHandler {
             case AWS_SDK_ERROR:
                 status = HttpStatus.SERVICE_UNAVAILABLE; // 503
                 message = "파일 저장 서비스를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.";
-                type = "https://api.softwarecampus.com/problems/s3-service-unavailable";
+                type = problemBaseUri + "/s3-service-unavailable";
                 title = "Service Unavailable";
                 log.error("S3 upload failed - AWS SDK error: {}", ex.getMessage(), ex);
                 break;
@@ -254,7 +258,7 @@ public class GlobalExceptionHandler {
             default:
                 status = HttpStatus.INTERNAL_SERVER_ERROR; // 500
                 message = "파일 업로드 중 서버 오류가 발생했습니다.";
-                type = "https://api.softwarecampus.com/problems/s3-internal-error";
+                type = problemBaseUri + "/s3-internal-error";
                 title = "Internal Server Error";
                 log.error("S3 upload failed - Internal error: {}", ex.getMessage(), ex);
                 break;
@@ -279,7 +283,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND,
                 "요청한 리소스를 찾을 수 없습니다." // 구체적인 메시지는 보안상 일반화
         );
-        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/resource-not-found"));
+        problemDetail.setType(URI.create(problemBaseUri + "/resource-not-found"));
         problemDetail.setTitle("Resource Not Found");
 
         // 디버깅을 위해 에러 메시지를 detail에 남길 수도 있지만, 여기서는 일반화합니다.
@@ -299,7 +303,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 ex.getMessage() // 비즈니스 로직 위반 메시지를 그대로 전달
         );
-        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/invalid-argument"));
+        problemDetail.setType(URI.create(problemBaseUri + "/invalid-argument"));
         problemDetail.setTitle("Invalid Request Argument");
 
         return problemDetail;
