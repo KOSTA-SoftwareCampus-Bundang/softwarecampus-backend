@@ -104,7 +104,7 @@ class TokenServiceIntegrationTest {
     
     @Test
     @DisplayName("refreshAccessToken: 유효한 Refresh Token으로 Access Token 갱신 성공")
-    void refreshAccessToken_Success() {
+    void refreshAccessToken_Success() throws InterruptedException {
         if (tokenService == null) {
             System.out.println("⚠️ Redis not available, skipping test");
             return;
@@ -113,6 +113,9 @@ class TokenServiceIntegrationTest {
         // given
         TokenResponse tokens = tokenService.createTokens(TEST_EMAIL);
         String originalAccessToken = tokens.getAccessToken();
+        
+        // JWT는 초 단위 타임스탬프를 사용하므로 1초 대기
+        Thread.sleep(1000);
         
         // when
         String newAccessToken = tokenService.refreshAccessToken(TEST_EMAIL, tokens.getRefreshToken());
