@@ -39,11 +39,6 @@ import static org.mockito.Mockito.*;
  */
 @SpringBootTest
 @Transactional
-@TestPropertySource(properties = {
-    "spring.data.redis.host=localhost",
-    "spring.data.redis.port=6379",
-    "spring.cache.type=redis"
-})
 @DisplayName("UserDetailsService 캐싱 통합 테스트")
 class UserDetailsCacheIntegrationTest {
     

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.test.context.TestPropertySource;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,10 +36,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @since 2025-11-19
  */
 @SpringBootTest
-@TestPropertySource(properties = {
-    "spring.data.redis.host=localhost",
-    "spring.data.redis.port=6379"
-})
 @DisplayName("TokenService + Redis 통합 테스트")
 class TokenServiceIntegrationTest {
     
