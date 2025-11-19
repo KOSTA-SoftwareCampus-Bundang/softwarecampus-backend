@@ -81,8 +81,9 @@ public class AuthController {
      * - IP 기반 제한 권장: 60 req/min per IP
      * - 로깅 및 모니터링 필요
      * 
-     * TODO Phase 8: Rate Limiter 구현
-     * - Bucket4j + Redis 또는 Spring Cloud Gateway rate limiter
+     * 선택사항: Rate Limiter 추후 구현
+     * - 이메일 중복 체크 API에 Rate Limiting 적용 권장
+     * - 구현 시 Bucket4j 또는 Spring Cloud Gateway 사용 고려
      * - IP 기반 제한: @RateLimit(permits=60, window=1, unit=MINUTES)
      * - 초과 시: 429 Too Many Requests 응답
      * 
