@@ -75,19 +75,24 @@ public class GlobalExceptionHandler {
             log.debug("Constraint violation detected for request parameters");
         }
         
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
-            "요청 파라미터가 유효하지 않습니다."
-        );
-        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/validation-error"));
-        problemDetail.setTitle("Validation Failed");
-        
         // 파라미터별 오류 수집
         Map<String, String> errors = new HashMap<>();
         ex.getConstraintViolations().forEach(violation -> {
             String parameterName = violation.getPropertyPath().toString();
             errors.put(parameterName, violation.getMessage());
         });
+        
+        // 단일 오류인 경우 해당 메시지를 detail에 직접 표시
+        String detailMessage = errors.size() == 1 
+            ? errors.values().iterator().next()
+            : "요청 파라미터가 유효하지 않습니다.";
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            detailMessage
+        );
+        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/validation-error"));
+        problemDetail.setTitle("Validation Failed");
         problemDetail.setProperty("errors", errors);
         
         return problemDetail;
