@@ -48,7 +48,7 @@ public class FileController {
     @PostMapping("/files/upload")
     @PreAuthorize("isAuthenticated()")  // TODO: SecurityConfig 수정 후 활성화됨
     public ResponseEntity<FileUploadResponse> uploadFile(
-            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "file", required = true) MultipartFile file,
             @RequestParam(value = "folder", defaultValue = "") String folder,
             @RequestParam(value = "fileType", required = true) FileType.FileTypeEnum fileType) {
 
@@ -89,7 +89,7 @@ public class FileController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/admin/files/delete")
     public ResponseEntity<FileDeleteResponse> deleteFile(
-            @RequestParam(value = "fileUrl", required = false) String fileUrl) {
+            @RequestParam(value = "fileUrl", required = true) String fileUrl) {
 
         // 현재 사용자 정보 (로깅용)
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
