@@ -261,37 +261,43 @@ public class S3Service {
 
     private void validateFile(MultipartFile file, FileType.FileTypeConfig config) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("파일이 비어있습니다.");
+            throw new S3UploadException("파일이 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
 
         // 파일 크기 검증
         if (!config.isFileSizeValid(file.getSize())) {
             log.warn("File size {} exceeds maximum allowed size {}", 
                     file.getSize(), config.getMaxFileSize());
-            throw new IllegalArgumentException(
+            throw new S3UploadException(
                     String.format("파일 크기가 제한을 초과합니다. 최대 %dMB까지 업로드 가능합니다.",
-                            config.getMaxFileSizeMB()));
+                            config.getMaxFileSizeMB()),
+                    S3UploadException.FailureReason.FILE_TOO_LARGE);
         }
 
         // Content-Type 검증
         String contentType = file.getContentType();
         if (contentType == null || !config.isContentTypeAllowed(contentType)) {
             log.warn("Invalid content type attempted: {}", contentType);
-            throw new IllegalArgumentException("허용되지 않은 파일 형식입니다: " + contentType);
+            throw new S3UploadException(
+                    "허용되지 않은 파일 형식입니다: " + contentType,
+                    S3UploadException.FailureReason.INVALID_FILE_TYPE);
         }
 
         // 확장자 검증
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || !originalFilename.contains(".")) {
-            throw new IllegalArgumentException("파일 확장자가 없습니다.");
+            throw new S3UploadException(
+                    "파일 확장자가 없습니다.",
+                    S3UploadException.FailureReason.VALIDATION_ERROR);
         }
 
         String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
         if (!config.isExtensionAllowed(extension)) {
             log.warn("Invalid file extension attempted: {}", extension);
-            throw new IllegalArgumentException(
+            throw new S3UploadException(
                     String.format("허용되지 않은 파일 확장자입니다: %s (허용: %s)", 
-                            extension, config.getAllowedExtensions()));
+                            extension, config.getAllowedExtensions()),
+                    S3UploadException.FailureReason.INVALID_FILE_TYPE);
         }
     }
 }
