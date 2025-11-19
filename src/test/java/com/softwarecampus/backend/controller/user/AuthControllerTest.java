@@ -1,12 +1,16 @@
 package com.softwarecampus.backend.controller.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.softwarecampus.backend.config.JwtAuthenticationFilter;
+import com.softwarecampus.backend.config.JwtProperties;
+import com.softwarecampus.backend.config.JwtTokenProvider;
 import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
+import com.softwarecampus.backend.service.user.auth.CustomUserDetailsService;
 import com.softwarecampus.backend.service.user.signup.SignupService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +53,19 @@ class AuthControllerTest {
     
     @MockBean
     private SignupService signupService;
+    
+    // JWT 관련 빈 Mock 추가
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+    
+    @MockBean
+    private JwtProperties jwtProperties;
+    
+    @MockBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
     
     @Test
     @DisplayName("POST /signup - 회원가입 성공 (USER)")
