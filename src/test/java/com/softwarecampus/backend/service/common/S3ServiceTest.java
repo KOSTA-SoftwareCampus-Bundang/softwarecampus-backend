@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -63,7 +64,8 @@ class S3ServiceTest {
                 5242880L // 5MB
         );
         
-        when(fileType.getConfig(FileType.FileTypeEnum.PROFILE)).thenReturn(profileConfig);
+        // lenient 설정으로 불필요한 stubbing 경고 무시
+        lenient().when(fileType.getConfig(FileType.FileTypeEnum.PROFILE)).thenReturn(profileConfig);
     }
 
     @Test
@@ -93,7 +95,7 @@ class S3ServiceTest {
     }
 
     @Test
-    @DisplayName("파일 업로드 - 파일명에 공백 포함 (인코딩 처리)")
+    @DisplayName("파일 업로드 - 파일명에 공백 포함 (UUID로 대체)")
     void testUploadFile_WithSpaceInFilename() throws IOException {
         // given
         MockMultipartFile file = new MockMultipartFile(
@@ -111,7 +113,8 @@ class S3ServiceTest {
         String fileUrl = s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE);
 
         // then
-        assertThat(fileUrl).contains("%20"); // 공백이 %20으로 인코딩됨
+        assertThat(fileUrl).contains(".jpg"); // UUID로 파일명이 변경되지만 확장자는 유지됨
+        assertThat(fileUrl).doesNotContain("test image"); // 원본 파일명은 포함되지 않음
         verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
 
@@ -238,8 +241,16 @@ class S3ServiceTest {
                 "test content".getBytes()
         );
         
+        S3Exception s3Exception = (S3Exception) S3Exception.builder()
+                .message("S3 error")
+                .awsErrorDetails(AwsErrorDetails.builder()
+                        .errorCode("InternalError")
+                        .errorMessage("S3 internal error")
+                        .build())
+                .build();
+        
         when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
-                .thenThrow(S3Exception.builder().message("S3 error").build());
+                .thenThrow(s3Exception);
 
         // when & then
         assertThatThrownBy(() -> s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE))
@@ -316,7 +327,7 @@ class S3ServiceTest {
         // when & then
         assertThatThrownBy(() -> s3Service.deleteFile("invalid-url"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("유효하지 않은 S3 파일 URL입니다");
+                .hasMessageContaining("유효하지 않은 S3 URL 형식입니다");
     }
 
     @Test
@@ -325,8 +336,16 @@ class S3ServiceTest {
         // given
         String fileUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test-file.jpg";
         
-        when(s3Client.deleteObject(any(DeleteObjectRequest.class)))
-                .thenThrow(S3Exception.builder().message("S3 delete error").build());
+        S3Exception s3Exception = (S3Exception) S3Exception.builder()
+                .message("S3 delete error")
+                .awsErrorDetails(AwsErrorDetails.builder()
+                        .errorCode("InternalError")
+                        .errorMessage("S3 internal error")
+                        .build())
+                .build();
+        
+        lenient().when(s3Client.deleteObject(any(DeleteObjectRequest.class)))
+                .thenThrow(s3Exception);
 
         // when & then
         assertThatThrownBy(() -> s3Service.deleteFile(fileUrl))
