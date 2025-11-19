@@ -182,18 +182,88 @@ public class GlobalExceptionHandler {
 
     /**
      * S3 파일 업로드 실패 예외 처리
-     * HTTP 500 Internal Server Error
+     * FailureReason에 따라 적절한 HTTP 상태 코드 및 로깅 레벨 매핑
      */
     @ExceptionHandler(S3UploadException.class)
     public ProblemDetail handleS3UploadException(S3UploadException ex) {
-        log.error("S3 file upload failed", ex);
+        S3UploadException.FailureReason reason = ex.getReason();
+        HttpStatus status;
+        String message;
+        String type;
+        String title;
 
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "파일 업로드에 실패했습니다."
-        );
-        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/s3-upload-failed"));
-        problemDetail.setTitle("File Upload Failed");
+        // FailureReason에 따른 HTTP 상태 코드 및 메시지 매핑
+        switch (reason) {
+            case FILE_TOO_LARGE:
+                status = HttpStatus.PAYLOAD_TOO_LARGE; // 413
+                message = "파일 크기가 너무 큽니다. 최대 허용 크기를 초과했습니다.";
+                type = "https://api.softwarecampus.com/problems/file-too-large";
+                title = "File Too Large";
+                log.warn("S3 upload failed - File too large: {}", ex.getMessage());
+                break;
+
+            case INVALID_FILE_TYPE:
+                status = HttpStatus.UNSUPPORTED_MEDIA_TYPE; // 415
+                message = "지원하지 않는 파일 형식입니다.";
+                type = "https://api.softwarecampus.com/problems/invalid-file-type";
+                title = "Invalid File Type";
+                log.warn("S3 upload failed - Invalid file type: {}", ex.getMessage());
+                break;
+
+            case VALIDATION_ERROR:
+                status = HttpStatus.BAD_REQUEST; // 400
+                message = "파일 검증에 실패했습니다. 파일이 비어있거나 유효하지 않습니다.";
+                type = "https://api.softwarecampus.com/problems/file-validation-error";
+                title = "File Validation Error";
+                log.warn("S3 upload failed - Validation error: {}", ex.getMessage());
+                break;
+
+            case AUTHENTICATION_ERROR:
+                status = HttpStatus.FORBIDDEN; // 403
+                message = "파일 저장소 접근 권한이 없습니다.";
+                type = "https://api.softwarecampus.com/problems/s3-access-denied";
+                title = "Access Denied";
+                log.error("S3 upload failed - Authentication/Permission error: {}", ex.getMessage(), ex);
+                break;
+
+            case RESOURCE_NOT_FOUND:
+                status = HttpStatus.NOT_FOUND; // 404
+                message = "파일 저장소를 찾을 수 없습니다.";
+                type = "https://api.softwarecampus.com/problems/s3-resource-not-found";
+                title = "Resource Not Found";
+                log.error("S3 upload failed - Resource not found: {}", ex.getMessage(), ex);
+                break;
+
+            case NETWORK_ERROR:
+                status = HttpStatus.BAD_GATEWAY; // 502
+                message = "파일 저장소와의 연결에 실패했습니다. 잠시 후 다시 시도해주세요.";
+                type = "https://api.softwarecampus.com/problems/s3-network-error";
+                title = "Network Error";
+                log.error("S3 upload failed - Network error: {}", ex.getMessage(), ex);
+                break;
+
+            case AWS_SDK_ERROR:
+                status = HttpStatus.SERVICE_UNAVAILABLE; // 503
+                message = "파일 저장 서비스를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.";
+                type = "https://api.softwarecampus.com/problems/s3-service-unavailable";
+                title = "Service Unavailable";
+                log.error("S3 upload failed - AWS SDK error: {}", ex.getMessage(), ex);
+                break;
+
+            case INTERNAL_ERROR:
+            default:
+                status = HttpStatus.INTERNAL_SERVER_ERROR; // 500
+                message = "파일 업로드 중 서버 오류가 발생했습니다.";
+                type = "https://api.softwarecampus.com/problems/s3-internal-error";
+                title = "Internal Server Error";
+                log.error("S3 upload failed - Internal error: {}", ex.getMessage(), ex);
+                break;
+        }
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, message);
+        problemDetail.setType(URI.create(type));
+        problemDetail.setTitle(title);
+        problemDetail.setProperty("reason", reason.name());
 
         return problemDetail;
     }

@@ -18,6 +18,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -36,8 +40,62 @@ public class FileController {
     private static final Pattern DANGEROUS_CHARS_PATTERN = Pattern.compile(".*[<>:\"|?*\\x00-\\x1F].*");
 
     /**
+     * URL 디코딩 및 정규화를 통한 경로 순회 공격 방지
+     * URL 인코딩, 이중 인코딩, 유니코드 인코딩된 경로 순회 벡터 탐지
+     * 
+     * @param input 검증할 입력 문자열 (파일명 또는 폴더 경로)
+     * @param baseFolder 기본 폴더 (예: "uploads")
+     * @return 정규화된 경로가 안전하면 true, 경로 순회 시도가 감지되면 false
+     */
+    private boolean isPathSafe(String input, String baseFolder) {
+        if (input == null || input.isBlank()) {
+            return true; // 빈 문자열은 다른 검증에서 처리
+        }
+
+        try {
+            // 1. URL 디코딩 (한 번만 수행하여 무한 디코딩 방지)
+            String decoded = URLDecoder.decode(input, StandardCharsets.UTF_8);
+            
+            // 2. 이중 인코딩 방지를 위한 추가 디코딩 검사
+            // 디코딩 후에도 % 문자가 남아있으면 이중 인코딩 시도로 간주
+            if (decoded.contains("%")) {
+                log.warn("Potential double-encoding detected in path: {}", input);
+                return false;
+            }
+            
+            // 3. 기본 디렉토리 설정 (S3 버킷 루트)
+            Path basePath = Paths.get("/" + baseFolder).normalize().toAbsolutePath();
+            
+            // 4. 입력 경로를 기본 디렉토리에 해결 및 정규화
+            Path resolvedPath = basePath.resolve(decoded).normalize().toAbsolutePath();
+            
+            // 5. 정규화된 경로가 기본 디렉토리로 시작하는지 확인
+            if (!resolvedPath.startsWith(basePath)) {
+                log.warn("Path traversal attempt detected - input: {}, decoded: {}, resolved: {}, base: {}",
+                        input, decoded, resolvedPath, basePath);
+                return false;
+            }
+            
+            return true;
+            
+        } catch (IllegalArgumentException e) {
+            // URL 디코딩 실패 또는 잘못된 경로
+            log.warn("Invalid path format: {}", input, e);
+            return false;
+        } catch (Exception e) {
+            // 기타 예외 발생 시 안전하게 거부
+            log.error("Unexpected error during path validation: {}", input, e);
+            return false;
+        }
+    }
+
+    /**
      * 파일 업로드
      * 인증된 사용자만 파일을 업로드할 수 있습니다.
+     * 
+     * TODO: [별도 브랜치] SecurityConfig에 @EnableMethodSecurity 추가 및 .requestMatchers("/api/files/upload").authenticated() 설정
+     *       현재는 SecurityConfig의 .anyRequest().permitAll()로 인해 @PreAuthorize가 작동하지 않음
+     *       비인증 사용자도 파일 업로드가 가능한 상태이므로 보안 수정 필요
      * 
      * @param file 업로드할 파일
      * @param folder S3 내 폴더 경로 (선택, 기본값: 빈 문자열)
@@ -51,7 +109,7 @@ public class FileController {
      * - 과정 이미지: POST /api/files/upload?folder=course&fileType=COURSE_IMAGE
      */
     @PostMapping("/files/upload")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated()")  // TODO: SecurityConfig 수정 후 활성화됨
     public ResponseEntity<Map<String, String>> uploadFile(
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "folder", defaultValue = "") String folder,
@@ -78,7 +136,7 @@ public class FileController {
             log.info("File upload request by {} - filename: {}, size: {} bytes, contentType: {}, folder: {}, fileType: {}",
                     username, originalFilename, fileSize, contentType, folder, fileType);
 
-            // 2. 파일명 검증
+            // 2. 파일명 검증 (originalFilename null 체크 포함)
             if (originalFilename == null || originalFilename.isBlank()) {
                 log.warn("File upload failed: filename is null or blank");
                 return createErrorResponse(
@@ -87,9 +145,9 @@ public class FileController {
                 );
             }
 
-            // 3. 경로 순회 공격 방지
-            if (PATH_TRAVERSAL_PATTERN.matcher(originalFilename).matches() ||
-                PATH_TRAVERSAL_PATTERN.matcher(folder).matches()) {
+            // 3. 경로 순회 공격 방지 (URL 인코딩/이중 인코딩/유니코드 인코딩 포함)
+            // 정규화 및 정규 경로 검증을 통한 포괄적인 경로 순회 방지
+            if (!isPathSafe(originalFilename, "uploads") || !isPathSafe(folder, "uploads")) {
                 log.warn("File upload failed: path traversal attempt detected - filename: {}, folder: {}",
                         originalFilename, folder);
                 return createErrorResponse(
@@ -98,7 +156,7 @@ public class FileController {
                 );
             }
 
-            // 4. 위험한 문자 검증
+            // 4. 위험한 문자 검증 (파일명)
             if (DANGEROUS_CHARS_PATTERN.matcher(originalFilename).matches()) {
                 log.warn("File upload failed: dangerous characters in filename: {}", originalFilename);
                 return createErrorResponse(
@@ -107,7 +165,16 @@ public class FileController {
                 );
             }
 
-            // 5. S3 업로드 실행 (FileType에서 파일 크기, contentType, 확장자 검증)
+            // 5. 위험한 문자 검증 (폴더 경로)
+            if (folder != null && !folder.isEmpty() && DANGEROUS_CHARS_PATTERN.matcher(folder).matches()) {
+                log.warn("File upload failed: dangerous characters in folder path: {}", folder);
+                return createErrorResponse(
+                        HttpStatus.BAD_REQUEST,
+                        "파일명에 허용되지 않는 문자가 포함되어 있습니다."
+                );
+            }
+
+            // 6. S3 업로드 실행 (FileType에서 파일 크기, contentType, 확장자 검증)
             String fileUrl = s3Service.uploadFile(file, folder, fileType);
 
             log.info("File uploaded successfully: {}", fileUrl);
@@ -166,15 +233,42 @@ public class FileController {
      * @param fileUrl 삭제할 파일의 S3 URL
      * @return 삭제 결과 메시지
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/admin/files/delete")
     public ResponseEntity<Map<String, String>> deleteFile(
             @RequestParam(value = "fileUrl", required = false) String fileUrl) {
 
         try {
-            // 1. 인증 정보 확인
+            // 1. 인증 정보 확인 및 관리자 권한 검증
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String username = authentication.getName();
-
+            
+            // 1-1. 인증 객체 null 체크
+            if (authentication == null || !authentication.isAuthenticated()) {
+                log.warn("File delete failed: User is not authenticated");
+                return createErrorResponse(
+                        HttpStatus.UNAUTHORIZED,
+                        "인증이 필요합니다."
+                );
+            }
+            
+            // 1-2. ADMIN 권한 확인 (getAuthorities() null 체크 포함)
+            boolean isAdmin = authentication.getAuthorities() != null && 
+                    authentication.getAuthorities().stream()
+                    .anyMatch(grantedAuthority -> 
+                        grantedAuthority != null && 
+                        "ROLE_ADMIN".equals(grantedAuthority.getAuthority())
+                    );
+            
+            if (!isAdmin) {
+                String userName = authentication.getName() != null ? authentication.getName() : "authenticated_user";
+                log.warn("File delete failed: User {} does not have ADMIN role", userName);
+                return createErrorResponse(
+                        HttpStatus.FORBIDDEN,
+                        "관리자 권한이 필요합니다."
+                );
+            }
+            
+            String username = authentication.getName() != null ? authentication.getName() : "authenticated_admin";
             log.info("ADMIN file delete request - user: {}, fileUrl: {}", username, fileUrl);
 
             // 2. fileUrl 기본 검증
