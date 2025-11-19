@@ -328,8 +328,8 @@ public class FileController {
 
         } catch (S3UploadException e) {
             log.error("S3 delete failed for URL: {}", fileUrl, e);
-            // S3에서 파일을 찾지 못한 경우는 404 반환
-            if (e.getMessage() != null && e.getMessage().contains("NoSuchKey")) {
+            // S3UploadException의 FailureReason을 확인하여 적절한 HTTP 상태 코드 반환
+            if (e.getReason() == S3UploadException.FailureReason.RESOURCE_NOT_FOUND) {
                 return createErrorResponse(
                         HttpStatus.NOT_FOUND,
                         "파일을 찾을 수 없습니다."
