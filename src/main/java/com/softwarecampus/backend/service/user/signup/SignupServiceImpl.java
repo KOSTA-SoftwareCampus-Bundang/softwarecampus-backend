@@ -193,10 +193,8 @@ public class SignupServiceImpl implements SignupService {
      */
     @Override
     public boolean isEmailAvailable(String email) {
-        // 이메일 형식 검증
-        if (!EmailUtils.isValidFormat(email)) {
-            throw new InvalidInputException("올바른 이메일 형식이 아닙니다.");
-        }
+        // 이메일 형식 검증 (기존 메서드 재사용)
+        validateEmailFormat(email);
         
         // 중복 확인
         return !accountRepository.existsByEmail(email);

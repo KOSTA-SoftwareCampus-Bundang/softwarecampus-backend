@@ -19,8 +19,8 @@ import java.net.URI;
  * 회원가입 및 인증 API 컨트롤러
  * 
  * 엔드포인트:
- * - POST /api/v1/auth/signup: 회원가입
- * - GET /api/v1/auth/check-email: 이메일 중복 확인
+ * - POST /api/auth/signup: 회원가입
+ * - GET /api/auth/check-email: 이메일 중복 확인
  * 
  * RESTful 원칙:
  * - HTTP 201 Created + Location 헤더 (리소스 URI)
@@ -32,7 +32,7 @@ import java.net.URI;
 @Slf4j
 @Validated
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     
@@ -81,8 +81,9 @@ public class AuthController {
      * - IP 기반 제한 권장: 60 req/min per IP
      * - 로깅 및 모니터링 필요
      * 
-     * TODO Phase 8: Rate Limiter 구현
-     * - Bucket4j + Redis 또는 Spring Cloud Gateway rate limiter
+     * 선택사항: Rate Limiter 추후 구현
+     * - 이메일 중복 체크 API에 Rate Limiting 적용 권장
+     * - 구현 시 Bucket4j 또는 Spring Cloud Gateway 사용 고려
      * - IP 기반 제한: @RateLimit(permits=60, window=1, unit=MINUTES)
      * - 초과 시: 429 Too Many Requests 응답
      * 

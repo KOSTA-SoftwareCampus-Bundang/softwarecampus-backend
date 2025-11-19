@@ -187,6 +187,9 @@ class SignupServiceImplTest {
         assertThatThrownBy(() -> signupService.signup(invalidRequest))
             .isInstanceOf(InvalidInputException.class)
             .hasMessage("올바른 이메일 형식이 아닙니다.");
+        
+        // Repository 호출되지 않아야 함
+        verify(accountRepository, never()).save(any(Account.class));
     }
     
     @Test
