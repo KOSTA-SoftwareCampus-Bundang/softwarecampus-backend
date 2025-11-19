@@ -19,8 +19,8 @@ import java.net.URI;
  * 회원가입 및 인증 API 컨트롤러
  * 
  * 엔드포인트:
- * - POST /api/v1/auth/signup: 회원가입
- * - GET /api/v1/auth/check-email: 이메일 중복 확인
+ * - POST /api/auth/signup: 회원가입
+ * - GET /api/auth/check-email: 이메일 중복 확인
  * 
  * RESTful 원칙:
  * - HTTP 201 Created + Location 헤더 (리소스 URI)
@@ -32,7 +32,7 @@ import java.net.URI;
 @Slf4j
 @Validated
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     
