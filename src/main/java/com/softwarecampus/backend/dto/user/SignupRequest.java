@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.dto.user;
 
 import com.softwarecampus.backend.domain.common.AccountType;
+import com.softwarecampus.backend.validation.ValidAccountType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +21,7 @@ import jakarta.validation.constraints.Size;
  * @param accountType 계정 타입 (필수, USER/ACADEMY/ADMIN)
  * @param academyId 기관 ID (ACADEMY 타입일 때 필수)
  */
+@ValidAccountType
 public record SignupRequest(
     
     @NotBlank(message = "이메일은 필수입니다")

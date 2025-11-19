@@ -3,6 +3,7 @@ package com.softwarecampus.backend.exception;
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -60,6 +61,32 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage())
         );
         problemDetail.setProperty("errors", errors);
+        
+        return problemDetail;
+    }
+
+    /**
+     * Request Parameter/Path Variable Validation 실패 처리
+     * (@RequestParam, @PathVariable에 @Email, @NotNull 등 사용 시)
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail handleConstraintViolationException(ConstraintViolationException ex) {
+        if (log.isDebugEnabled()) {
+            log.debug("Constraint violation detected for request parameters");
+        }
+        
+        // 첫 번째 위반 메시지 추출
+        String detail = ex.getConstraintViolations().stream()
+            .findFirst()
+            .map(violation -> violation.getMessage())
+            .orElse("요청 파라미터가 유효하지 않습니다.");
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            detail
+        );
+        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/validation-error"));
+        problemDetail.setTitle("Validation Failed");
         
         return problemDetail;
     }

@@ -16,11 +16,14 @@
 
 ```
 src/main/java/com/softwarecampus/backend/
-└─ dto/
-   └─ user/
-      ├─ SignupRequest.java
-      ├─ AccountResponse.java
-      └─ MessageResponse.java
+├─ dto/
+│  └─ user/
+│     ├─ SignupRequest.java
+│     ├─ AccountResponse.java
+│     └─ MessageResponse.java
+└─ validation/
+   ├─ ValidAccountType.java (커스텀 어노테이션)
+   └─ AccountTypeValidator.java (검증 로직)
 ```
 
 ---
@@ -36,8 +39,11 @@ src/main/java/com/softwarecampus/backend/
 ```java
 package com.softwarecampus.backend.dto.user;
 
+import com.softwarecampus.backend.domain.common.AccountType;
+import com.softwarecampus.backend.validation.ValidAccountType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -51,7 +57,10 @@ import jakarta.validation.constraints.Size;
  * @param address 주소 (선택)
  * @param affiliation 소속 (선택)
  * @param position 직책 (선택)
+ * @param accountType 계정 타입 (필수, USER/ACADEMY/ADMIN)
+ * @param academyId 기관 ID (ACADEMY 타입일 때 필수)
  */
+@ValidAccountType
 public record SignupRequest(
     
     @NotBlank(message = "이메일은 필수입니다")
@@ -72,24 +81,35 @@ public record SignupRequest(
     
     @NotBlank(message = "전화번호는 필수입니다")
     @Pattern(
-        regexp = "^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$",
-        message = "올바른 휴대폰 번호 형식이 아닙니다 (예: 010-1234-5678)"
+        regexp = "^01[0-9]-[0-9]{3,4}-[0-9]{4}$|^01[0-9][0-9]{7,8}$",
+        message = "올바른 휴대폰 번호 형식이 아닙니다 (형식: 010-1234-5678 또는 01012345678)"
     )
     String phoneNumber,
     
     String address,
     String affiliation,
-    String position
+    String position,
+    
+    @NotNull(message = "계정 타입은 필수입니다")
+    AccountType accountType,
+    
+    Long academyId
 ) {
 }
 ```
 
 **검증 규칙:**
-- `email`: 필수, 이메일 형식
+- `email`: 필수, 이메일 형식 (Bean Validation)
 - `password`: 필수, 8~20자, 영문+숫자+특수문자 포함
 - `userName`: 필수, 2~50자 (한글/영문 이름 모두 수용)
 - `phoneNumber`: 필수, 휴대폰 형식 (010-1234-5678 또는 01012345678)
+- `accountType`: 필수, USER/ACADEMY/ADMIN
+- `academyId`: ACADEMY 타입일 때 필수 (@ValidAccountType 커스텀 검증)
 - `address`, `affiliation`, `position`: 선택 (null 허용)
+
+**커스텀 검증:**
+- `@ValidAccountType`: ACADEMY 타입일 때 academyId 필수 검증
+- `AccountTypeValidator`: 클래스 레벨 검증 로직
 
 ---
 
@@ -150,32 +170,30 @@ package com.softwarecampus.backend.dto.user;
 
 /**
  * 간단한 메시지 응답 DTO
+ * HTTP 상태 코드로 성공/실패를 판단하므로 별도 status 필드 불필요
  * 
  * @param message 응답 메시지
  */
-public record MessageResponse(
-    String message
-) {
-    /**
-     * 정적 팩토리 메서드 - 성공 메시지
-     */
-    public static MessageResponse success(String message) {
-        return new MessageResponse(message);
-    }
+public record MessageResponse(String message) {
     
     /**
-     * 정적 팩토리 메서드 - 에러 메시지
+     * 정적 팩토리 메서드
      */
-    public static MessageResponse error(String message) {
+    public static MessageResponse of(String message) {
         return new MessageResponse(message);
     }
 }
 ```
 
+**설계 결정:**
+- `success()`, `error()` 메서드 제거 → HTTP 상태 코드로 성공/실패 구분
+- 단일 `of()` 팩토리 메서드로 통일
+- RESTful 원칙: 응답 상태는 HTTP 상태 코드가 담당
+
 **사용 예시:**
 ```java
 // 컨트롤러에서
-return ResponseEntity.ok(MessageResponse.success("작업이 완료되었습니다"));
+return ResponseEntity.ok(MessageResponse.of("사용 가능한 이메일입니다."));
 ```
 
 ---
@@ -200,18 +218,22 @@ return ResponseEntity.ok(MessageResponse.success("작업이 완료되었습니�
 ## 📝 Phase 완료 기준
 
 - [x] **파일 생성 완료**
-  - [x] `SignupRequest.java` 생성
+  - [x] `SignupRequest.java` 생성 (accountType, academyId 필드 추가)
   - [x] `AccountResponse.java` 생성
-  - [x] `MessageResponse.java` 생성
+  - [x] `MessageResponse.java` 생성 (of() 메서드로 단순화)
+  - [x] `ValidAccountType.java` 커스텀 어노테이션 생성
+  - [x] `AccountTypeValidator.java` 검증 로직 구현
 
 - [x] **코드 검증**
   - [x] 컴파일 성공 (`mvn clean compile` - BUILD SUCCESS)
   - [x] Record 문법 정상 동작 확인
   - [x] Bean Validation 어노테이션 올바르게 적용
+  - [x] 커스텀 검증 어노테이션 동작 확인
 
 - [x] **문서화**
   - [x] 작업 기록에 Phase 4 완료 기록
   - [x] implementation_plan.md 체크리스트 업데이트
+  - [x] accountType/academyId 필드 추가 근거 문서화
 
 - [x] **의존성 추가**
   - [x] `spring-boot-starter-validation` 추가 (pom.xml)
@@ -236,10 +258,12 @@ return ResponseEntity.ok(MessageResponse.success("작업이 완료되었습니�
 
 ## 📊 구현 결과
 
-### 생성된 파일 (3개)
+### 생성된 파일 (5개)
 - ✅ `src/main/java/com/softwarecampus/backend/dto/user/SignupRequest.java`
 - ✅ `src/main/java/com/softwarecampus/backend/dto/user/AccountResponse.java`
 - ✅ `src/main/java/com/softwarecampus/backend/dto/user/MessageResponse.java`
+- ✅ `src/main/java/com/softwarecampus/backend/validation/ValidAccountType.java`
+- ✅ `src/main/java/com/softwarecampus/backend/validation/AccountTypeValidator.java`
 
 ### 의존성 추가
 - ✅ `pom.xml`: `spring-boot-starter-validation` 추가
@@ -257,5 +281,12 @@ return ResponseEntity.ok(MessageResponse.success("작업이 완료되었습니�
 ### 검증 완료 항목
 - ✅ Java 17 Record 문법 정상 작동
 - ✅ Bean Validation 어노테이션 컴파일 성공
+- ✅ 커스텀 검증 어노테이션 (@ValidAccountType) 동작 확인
 - ✅ Account 엔티티 필드와 DTO 매핑 완료
 - ✅ RFC 9457 Problem Details 연동 준비 완료
+
+### 주요 설계 변경 (Phase 7 통합 과정)
+- ✅ `accountType` 필드 추가: 프론트엔드가 계정 타입 선택
+- ✅ `academyId` 필드 추가: ACADEMY 타입용 기관 ID
+- ✅ `@ValidAccountType` 커스텀 검증: ACADEMY 타입일 때 academyId 필수
+- ✅ `MessageResponse.of()`: 단일 팩토리 메서드로 단순화
