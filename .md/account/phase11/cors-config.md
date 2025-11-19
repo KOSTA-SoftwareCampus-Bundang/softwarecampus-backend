@@ -100,8 +100,39 @@ public class WebConfig {
 ## ⚠️ 주의사항
 
 ### 1. 환경변수 관리
-- `.env` 파일에 `FRONTEND_PORT=3000` 정의됨
-- Spring Boot에서 환경변수 읽기: `${FRONTEND_PORT:3000}` (기본값 3000)
+
+본 프로젝트는 `.env` 파일을 사용하여 환경변수를 관리합니다 (dotenv 라이브러리 필요).
+
+**구조:**
+1. `.env` 파일에 실제 값 정의
+2. `application.properties`에서 환경변수 참조
+3. Java 코드에서 프로퍼티 값 주입
+
+**예시:**
+
+`.env` 파일 (gitignore 대상):
+```properties
+FRONTEND_PORT=3000
+```
+
+`application.properties` (또는 직접 환경변수 참조):
+```properties
+# Option 1: application.properties에서 재정의
+frontend.port=${FRONTEND_PORT:3000}
+
+# Option 2: Java 코드에서 직접 환경변수 참조 (본 프로젝트 방식)
+```
+
+Java 코드:
+```java
+@Value("${FRONTEND_PORT:3000}")  // 환경변수 직접 참조
+private String frontendPort;
+```
+
+**참고:** 
+- `.env` 방식은 표준 Spring Boot 기능이 아니므로 `spring-dotenv` 또는 유사 라이브러리가 필요합니다.
+- `.env` 파일은 `.gitignore`에 포함되어 GitHub에 업로드되지 않습니다.
+- 프로덕션 환경에서는 시스템 환경변수 또는 CI/CD secrets를 통해 값을 주입합니다
 
 ### 2. 프로덕션 설정
 현재는 개발 환경만 고려. 프로덕션에서는:

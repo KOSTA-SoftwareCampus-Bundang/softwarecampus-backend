@@ -36,7 +36,7 @@ Phase 5에서 구현한 Service Layer의 비즈니스 로직을 검증하는 단
 
 ## 📊 테스트 통계
 
-**총 테스트 개수:** 51개
+**총 테스트 개수:** 54개
 - SignupServiceImplTest: 10개
 - ProfileServiceImplTest: 7개
 - EmailUtilsTest: 37개

@@ -17,9 +17,13 @@ import com.softwarecampus.backend.dto.user.SignupRequest;
 import com.softwarecampus.backend.service.user.signup.SignupService;
 import com.softwarecampus.backend.util.EmailUtils;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -39,6 +43,7 @@ import java.net.URI;
  * @author 태윤
  */
 @Slf4j
+@Validated
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -98,9 +103,15 @@ public class AuthController {
      * @return 200 OK - 사용 가능 여부
      * 
      * @throws InvalidInputException 400 - 이메일 형식 오류
+     * @throws ConstraintViolationException 400 - Bean Validation 실패 (@Email, @NotBlank, @Size)
      */
     @GetMapping("/check-email")
-    public ResponseEntity<MessageResponse> checkEmail(@RequestParam String email) {
+    public ResponseEntity<MessageResponse> checkEmail(
+            @RequestParam 
+            @NotBlank(message = "이메일은 필수입니다.") 
+            @Size(max = 254, message = "이메일은 최대 254자까지 입력 가능합니다.")
+            @Email(message = "올바른 이메일 형식이 아닙니다.") 
+            String email) {
         log.info("이메일 중복 확인 요청: email={}", EmailUtils.maskEmail(email));
         
         boolean available = signupService.isEmailAvailable(email);

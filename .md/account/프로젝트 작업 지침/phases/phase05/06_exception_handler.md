@@ -19,12 +19,12 @@
 public ProblemDetail handleInvalidInputException(InvalidInputException ex) {
     log.warn("Invalid input detected for a request");
     if (log.isDebugEnabled()) {
-        log.debug("InvalidInputException details", ex);
+        log.debug("InvalidInputException details: {}", ex.getMessage(), ex);
     }
     
     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
         HttpStatus.BAD_REQUEST,
-        ex.getMessage()  // 이미 일반화된 메시지 사용
+        "입력값이 올바르지 않습니다."  // 고정된 일반화 메시지
     );
     problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-input"));
     problemDetail.setTitle("Invalid Input");
