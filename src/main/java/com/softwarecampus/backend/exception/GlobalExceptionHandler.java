@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * 프로젝트 전역 예외 처리기
@@ -178,5 +179,42 @@ public class GlobalExceptionHandler {
     // ========================================
     // 여기에 다른 도메인 예외 추가
     // ========================================
-    
+
+    /**
+     *  리소스 찾기 실패 처리
+     */
+    @ExceptionHandler(NoSuchElementException.class)
+    public ProblemDetail handleNotFoundException(NoSuchElementException ex) {
+        log.warn("Resource not found: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                "요청한 리소스를 찾을 수 없습니다." // 구체적인 메시지는 보안상 일반화
+        );
+        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/resource-not-found"));
+        problemDetail.setTitle("Resource Not Found");
+
+        // 디버깅을 위해 에러 메시지를 detail에 남길 수도 있지만, 여기서는 일반화합니다.
+        // problemDetail.setProperty("reason", ex.getMessage());
+
+        return problemDetail;
+    }
+
+    /**
+     *  잘못된 요청/비즈니스 로직 위반 처리
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleBadRequestException(IllegalArgumentException ex) {
+        log.warn("Bad Request or Business Rule Violation: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage() // 비즈니스 로직 위반 메시지를 그대로 전달
+        );
+        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/invalid-argument"));
+        problemDetail.setTitle("Invalid Request Argument");
+
+        return problemDetail;
+    }
+
 }

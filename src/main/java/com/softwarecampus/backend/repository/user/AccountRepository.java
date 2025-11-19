@@ -3,7 +3,11 @@ package com.softwarecampus.backend.repository.user;
 import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -54,4 +58,20 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
         AccountType accountType, 
         ApprovalStatus accountApproved
     );
+
+    /**
+     * 전체 활성 계정 목록 조회
+     */
+    Page<Account> findByIsDeletedFalse(Pageable pageable);
+
+    /**
+     * 활성 계정을 대상으로 특정 회원 검색
+     */
+    @Query("SELECT a FROM Account a " +
+            "WHERE a.isDeleted = false AND " + // Soft Delete 제외 조건
+            "(:keyword IS NULL OR " +
+            "LOWER(a.userName) LIKE %:keyword% OR " +
+            "LOWER(a.email) LIKE %:keyword% OR " +
+            "a.phoneNumber LIKE %:keyword%)")
+    Page<Account> searchActiveAccounts(@Param("keyword") String keyword, Pageable pageable);
 }
