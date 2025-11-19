@@ -109,11 +109,15 @@ public class S3Service {
     }
 
     public void deleteFile(String fileUrl) {
-        // 1. URL 검증 (null, 형식, 길이, 경로 순회 공격 방지)
+        // 1. URL 기본 검증 (null, 형식, 길이)
         validateFileUrl(fileUrl);
         
         try {
+            // 2. Key 추출 및 디코딩
             String key = extractKeyFromUrl(fileUrl);
+            
+            // 3. 디코딩된 key에 대한 경로 순회 검증 (URL 인코딩 우회 방지)
+            validateS3Key(key);
 
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(bucketName)
@@ -160,6 +164,8 @@ public class S3Service {
         String extension = "";
         if (originalFilename != null && originalFilename.contains(".")) {
             extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            // validateFile()에서 이미 FileType enum 기반으로 확장자 검증 완료
+            // (jpg, png, pdf 등 허용된 확장자만 통과)
         }
         return UUID.randomUUID() + extension;
     }
@@ -185,7 +191,7 @@ public class S3Service {
     private void validateFolderSecurity(String folder) {
         // S3Folder enum 기반 화이트리스트 검증
         // enum에 정의된 값("board", "academy", "course", "profile", "temp", "")만 허용
-        // 이 검증만으로 경로 순회 공격이 원천적으로 차단됨
+        // 긍정 리스트(positive list) 방식으로 경로 순회 공격 원천 차단
         if (!ALLOWED_FOLDERS.contains(folder)) {
             log.warn("Invalid folder name attempted: {}", folder);
             throw new IllegalArgumentException("허용되지 않은 폴더입니다: " + folder);
@@ -193,7 +199,8 @@ public class S3Service {
     }
 
     /**
-     * 파일 URL의 보안 검증 (null, 형식, 길이)
+     * 파일 URL의 기본 검증 (null, 형식, 길이)
+     * 경로 순회 검증은 디코딩 후 validateS3Key()에서 수행
      * 
      * @param fileUrl 검증할 파일 URL
      * @throws IllegalArgumentException URL이 유효하지 않은 경우
@@ -220,6 +227,35 @@ public class S3Service {
         if (fileUrl.length() > 2048) {
             log.warn("File delete failed: URL too long: {} characters", fileUrl.length());
             throw new IllegalArgumentException("URL이 너무 깁니다.");
+        }
+    }
+
+    /**
+     * 디코딩된 S3 key의 경로 순회 공격 검증
+     * URL 인코딩 우회를 방지하기 위해 디코딩 후 검증 필수
+     * 
+     * 예시:
+     * - URL: "https://bucket.s3.region.amazonaws.com/board/%2E%2E/admin/file.pdf"
+     * - 디코딩 후 key: "board/../admin/file.pdf" ← 여기서 차단
+     * 
+     * @param key 디코딩된 S3 키
+     * @throws IllegalArgumentException 경로 순회 패턴이 감지된 경우
+     */
+    private void validateS3Key(String key) {
+        if (key == null || key.isBlank()) {
+            throw new IllegalArgumentException("S3 키가 비어있습니다.");
+        }
+        
+        // 경로 순회 패턴 검증 (**중요: URL 디코딩 후 검증**)
+        if (key.contains("..") || key.contains("//") || key.contains("\\")) {
+            log.warn("Path traversal attempt detected in decoded S3 key: {}", key);
+            throw new IllegalArgumentException("잘못된 S3 키 형식입니다.");
+        }
+        
+        // 추가 보안: 경로 구분자로 시작하면 안됨
+        if (key.startsWith("/") || key.startsWith("\\")) {
+            log.warn("S3 key starts with path separator: {}", key);
+            throw new IllegalArgumentException("잘못된 S3 키 형식입니다.");
         }
     }
 
