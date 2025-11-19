@@ -98,8 +98,9 @@ class CustomUserDetailsServiceTest {
         assertThat(userDetails.getUsername()).isEqualTo("user@test.com");
         assertThat(userDetails.getPassword()).isEqualTo("$2a$10$hashedPassword");
         assertThat(userDetails.getAuthorities()).hasSize(1);
-        assertThat(userDetails.getAuthorities())
-                .contains(new SimpleGrantedAuthority("ROLE_USER"));
+        assertThat(userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList()).containsExactly("ROLE_USER");
 
         verify(accountRepository, times(1)).findByEmail("user@test.com");
     }
@@ -119,8 +120,9 @@ class CustomUserDetailsServiceTest {
         assertThat(userDetails.getUsername()).isEqualTo("academy@test.com");
         assertThat(userDetails.getPassword()).isEqualTo("$2a$10$hashedPassword2");
         assertThat(userDetails.getAuthorities()).hasSize(1);
-        assertThat(userDetails.getAuthorities())
-                .contains(new SimpleGrantedAuthority("ROLE_ACADEMY"));
+        assertThat(userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList()).containsExactly("ROLE_ACADEMY");
 
         verify(accountRepository, times(1)).findByEmail("academy@test.com");
     }
@@ -140,8 +142,9 @@ class CustomUserDetailsServiceTest {
         assertThat(userDetails.getUsername()).isEqualTo("admin@test.com");
         assertThat(userDetails.getPassword()).isEqualTo("$2a$10$hashedPassword3");
         assertThat(userDetails.getAuthorities()).hasSize(1);
-        assertThat(userDetails.getAuthorities())
-                .contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        assertThat(userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList()).containsExactly("ROLE_ADMIN");
 
         verify(accountRepository, times(1)).findByEmail("admin@test.com");
     }
