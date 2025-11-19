@@ -21,9 +21,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -43,6 +46,9 @@ public class S3Service {
     private static final Set<String> ALLOWED_FOLDERS = Arrays.stream(S3Folder.values())
             .map(S3Folder::getPath)
             .collect(Collectors.toSet());
+
+    // 경로 순회 공격 패턴 (../ 또는 \..\만 차단)
+    private static final Pattern PATH_TRAVERSAL_PATTERN = Pattern.compile(".*(\\.\\.[/\\\\]|[/\\\\]\\.\\.).*");
 
     public S3Service(S3Client s3Client, FileType fileType) {
         this.s3Client = s3Client;
@@ -70,7 +76,10 @@ public class S3Service {
     }
 
     public String uploadFile(MultipartFile file, String folder, FileType.FileTypeEnum fileTypeEnum) {
-        validateFolder(folder);
+        // 1. 폴더 경로 순회 공격 방지 및 허용 목록 검증
+        validateFolderSecurity(folder);
+        
+        // 2. FileType 설정 조회 및 파일 검증
         FileType.FileTypeConfig config = fileType.getConfig(fileTypeEnum);
         validateFile(file, config);
 
@@ -108,6 +117,9 @@ public class S3Service {
     }
 
     public void deleteFile(String fileUrl) {
+        // 1. URL 검증 (null, 형식, 길이, 경로 순회 공격 방지)
+        validateFileUrl(fileUrl);
+        
         try {
             String key = extractKeyFromUrl(fileUrl);
 
@@ -232,10 +244,111 @@ public class S3Service {
         }
     }
 
-    private void validateFolder(String folder) {
+    /**
+     * 폴더 경로의 보안 검증 (경로 순회 공격 방지 + 허용 목록 검증)
+     * URL 인코딩, 이중 인코딩, 유니코드 인코딩된 경로 순회 벡터 탐지
+     * 
+     * @param folder S3 내 폴더 경로
+     * @throws IllegalArgumentException 경로 순회 공격 시도 또는 허용되지 않은 폴더인 경우
+     */
+    private void validateFolderSecurity(String folder) {
+        // 1. 허용 목록 검증
         if (!ALLOWED_FOLDERS.contains(folder)) {
             log.warn("Invalid folder name attempted: {}", folder);
             throw new IllegalArgumentException("허용되지 않은 폴더입니다: " + folder);
+        }
+        
+        // 2. 경로 순회 공격 방지 (URL 인코딩/이중 인코딩 포함)
+        if (!isPathSafe(folder, "uploads")) {
+            log.warn("Path traversal attempt detected in folder: {}", folder);
+            throw new IllegalArgumentException("유효하지 않은 폴더 경로입니다.");
+        }
+    }
+
+    /**
+     * URL 디코딩 및 정규화를 통한 경로 순회 공격 방지
+     * URL 인코딩, 이중 인코딩, 유니코드 인코딩된 경로 순회 벡터 탐지
+     * 
+     * @param input 검증할 입력 문자열 (폴더 경로)
+     * @param baseFolder 기본 폴더 (예: "uploads")
+     * @return 정규화된 경로가 안전하면 true, 경로 순회 시도가 감지되면 false
+     */
+    private boolean isPathSafe(String input, String baseFolder) {
+        if (input == null || input.isBlank()) {
+            return true; // 빈 문자열은 다른 검증에서 처리
+        }
+
+        try {
+            // 1. URL 디코딩 (한 번만 수행하여 무한 디코딩 방지)
+            String decoded = URLDecoder.decode(input, StandardCharsets.UTF_8);
+            
+            // 2. 이중 인코딩 방지를 위한 추가 디코딩 검사
+            // 디코딩 후에도 % 문자가 남아있으면 이중 인코딩 시도로 간주
+            if (decoded.contains("%")) {
+                log.warn("Potential double-encoding detected in path: {}", input);
+                return false;
+            }
+            
+            // 3. 기본 디렉토리 설정 (S3 버킷 루트)
+            Path basePath = Paths.get("/" + baseFolder).normalize().toAbsolutePath();
+            
+            // 4. 입력 경로를 기본 디렉토리에 해결 및 정규화
+            Path resolvedPath = basePath.resolve(decoded).normalize().toAbsolutePath();
+            
+            // 5. 정규화된 경로가 기본 디렉토리로 시작하는지 확인
+            if (!resolvedPath.startsWith(basePath)) {
+                log.warn("Path traversal attempt detected - input: {}, decoded: {}, resolved: {}, base: {}",
+                        input, decoded, resolvedPath, basePath);
+                return false;
+            }
+            
+            return true;
+            
+        } catch (IllegalArgumentException e) {
+            // URL 디코딩 실패 또는 잘못된 경로
+            log.warn("Invalid path format: {}", input, e);
+            return false;
+        } catch (Exception e) {
+            // 기타 예외 발생 시 안전하게 거부
+            log.error("Unexpected error during path validation: {}", input, e);
+            return false;
+        }
+    }
+
+    /**
+     * 파일 URL의 보안 검증 (null, 형식, 길이, 경로 순회 공격 방지)
+     * 
+     * @param fileUrl 검증할 파일 URL
+     * @throws IllegalArgumentException URL이 유효하지 않거나 보안 위협이 감지된 경우
+     */
+    private void validateFileUrl(String fileUrl) {
+        // 1. null 및 빈 문자열 검증
+        if (fileUrl == null || fileUrl.isBlank()) {
+            throw new IllegalArgumentException("파일 URL이 비어있습니다.");
+        }
+
+        // 2. URL 형식 검증 (기본 패턴 체크)
+        if (!fileUrl.startsWith("https://") && !fileUrl.startsWith("http://")) {
+            log.warn("File delete failed: invalid URL format: {}", fileUrl);
+            throw new IllegalArgumentException("유효하지 않은 URL 형식입니다.");
+        }
+
+        // 3. S3 URL 패턴 검증 (amazonaws.com 포함 여부)
+        if (!fileUrl.contains(".s3.") || !fileUrl.contains(".amazonaws.com/")) {
+            log.warn("File delete failed: not a valid S3 URL: {}", fileUrl);
+            throw new IllegalArgumentException("유효하지 않은 S3 URL입니다.");
+        }
+
+        // 4. 경로 순회 공격 방지
+        if (PATH_TRAVERSAL_PATTERN.matcher(fileUrl).matches()) {
+            log.warn("File delete failed: path traversal attempt detected in URL: {}", fileUrl);
+            throw new IllegalArgumentException("유효하지 않은 URL입니다.");
+        }
+
+        // 5. URL 길이 검증 (비정상적으로 긴 URL 차단)
+        if (fileUrl.length() > 2048) {
+            log.warn("File delete failed: URL too long: {} characters", fileUrl.length());
+            throw new IllegalArgumentException("URL이 너무 깁니다.");
         }
     }
 

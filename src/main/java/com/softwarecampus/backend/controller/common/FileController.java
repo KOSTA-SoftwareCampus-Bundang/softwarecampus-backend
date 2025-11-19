@@ -18,12 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Pattern;
 
 @Slf4j
 @RestController
@@ -32,62 +27,6 @@ import java.util.regex.Pattern;
 public class FileController {
 
     private final S3Service s3Service;
-
-    // 경로 순회 공격 패턴 (../ 또는 \..\만 차단, 연속된 점은 허용)
-    private static final Pattern PATH_TRAVERSAL_PATTERN = Pattern.compile(".*(\\.\\.[/\\\\]|[/\\\\]\\.\\.).*");
-    
-    // 위험한 파일명 문자
-    private static final Pattern DANGEROUS_CHARS_PATTERN = Pattern.compile(".*[<>:\"|?*\\x00-\\x1F].*");
-
-    /**
-     * URL 디코딩 및 정규화를 통한 경로 순회 공격 방지
-     * URL 인코딩, 이중 인코딩, 유니코드 인코딩된 경로 순회 벡터 탐지
-     * 
-     * @param input 검증할 입력 문자열 (파일명 또는 폴더 경로)
-     * @param baseFolder 기본 폴더 (예: "uploads")
-     * @return 정규화된 경로가 안전하면 true, 경로 순회 시도가 감지되면 false
-     */
-    private boolean isPathSafe(String input, String baseFolder) {
-        if (input == null || input.isBlank()) {
-            return true; // 빈 문자열은 다른 검증에서 처리
-        }
-
-        try {
-            // 1. URL 디코딩 (한 번만 수행하여 무한 디코딩 방지)
-            String decoded = URLDecoder.decode(input, StandardCharsets.UTF_8);
-            
-            // 2. 이중 인코딩 방지를 위한 추가 디코딩 검사
-            // 디코딩 후에도 % 문자가 남아있으면 이중 인코딩 시도로 간주
-            if (decoded.contains("%")) {
-                log.warn("Potential double-encoding detected in path: {}", input);
-                return false;
-            }
-            
-            // 3. 기본 디렉토리 설정 (S3 버킷 루트)
-            Path basePath = Paths.get("/" + baseFolder).normalize().toAbsolutePath();
-            
-            // 4. 입력 경로를 기본 디렉토리에 해결 및 정규화
-            Path resolvedPath = basePath.resolve(decoded).normalize().toAbsolutePath();
-            
-            // 5. 정규화된 경로가 기본 디렉토리로 시작하는지 확인
-            if (!resolvedPath.startsWith(basePath)) {
-                log.warn("Path traversal attempt detected - input: {}, decoded: {}, resolved: {}, base: {}",
-                        input, decoded, resolvedPath, basePath);
-                return false;
-            }
-            
-            return true;
-            
-        } catch (IllegalArgumentException e) {
-            // URL 디코딩 실패 또는 잘못된 경로
-            log.warn("Invalid path format: {}", input, e);
-            return false;
-        } catch (Exception e) {
-            // 기타 예외 발생 시 안전하게 거부
-            log.error("Unexpected error during path validation: {}", input, e);
-            return false;
-        }
-    }
 
     /**
      * 파일 업로드
@@ -129,52 +68,10 @@ public class FileController {
                 );
             }
 
-            String originalFilename = file.getOriginalFilename();
-            String contentType = file.getContentType();
-            long fileSize = file.getSize();
+            log.info("File upload request by {} - folder: {}, fileType: {}",
+                    username, folder, fileType);
 
-            log.info("File upload request by {} - filename: {}, size: {} bytes, contentType: {}, folder: {}, fileType: {}",
-                    username, originalFilename, fileSize, contentType, folder, fileType);
-
-            // 2. 파일명 검증 (originalFilename null 체크 포함)
-            if (originalFilename == null || originalFilename.isBlank()) {
-                log.warn("File upload failed: filename is null or blank");
-                return createErrorResponse(
-                        HttpStatus.BAD_REQUEST,
-                        "파일명이 유효하지 않습니다."
-                );
-            }
-
-            // 3. 경로 순회 공격 방지 (URL 인코딩/이중 인코딩/유니코드 인코딩 포함)
-            // 정규화 및 정규 경로 검증을 통한 포괄적인 경로 순회 방지
-            if (!isPathSafe(originalFilename, "uploads") || !isPathSafe(folder, "uploads")) {
-                log.warn("File upload failed: path traversal attempt detected - filename: {}, folder: {}",
-                        originalFilename, folder);
-                return createErrorResponse(
-                        HttpStatus.BAD_REQUEST,
-                        "유효하지 않은 파일명 또는 폴더 경로입니다."
-                );
-            }
-
-            // 4. 위험한 문자 검증 (파일명)
-            if (DANGEROUS_CHARS_PATTERN.matcher(originalFilename).matches()) {
-                log.warn("File upload failed: dangerous characters in filename: {}", originalFilename);
-                return createErrorResponse(
-                        HttpStatus.BAD_REQUEST,
-                        "파일명에 허용되지 않는 문자가 포함되어 있습니다."
-                );
-            }
-
-            // 5. 위험한 문자 검증 (폴더 경로)
-            if (folder != null && !folder.isEmpty() && DANGEROUS_CHARS_PATTERN.matcher(folder).matches()) {
-                log.warn("File upload failed: dangerous characters in folder path: {}", folder);
-                return createErrorResponse(
-                        HttpStatus.BAD_REQUEST,
-                        "파일명에 허용되지 않는 문자가 포함되어 있습니다."
-                );
-            }
-
-            // 6. S3 업로드 실행 (FileType에서 파일 크기, contentType, 확장자 검증)
+            // 2. S3 업로드 실행 (Service에서 모든 검증 수행)
             String fileUrl = s3Service.uploadFile(file, folder, fileType);
 
             log.info("File uploaded successfully: {}", fileUrl);
@@ -271,52 +168,7 @@ public class FileController {
             String username = authentication.getName() != null ? authentication.getName() : "authenticated_admin";
             log.info("ADMIN file delete request - user: {}, fileUrl: {}", username, fileUrl);
 
-            // 2. fileUrl 기본 검증
-            if (fileUrl == null || fileUrl.isBlank()) {
-                log.warn("File delete failed: fileUrl is null or blank");
-                return createErrorResponse(
-                        HttpStatus.BAD_REQUEST,
-                        "파일 URL이 비어있습니다."
-                );
-            }
-
-            // 3. URL 형식 검증 (기본 패턴 체크)
-            if (!fileUrl.startsWith("https://") && !fileUrl.startsWith("http://")) {
-                log.warn("File delete failed: invalid URL format: {}", fileUrl);
-                return createErrorResponse(
-                        HttpStatus.BAD_REQUEST,
-                        "유효하지 않은 URL 형식입니다."
-                );
-            }
-
-            // 4. S3 URL 패턴 검증 (amazonaws.com 포함 여부)
-            if (!fileUrl.contains(".s3.") || !fileUrl.contains(".amazonaws.com/")) {
-                log.warn("File delete failed: not a valid S3 URL: {}", fileUrl);
-                return createErrorResponse(
-                        HttpStatus.BAD_REQUEST,
-                        "유효하지 않은 S3 URL입니다."
-                );
-            }
-
-            // 5. 경로 순회 공격 방지
-            if (PATH_TRAVERSAL_PATTERN.matcher(fileUrl).matches()) {
-                log.warn("File delete failed: path traversal attempt detected in URL: {}", fileUrl);
-                return createErrorResponse(
-                        HttpStatus.BAD_REQUEST,
-                        "유효하지 않은 URL입니다."
-                );
-            }
-
-            // 6. URL 길이 검증 (비정상적으로 긴 URL 차단)
-            if (fileUrl.length() > 2048) {
-                log.warn("File delete failed: URL too long: {} characters", fileUrl.length());
-                return createErrorResponse(
-                        HttpStatus.BAD_REQUEST,
-                        "URL이 너무 깁니다."
-                );
-            }
-
-            // 7. S3 파일 삭제 실행
+            // 2. S3 파일 삭제 실행 (Service에서 모든 검증 수행)
             s3Service.deleteFile(fileUrl);
 
             log.warn("File PERMANENTLY deleted by admin {}: {}", username, fileUrl);
