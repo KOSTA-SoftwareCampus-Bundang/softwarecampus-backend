@@ -181,6 +181,24 @@ public class GlobalExceptionHandler {
     // ========================================
 
     /**
+     * S3 파일 업로드 실패 예외 처리
+     * HTTP 500 Internal Server Error
+     */
+    @ExceptionHandler(S3UploadException.class)
+    public ProblemDetail handleS3UploadException(S3UploadException ex) {
+        log.error("S3 file upload failed", ex);
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "파일 업로드에 실패했습니다."
+        );
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/s3-upload-failed"));
+        problemDetail.setTitle("File Upload Failed");
+
+        return problemDetail;
+    }
+
+    /**
      *  리소스 찾기 실패 처리
      */
     @ExceptionHandler(NoSuchElementException.class)
