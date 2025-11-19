@@ -2,6 +2,8 @@ package com.softwarecampus.backend.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.EnableCaching;
@@ -56,10 +58,16 @@ public class RedisConfig {
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // ObjectMapper 설정
+        // ObjectMapper 설정 - 타입 정보 활성화
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        
+        // 타입 정보를 포함한 직렬화 활성화
+        PolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
+                .allowIfBaseType(Object.class)
+                .build();
+        objectMapper.activateDefaultTyping(typeValidator, ObjectMapper.DefaultTyping.NON_FINAL);
 
         GenericJackson2JsonRedisSerializer serializer =
                 new GenericJackson2JsonRedisSerializer(objectMapper);

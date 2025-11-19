@@ -28,6 +28,11 @@ import static org.mockito.Mockito.*;
  * - 캐시 히트/미스 시나리오 테스트
  * - 실제 Redis 연동 확인
  * 
+ * 캐싱 전략:
+ * - Account 엔티티를 캐싱 (getAccountByEmail)
+ * - UserDetails는 매번 새로 생성
+ * - DB 조회만 캐싱하여 성능 향상
+ * 
  * 테스트 시나리오:
  * 1. 첫 호출 시 DB 조회 (캐시 미스)
  * 2. 동일 이메일로 재호출 시 캐시에서 반환 (캐시 히트)
@@ -84,13 +89,9 @@ class UserDetailsCacheIntegrationTest {
     @DisplayName("첫 호출 시 DB 조회 (캐시 미스)")
     void loadUserByUsername_FirstCall_QueriesDatabase() {
         // when
-        UserDetails userDetails = userDetailsService.loadUserByUsername("cache@example.com");
+        userDetailsService.getAccountByEmail("cache@example.com");
         
-        // then
-        assertThat(userDetails).isNotNull();
-        assertThat(userDetails.getUsername()).isEqualTo("cache@example.com");
-        
-        // DB 조회 확인
+        // then - DB 조회 확인
         verify(accountRepository, times(1)).findByEmail("cache@example.com");
     }
     
@@ -103,17 +104,13 @@ class UserDetailsCacheIntegrationTest {
         }
         
         // given - 첫 번째 호출로 캐시 생성
-        UserDetails firstCall = userDetailsService.loadUserByUsername("cache@example.com");
+        userDetailsService.getAccountByEmail("cache@example.com");
         clearInvocations(accountRepository); // 호출 기록 초기화
         
         // when - 두 번째 호출 (캐시에서 반환)
-        UserDetails secondCall = userDetailsService.loadUserByUsername("cache@example.com");
+        userDetailsService.getAccountByEmail("cache@example.com");
         
-        // then - 같은 객체 반환
-        assertThat(secondCall).isNotNull();
-        assertThat(secondCall.getUsername()).isEqualTo(firstCall.getUsername());
-        
-        // DB 조회하지 않음 (캐시 히트)
+        // then - DB 조회하지 않음 (캐시 히트)
         verify(accountRepository, never()).findByEmail("cache@example.com");
     }
     

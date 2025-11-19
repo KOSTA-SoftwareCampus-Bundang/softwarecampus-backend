@@ -244,9 +244,7 @@ class JwtTokenProviderTest {
     @DisplayName("토큰 만료 시간 정확성 검증")
     void verifyTokenExpirationTime() {
         // given
-        long beforeGeneration = System.currentTimeMillis();
         String token = jwtTokenProvider.generateToken("test@example.com");
-        long afterGeneration = System.currentTimeMillis();
         
         // when
         SecretKey key = Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8));
@@ -259,8 +257,10 @@ class JwtTokenProviderTest {
         long expirationTime = claims.getExpiration().getTime();
         long issuedTime = claims.getIssuedAt().getTime();
         
-        // then
-        assertThat(issuedTime).isBetween(beforeGeneration, afterGeneration);
-        assertThat(expirationTime - issuedTime).isEqualTo(TEST_EXPIRATION);
+        // then - JWT는 초 단위로 저장하므로 밀리초는 잘림
+        // 정확히 TEST_EXPIRATION이 아닌 TEST_EXPIRATION ± 1000ms 범위 내
+        long actualDuration = expirationTime - issuedTime;
+        assertThat(actualDuration).isBetween(TEST_EXPIRATION - 1000, TEST_EXPIRATION + 1000);
+        assertThat(issuedTime).isLessThanOrEqualTo(System.currentTimeMillis());
     }
 }

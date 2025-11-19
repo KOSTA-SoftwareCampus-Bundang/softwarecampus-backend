@@ -52,7 +52,7 @@ class TokenServiceTest {
     @BeforeEach
     void setUp() {
         // RedisTemplate의 opsForValue() 메서드가 valueOperations를 반환하도록 설정
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     @Test
