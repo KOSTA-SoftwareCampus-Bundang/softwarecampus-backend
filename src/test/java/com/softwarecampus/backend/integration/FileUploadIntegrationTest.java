@@ -211,14 +211,13 @@ class FileUploadIntegrationTest {
     @WithMockUser(username = "user1", roles = {"USER"})
     void testIntegration_Upload_NullFile() throws Exception {
         // when & then
+        // required=true 파라미터가 없으면 Spring이 MissingServletRequestPartException 발생 (400)
         mockMvc.perform(multipart("/api/files/upload")
                         .param("folder", "profile")
                         .param("fileType", "PROFILE")
                         .with(csrf()))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists())
-                .andExpect(jsonPath("$.error").value(containsString("파일이 비어있습니다")));
+                .andExpect(status().isBadRequest());
 
         verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
@@ -243,8 +242,8 @@ class FileUploadIntegrationTest {
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists())
-                .andExpect(jsonPath("$.error").value(containsString("파일이 비어있습니다")));
+                .andExpect(jsonPath("$.detail").exists())
+                .andExpect(jsonPath("$.detail").value(containsString("파일이 비어있습니다")));
 
         verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
@@ -268,9 +267,9 @@ class FileUploadIntegrationTest {
                         .param("fileType", "PROFILE")
                         .with(csrf()))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists())
-                .andExpect(jsonPath("$.error").value(containsString("허용되지 않은")));
+                .andExpect(status().isUnsupportedMediaType()) // 415
+                .andExpect(jsonPath("$.detail").exists())
+                .andExpect(jsonPath("$.detail").value(containsString("허용되지 않은 파일")));
 
         verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
@@ -295,9 +294,9 @@ class FileUploadIntegrationTest {
                         .param("fileType", "PROFILE")
                         .with(csrf()))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists())
-                .andExpect(jsonPath("$.error").value(containsString("파일 크기가 제한을 초과합니다")));
+                .andExpect(status().isPayloadTooLarge()) // 413
+                .andExpect(jsonPath("$.detail").exists())
+                .andExpect(jsonPath("$.detail").value(containsString("파일 크기가 제한을 초과합니다")));
 
         verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
@@ -321,18 +320,19 @@ class FileUploadIntegrationTest {
                         .param("fileType", "PROFILE")
                         .with(csrf()))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists())
-                .andExpect(jsonPath("$.error").value(containsString("유효하지 않은")));
+                .andExpect(status().isUnsupportedMediaType()) // 415 (확장자 검증 실패)
+                .andExpect(jsonPath("$.detail").exists())
+                .andExpect(jsonPath("$.detail").value(containsString("허용되지 않은 파일")));
 
         verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
 
     @Test
-    @DisplayName("통합: 파일 업로드 실패 - 위험한 파일명 문자")
+    @DisplayName("통합: 파일 업로드 성공 - 위험한 파일명 (UUID로 대체됨)")
     @WithMockUser(username = "user1", roles = {"USER"})
     void testIntegration_Upload_DangerousFilename() throws Exception {
         // given
+        // 파일명은 UUID로 변경되므로 위험한 문자가 포함되어도 안전하게 처리됨
         MockMultipartFile file = new MockMultipartFile(
                 "file",
                 "file<script>.jpg",
@@ -347,11 +347,10 @@ class FileUploadIntegrationTest {
                         .param("fileType", "PROFILE")
                         .with(csrf()))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists())
-                .andExpect(jsonPath("$.error").value(containsString("허용되지 않는")));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fileUrl").exists());
 
-        verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+        verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
 
     // ==================== 파일 삭제 통합 테스트 ====================
@@ -418,6 +417,7 @@ class FileUploadIntegrationTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testIntegration_DeleteFile_NullUrl() throws Exception {
         // when & then
+        // required=true 파라미터가 없으면 Spring이 MissingServletRequestParameterException 발생 (400)
         mockMvc.perform(delete("/api/admin/files/delete")
                         .with(csrf()))
                 .andDo(print())
@@ -439,8 +439,8 @@ class FileUploadIntegrationTest {
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists())
-                .andExpect(jsonPath("$.error").value(containsString("유효하지 않은")));
+                .andExpect(jsonPath("$.detail").exists())
+                .andExpect(jsonPath("$.detail").value(containsString("유효하지 않은")));
 
         verify(s3Client, never()).deleteObject(any(DeleteObjectRequest.class));
     }

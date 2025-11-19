@@ -123,7 +123,7 @@ class S3ServiceTest {
     void testUploadFile_NullFile() {
         // when & then
         assertThatThrownBy(() -> s3Service.uploadFile(null, "profile", FileType.FileTypeEnum.PROFILE))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(S3UploadException.class)
                 .hasMessageContaining("파일이 비어있습니다");
     }
 
@@ -140,7 +140,7 @@ class S3ServiceTest {
 
         // when & then
         assertThatThrownBy(() -> s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(S3UploadException.class)
                 .hasMessageContaining("파일이 비어있습니다");
     }
 
@@ -158,7 +158,7 @@ class S3ServiceTest {
 
         // when & then
         assertThatThrownBy(() -> s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(S3UploadException.class)
                 .hasMessageContaining("파일 크기가 제한을 초과합니다");
     }
 
@@ -175,7 +175,7 @@ class S3ServiceTest {
 
         // when & then
         assertThatThrownBy(() -> s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(S3UploadException.class)
                 .hasMessageContaining("허용되지 않은 파일 형식입니다");
     }
 
@@ -192,7 +192,7 @@ class S3ServiceTest {
 
         // when & then
         assertThatThrownBy(() -> s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(S3UploadException.class)
                 .hasMessageContaining("허용되지 않은 파일 확장자입니다");
     }
 
@@ -209,7 +209,7 @@ class S3ServiceTest {
 
         // when & then
         assertThatThrownBy(() -> s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(S3UploadException.class)
                 .hasMessageContaining("파일 확장자가 없습니다");
     }
 
@@ -308,7 +308,7 @@ class S3ServiceTest {
     void testDeleteFile_NullUrl() {
         // when & then
         assertThatThrownBy(() -> s3Service.deleteFile(null))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(S3UploadException.class)
                 .hasMessageContaining("파일 URL이 비어있습니다");
     }
 
@@ -317,7 +317,7 @@ class S3ServiceTest {
     void testDeleteFile_EmptyUrl() {
         // when & then
         assertThatThrownBy(() -> s3Service.deleteFile(""))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(S3UploadException.class)
                 .hasMessageContaining("파일 URL이 비어있습니다");
     }
 
@@ -326,7 +326,7 @@ class S3ServiceTest {
     void testDeleteFile_InvalidUrl() {
         // when & then
         assertThatThrownBy(() -> s3Service.deleteFile("invalid-url"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(S3UploadException.class)
                 .hasMessageContaining("유효하지 않은 URL 형식입니다");
     }
 
@@ -375,7 +375,7 @@ class S3ServiceTest {
         assertThatThrownBy(() ->
             ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", attackKey)
         )
-            .isInstanceOf(IllegalArgumentException.class)
+            .isInstanceOf(S3UploadException.class)
             .hasMessageContaining("잘못된 S3 키 형식입니다");
     }
 
@@ -389,7 +389,7 @@ class S3ServiceTest {
         assertThatThrownBy(() ->
             ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", attackKey)
         )
-            .isInstanceOf(IllegalArgumentException.class)
+            .isInstanceOf(S3UploadException.class)
             .hasMessageContaining("잘못된 S3 키 형식입니다");
     }
 
@@ -403,7 +403,7 @@ class S3ServiceTest {
         assertThatThrownBy(() ->
             ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", attackKey)
         )
-            .isInstanceOf(IllegalArgumentException.class)
+            .isInstanceOf(S3UploadException.class)
             .hasMessageContaining("잘못된 S3 키 형식입니다");
     }
 
@@ -417,7 +417,7 @@ class S3ServiceTest {
         assertThatThrownBy(() ->
             ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", attackKey)
         )
-            .isInstanceOf(IllegalArgumentException.class)
+            .isInstanceOf(S3UploadException.class)
             .hasMessageContaining("잘못된 S3 키 형식입니다");
     }
 
@@ -428,7 +428,7 @@ class S3ServiceTest {
         assertThatThrownBy(() ->
             ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", (String) null)
         )
-            .isInstanceOf(IllegalArgumentException.class)
+            .isInstanceOf(S3UploadException.class)
             .hasMessageContaining("S3 키가 비어있습니다");
     }
 
@@ -439,7 +439,7 @@ class S3ServiceTest {
         assertThatThrownBy(() ->
             ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", "")
         )
-            .isInstanceOf(IllegalArgumentException.class)
+            .isInstanceOf(S3UploadException.class)
             .hasMessageContaining("S3 키가 비어있습니다");
     }
 
@@ -450,7 +450,7 @@ class S3ServiceTest {
         assertThatThrownBy(() ->
             ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", "   ")
         )
-            .isInstanceOf(IllegalArgumentException.class)
+            .isInstanceOf(S3UploadException.class)
             .hasMessageContaining("S3 키가 비어있습니다");
     }
 
