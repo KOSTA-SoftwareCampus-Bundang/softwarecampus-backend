@@ -32,7 +32,26 @@ public class JwtTokenProvider {
     }
     
     /**
-     * JWT 토큰 생성
+     * JWT 토큰 생성 (이메일만)
+     * Refresh Token으로 Access Token 갱신 시 사용
+     * 
+     * @param email 사용자 이메일
+     * @return 생성된 JWT 토큰
+     */
+    public String generateToken(String email) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getExpiration());
+        
+        return Jwts.builder()
+                .subject(email)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
+    }
+    
+    /**
+     * JWT 토큰 생성 (이메일 + 권한)
      * 
      * @param email 사용자 이메일
      * @param role 사용자 권한 (STUDENT, INSTRUCTOR, ADMIN)
@@ -49,6 +68,15 @@ public class JwtTokenProvider {
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
+    }
+    
+    /**
+     * JWT 토큰 만료 시간 조회 (밀리초)
+     * 
+     * @return 토큰 유효 시간 (밀리초)
+     */
+    public long getExpiration() {
+        return jwtProperties.getExpiration();
     }
     
     /**
