@@ -1,0 +1,26 @@
+package com.softwarecampus.backend.exception.board;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+
+@Getter
+@RequiredArgsConstructor
+public enum BoardErrorCode {
+
+    BOARD_NOT_FOUND(HttpStatus.NOT_FOUND,1001,"해당 게시글을 찾을 수 없습니다"),
+    CANNOT_MODIFY_BOARD(HttpStatus.FORBIDDEN,1002,"게시글 수정 권한이 없습니다"),
+    CANNOT_DELETE_BOARD(HttpStatus.FORBIDDEN,1003,"게시글 삭제 권힌이 없습니다"),
+    ALREADY_RECOMMEND_BOARD(HttpStatus.BAD_REQUEST,1004,"게시글을 이미 추천하였습니다"),
+    NOT_RECOMMEND_BOARD(HttpStatus.BAD_REQUEST,1005,"게시글을 추천한 기록이 없습니다"),
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND,1101,"해당 댓글을 찾지 못했습니다"),
+    CANNOT_MODIFY_COMMENT(HttpStatus.FORBIDDEN,1102,"댓글 수정 권한이 없습니다"),
+    CANNOT_DELETE_COMMENT(HttpStatus.FORBIDDEN,1103,"댓글 삭제 권한이 없습니다"),
+    ALREADY_RECOMMEND_COMMENT(HttpStatus.BAD_REQUEST,1104,"댓글을 이미 추천하였습니다"),
+    NOT_RECOMMEND_COMMENT(HttpStatus.BAD_REQUEST,1105,"댓글을 추천한 기록이 없습니다");
+
+    private final HttpStatus httpStatus;
+    private final int errorCode;
+    private final String details;
+}
