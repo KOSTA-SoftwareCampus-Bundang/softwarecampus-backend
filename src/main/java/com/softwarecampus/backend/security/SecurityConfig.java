@@ -1,6 +1,5 @@
 package com.softwarecampus.backend.security;
 
-import com.softwarecampus.backend.config.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

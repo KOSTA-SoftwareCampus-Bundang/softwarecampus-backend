@@ -1,5 +1,6 @@
-package com.softwarecampus.backend.config;
+package com.softwarecampus.backend.security;
 
+import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

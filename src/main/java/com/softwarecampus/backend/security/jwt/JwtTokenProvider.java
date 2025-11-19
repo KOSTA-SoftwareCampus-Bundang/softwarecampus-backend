@@ -1,4 +1,4 @@
-package com.softwarecampus.backend.config;
+package com.softwarecampus.backend.security.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

@@ -1,4 +1,4 @@
-package com.softwarecampus.backend.config;
+package com.softwarecampus.backend.security.jwt;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package com.softwarecampus.backend.service.user.auth;
+package com.softwarecampus.backend.security;
 
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.repository.user.AccountRepository;
