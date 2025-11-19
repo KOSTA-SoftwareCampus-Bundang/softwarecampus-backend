@@ -41,4 +41,4 @@
 - [x] `WebConfig.java` 생성 및 테스트
 - [x] `AuthController.java` 주석 수정
 - [x] 빌드 성공 (`mvn clean compile`)
-- [x] 기존 테스트 통과 (90/90)
+- [x] 기존 테스트 통과 (`mvn test` - 90/90)

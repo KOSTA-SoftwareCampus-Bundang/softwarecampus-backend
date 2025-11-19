@@ -19,7 +19,7 @@
 public ProblemDetail handleInvalidInputException(InvalidInputException ex) {
     log.warn("Invalid input detected for a request");
     if (log.isDebugEnabled()) {
-        log.debug("InvalidInputException details: {}", ex.getMessage(), ex);
+        log.debug("InvalidInputException details: {}", ex.getMessage());
     }
     
     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
