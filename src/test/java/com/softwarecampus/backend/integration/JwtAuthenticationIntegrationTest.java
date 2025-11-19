@@ -1,6 +1,5 @@
 package com.softwarecampus.backend.integration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 /**
  * Phase 13: JWT 인증 통합 테스트
@@ -40,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since 2025-11-19
  */
 @SpringBootTest
-@AutoConfigureMockMvc // Security 필터 포함
+@AutoConfigureMockMvc
 @Transactional
 @DisplayName("JWT 인증 통합 테스트")
 class JwtAuthenticationIntegrationTest {
@@ -56,9 +54,6 @@ class JwtAuthenticationIntegrationTest {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
-    
-    @Autowired
-    private ObjectMapper objectMapper;
     
     private Account testUser;
     private String validToken;
@@ -84,7 +79,7 @@ class JwtAuthenticationIntegrationTest {
     @DisplayName("유효한 JWT 토큰으로 보호된 리소스 접근 성공")
     void accessProtectedResource_withValidToken_Success() throws Exception {
         // when & then
-        mockMvc.perform(get("/api/my-page")
+        mockMvc.perform(get("/api/admin/dashboard")
                 .header("Authorization", "Bearer " + validToken))
             .andExpect(status().isOk());
     }
@@ -93,7 +88,7 @@ class JwtAuthenticationIntegrationTest {
     @DisplayName("토큰 없이 보호된 리소스 접근 시 401 Unauthorized")
     void accessProtectedResource_withoutToken_Unauthorized() throws Exception {
         // when & then
-        mockMvc.perform(get("/api/my-page"))
+        mockMvc.perform(get("/api/admin/dashboard"))
             .andExpect(status().isUnauthorized());
     }
     
@@ -101,7 +96,7 @@ class JwtAuthenticationIntegrationTest {
     @DisplayName("Bearer 접두사 없는 토큰으로 접근 시 401 Unauthorized")
     void accessProtectedResource_withoutBearerPrefix_Unauthorized() throws Exception {
         // when & then
-        mockMvc.perform(get("/api/my-page")
+        mockMvc.perform(get("/api/admin/dashboard")
                 .header("Authorization", validToken)) // Bearer 없음
             .andExpect(status().isUnauthorized());
     }
@@ -113,7 +108,7 @@ class JwtAuthenticationIntegrationTest {
         String malformedToken = "this.is.not.a.valid.jwt.token";
         
         // when & then
-        mockMvc.perform(get("/api/my-page")
+        mockMvc.perform(get("/api/admin/dashboard")
                 .header("Authorization", "Bearer " + malformedToken))
             .andExpect(status().isUnauthorized());
     }
@@ -122,7 +117,7 @@ class JwtAuthenticationIntegrationTest {
     @DisplayName("빈 토큰으로 접근 시 401 Unauthorized")
     void accessProtectedResource_withEmptyToken_Unauthorized() throws Exception {
         // when & then
-        mockMvc.perform(get("/api/my-page")
+        mockMvc.perform(get("/api/admin/dashboard")
                 .header("Authorization", "Bearer "))
             .andExpect(status().isUnauthorized());
     }
@@ -143,7 +138,7 @@ class JwtAuthenticationIntegrationTest {
         String userToken = jwtTokenProvider.generateToken("test@example.com", "USER");
         
         // when & then
-        mockMvc.perform(get("/api/my-page")
+        mockMvc.perform(get("/api/admin/dashboard")
                 .header("Authorization", "Bearer " + userToken))
             .andExpect(status().isOk());
     }
@@ -166,7 +161,7 @@ class JwtAuthenticationIntegrationTest {
         String academyToken = jwtTokenProvider.generateToken("academy@example.com", "ACADEMY");
         
         // when & then
-        mockMvc.perform(get("/api/my-page")
+        mockMvc.perform(get("/api/admin/dashboard")
                 .header("Authorization", "Bearer " + academyToken))
             .andExpect(status().isOk());
     }
@@ -188,7 +183,7 @@ class JwtAuthenticationIntegrationTest {
         String adminToken = jwtTokenProvider.generateToken("admin@example.com", "ADMIN");
         
         // when & then
-        mockMvc.perform(get("/api/my-page")
+        mockMvc.perform(get("/api/admin/dashboard")
                 .header("Authorization", "Bearer " + adminToken))
             .andExpect(status().isOk());
     }
@@ -200,7 +195,7 @@ class JwtAuthenticationIntegrationTest {
         String emailOnlyToken = jwtTokenProvider.generateToken("test@example.com");
         
         // when & then
-        mockMvc.perform(get("/api/my-page")
+        mockMvc.perform(get("/api/admin/dashboard")
                 .header("Authorization", "Bearer " + emailOnlyToken))
             .andExpect(status().isOk());
     }
@@ -212,7 +207,7 @@ class JwtAuthenticationIntegrationTest {
         String nonExistentUserToken = jwtTokenProvider.generateToken("nonexistent@example.com", "USER");
         
         // when & then
-        mockMvc.perform(get("/api/my-page")
+        mockMvc.perform(get("/api/admin/dashboard")
                 .header("Authorization", "Bearer " + nonExistentUserToken))
             .andExpect(status().isUnauthorized());
     }
@@ -221,7 +216,7 @@ class JwtAuthenticationIntegrationTest {
     @DisplayName("Authorization 헤더가 null일 때 401 Unauthorized")
     void accessWithNullAuthorizationHeader_Unauthorized() throws Exception {
         // when & then
-        mockMvc.perform(get("/api/my-page"))
+        mockMvc.perform(get("/api/admin/dashboard"))
             .andExpect(status().isUnauthorized());
     }
 }
