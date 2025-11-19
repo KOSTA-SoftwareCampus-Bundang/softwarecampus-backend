@@ -5,12 +5,16 @@
  */
 package com.softwarecampus.backend.controller.common;
 
+import com.softwarecampus.backend.dto.common.FileDeleteResponse;
+import com.softwarecampus.backend.dto.common.FileUploadResponse;
 import com.softwarecampus.backend.exception.S3UploadException;
 import com.softwarecampus.backend.service.common.FileType;
 import com.softwarecampus.backend.service.common.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -18,7 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.*;
+import java.net.URI;
 
 @Slf4j
 @RestController
@@ -27,6 +31,9 @@ import java.util.*;
 public class FileController {
 
     private final S3Service s3Service;
+    
+    @Value("${problem.base-uri}")
+    private String problemBaseUri;
 
     /**
      * 파일 업로드
@@ -49,7 +56,7 @@ public class FileController {
      */
     @PostMapping("/files/upload")
     @PreAuthorize("isAuthenticated()")  // TODO: SecurityConfig 수정 후 활성화됨
-    public ResponseEntity<Map<String, String>> uploadFile(
+    public ResponseEntity<?> uploadFile(
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "folder", defaultValue = "") String folder,
             @RequestParam(value = "fileType", required = true) FileType.FileTypeEnum fileType) {
@@ -62,10 +69,13 @@ public class FileController {
             // 1. 기본 null 및 empty 검증
             if (file == null || file.isEmpty()) {
                 log.warn("File upload failed by {}: file is null or empty", username);
-                return createErrorResponse(
+                ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                         HttpStatus.BAD_REQUEST,
                         "파일이 비어있습니다. 파일을 선택해주세요."
                 );
+                problemDetail.setType(URI.create(problemBaseUri + "/file-empty"));
+                problemDetail.setTitle("파일 업로드 실패");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
             }
 
             log.info("File upload request by {} - folder: {}, fileType: {}",
@@ -76,42 +86,39 @@ public class FileController {
 
             log.info("File uploaded successfully: {}", fileUrl);
 
-            Map<String, String> response = new HashMap<>();
-            response.put("fileUrl", fileUrl);
-            response.put("message", "파일이 성공적으로 업로드되었습니다.");
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(FileUploadResponse.success(fileUrl));
 
         } catch (S3UploadException e) {
             log.error("S3 upload failed", e);
-            return createErrorResponse(
+            ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "파일 업로드 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
             );
+            problemDetail.setType(URI.create(problemBaseUri + "/s3-upload-failed"));
+            problemDetail.setTitle("파일 업로드 오류");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
         } catch (IllegalArgumentException e) {
             log.error("Validation failed", e);
-            return createErrorResponse(
+            ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                     HttpStatus.BAD_REQUEST,
                     e.getMessage()
             );
+            problemDetail.setType(URI.create(problemBaseUri + "/validation-failed"));
+            problemDetail.setTitle("입력 검증 실패");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
         } catch (Exception e) {
             log.error("Unexpected error during file upload", e);
-            return createErrorResponse(
+            ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "파일 업로드 중 예상치 못한 오류가 발생했습니다."
             );
+            problemDetail.setType(URI.create(problemBaseUri + "/unexpected-error"));
+            problemDetail.setTitle("예상치 못한 오류");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
         }
     }
 
-    /**
-     * 오류 응답 생성 헬퍼 메서드
-     */
-    private ResponseEntity<Map<String, String>> createErrorResponse(HttpStatus status, String message) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", message);
-        errorResponse.put("status", String.valueOf(status.value()));
-        return ResponseEntity.status(status).body(errorResponse);
-    }
+
 
     /**
      * 파일 삭제 (관리자 전용)
@@ -132,7 +139,7 @@ public class FileController {
      */
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/admin/files/delete")
-    public ResponseEntity<Map<String, String>> deleteFile(
+    public ResponseEntity<?> deleteFile(
             @RequestParam(value = "fileUrl", required = false) String fileUrl) {
 
         try {
@@ -142,10 +149,13 @@ public class FileController {
             // 1-1. 인증 객체 null 체크
             if (authentication == null || !authentication.isAuthenticated()) {
                 log.warn("File delete failed: User is not authenticated");
-                return createErrorResponse(
+                ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                         HttpStatus.UNAUTHORIZED,
                         "인증이 필요합니다."
                 );
+                problemDetail.setType(URI.create(problemBaseUri + "/unauthorized"));
+                problemDetail.setTitle("인증 실패");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
             }
             
             // 1-2. ADMIN 권한 확인 (getAuthorities() null 체크 포함)
@@ -159,10 +169,13 @@ public class FileController {
             if (!isAdmin) {
                 String userName = authentication.getName() != null ? authentication.getName() : "authenticated_user";
                 log.warn("File delete failed: User {} does not have ADMIN role", userName);
-                return createErrorResponse(
+                ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                         HttpStatus.FORBIDDEN,
                         "관리자 권한이 필요합니다."
                 );
+                problemDetail.setType(URI.create(problemBaseUri + "/forbidden"));
+                problemDetail.setTitle("권한 부족");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
             }
             
             String username = authentication.getName() != null ? authentication.getName() : "authenticated_admin";
@@ -173,36 +186,45 @@ public class FileController {
 
             log.warn("File PERMANENTLY deleted by admin {}: {}", username, fileUrl);
 
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "파일이 성공적으로 삭제되었습니다.");
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(FileDeleteResponse.success());
 
         } catch (S3UploadException e) {
             log.error("S3 delete failed for URL: {}", fileUrl, e);
             // S3UploadException의 FailureReason을 확인하여 적절한 HTTP 상태 코드 반환
             if (e.getReason() == S3UploadException.FailureReason.RESOURCE_NOT_FOUND) {
-                return createErrorResponse(
+                ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                         HttpStatus.NOT_FOUND,
                         "파일을 찾을 수 없습니다."
                 );
+                problemDetail.setType(URI.create(problemBaseUri + "/file-not-found"));
+                problemDetail.setTitle("파일 없음");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
             }
-            return createErrorResponse(
+            ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "파일 삭제 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
             );
+            problemDetail.setType(URI.create(problemBaseUri + "/s3-delete-failed"));
+            problemDetail.setTitle("파일 삭제 오류");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
         } catch (IllegalArgumentException e) {
             log.error("Invalid argument for file deletion: {}", fileUrl, e);
-            return createErrorResponse(
+            ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                     HttpStatus.BAD_REQUEST,
                     e.getMessage()
             );
+            problemDetail.setType(URI.create(problemBaseUri + "/validation-failed"));
+            problemDetail.setTitle("입력 검증 실패");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
         } catch (Exception e) {
             log.error("Unexpected error during file deletion: {}", fileUrl, e);
-            return createErrorResponse(
+            ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "파일 삭제 중 예상치 못한 오류가 발생했습니다."
             );
+            problemDetail.setType(URI.create(problemBaseUri + "/unexpected-error"));
+            problemDetail.setTitle("예상치 못한 오류");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
         }
     }
 }
