@@ -59,8 +59,10 @@ public class BannerServiceImpl implements BannerService {
 
         if (request.getNewImageFile() != null && !request.getNewImageFile().isEmpty()) {
 
-            fileService.deleteFile(banner.getImageUrl());
             newImageUrl = fileService.uploadFile(request.getNewImageFile(), BANNER_IMAGE_DIR);
+            if (newImageUrl != null) {
+                fileService.deleteFile(banner.getImageUrl());
+            }
         }
 
         banner.update(

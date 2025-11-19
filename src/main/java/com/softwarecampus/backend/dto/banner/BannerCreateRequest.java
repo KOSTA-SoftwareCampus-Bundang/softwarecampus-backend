@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.dto.banner;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
@@ -9,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Builder
 public class BannerCreateRequest {
 
-    @NotBlank(message = "")
+    @NotNull(message = "이미지 파일은 필수입니다.")
     private MultipartFile imageFile;
 
     @NotBlank(message = "제목은 필수입니다.")
@@ -17,10 +18,10 @@ public class BannerCreateRequest {
 
     private String linkUrl;
 
-    @NotBlank(message = "순서는 필수입니다.")
-    private int sequence;
+    @NotNull(message = "순서는 필수입니다.")
+    private Integer sequence;
 
-    @NotBlank(message = "활성화 상태는 필수입니다.")
+    @NotNull(message = "활성화 상태는 필수입니다.")
     private Boolean isActivated;
 
 

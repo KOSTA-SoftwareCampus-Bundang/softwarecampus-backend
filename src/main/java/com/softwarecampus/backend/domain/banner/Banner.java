@@ -5,11 +5,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Banner extends BaseSoftDeleteSupportEntity {
@@ -27,16 +25,17 @@ public class Banner extends BaseSoftDeleteSupportEntity {
     private String linkUrl;
 
     @Column(nullable = false)
-    private int sequence;
+    private Integer sequence;
 
     @Column(nullable = false)
     private Boolean isActivated;
 
     public void update(String title, String imageUrl, String linkUrl, int sequence, Boolean isActivated) {
-        this.title = title;
-        this.imageUrl = imageUrl;
-        this.linkUrl = linkUrl;
+        if (title != null) this.title = title;
+        if (imageUrl != null) this.imageUrl = imageUrl;
+        if (linkUrl != null) this.linkUrl = linkUrl;
+
         this.sequence = sequence;
-        this.isActivated = isActivated;
+        if (isActivated != null) this.isActivated = isActivated;
     }
 }

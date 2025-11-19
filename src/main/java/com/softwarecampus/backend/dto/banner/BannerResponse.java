@@ -14,7 +14,7 @@ public class BannerResponse {
     private String title;
     private String imageUrl;
     private String linkUrl;
-    private int sequence;
+    private Integer sequence;
     private Boolean isActivated;
 
     private LocalDateTime createdAt;
@@ -29,7 +29,6 @@ public class BannerResponse {
                 .linkUrl(banner.getLinkUrl())
                 .sequence(banner.getSequence())
                 .isActivated(banner.getIsActivated())
-                // 상속받은 필드 매핑
                 .createdAt(banner.getCreatedAt())
                 .updatedAt(banner.getUpdatedAt())
                 .isDeleted(banner.getIsDeleted())
