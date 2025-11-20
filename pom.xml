@@ -31,6 +31,7 @@
         <!-- 보안 취약점(CVE-2025-11226) 해결을 위한 logback 버전 명시 -->
         <logback.version>1.5.19</logback.version>
     </properties>
+    
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -86,6 +87,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- AWS S3 SDK -->
+        <!-- 버전 명시적으로 관리하여 의존성 업데이트에 의한 코드 고장 방지 -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.38.7</version>
         </dependency>
     </dependencies>
 
