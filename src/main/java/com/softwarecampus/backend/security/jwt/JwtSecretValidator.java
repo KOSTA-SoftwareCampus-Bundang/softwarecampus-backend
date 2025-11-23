@@ -39,16 +39,25 @@ public class JwtSecretValidator implements InitializingBean {
      * JWT Secret 최소 길이 검증
      * HMAC-SHA256 알고리즘은 최소 256bit (32바이트) 이상의 키를 요구합니다
      * 
-     * @throws IllegalStateException Secret의 최소 길이 미달 시
+     * @throws IllegalStateException Secret의 최소 길이 미달 시 또는 null/blank인 경우
      */
     private void validateSecretLength() {
         String secret = jwtProperties.getSecret();
+        
+        // null/blank 방어 로직 (설정 검증 실패 시 명확한 에러)
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                "JWT_SECRET must not be null or blank. " +
+                "Please set the JWT_SECRET environment variable."
+            );
+        }
+        
         int secretLength = secret.getBytes(StandardCharsets.UTF_8).length;
         
         // HMAC-SHA256 requires at least 256 bits (32 bytes)
         if (secretLength < 32) {
             throw new IllegalStateException(String.format(
-                "JWT_SECRET must be at least 256 bits (32 characters). " +
+                "JWT_SECRET must be at least 256 bits (32 bytes). " +
                 "Current length: %d bytes. " +
                 "Please set a stronger JWT_SECRET environment variable.",
                 secretLength
