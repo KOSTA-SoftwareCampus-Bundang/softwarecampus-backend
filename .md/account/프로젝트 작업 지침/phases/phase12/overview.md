@@ -9,44 +9,44 @@
 ## 📋 체크리스트
 
 ### 1. JWT 토큰 Provider 구현
-- [ ] `security/jwt/JwtTokenProvider.java` 생성
-  - [ ] `generateToken(String email, String role)` 메서드
-  - [ ] `validateToken(String token)` 메서드
-  - [ ] `getEmailFromToken(String token)` 메서드
-  - [ ] `getRoleFromToken(String token)` 메서드
-- [ ] `security/jwt/JwtProperties.java` 생성
-  - [ ] `@ConfigurationProperties("jwt")` 설정
-  - [ ] secret, expiration, issuer 필드
+- [x] `security/jwt/JwtTokenProvider.java` 생성
+  - [x] `generateToken(String email, String role)` 메서드
+  - [x] `validateToken(String token)` 메서드
+  - [x] `getEmailFromToken(String token)` 메서드
+  - [x] `getRoleFromToken(String token)` 메서드
+- [x] `security/jwt/JwtProperties.java` 생성
+  - [x] `@ConfigurationProperties("jwt")` 설정
+  - [x] secret, expiration, issuer 필드
 
 ### 2. UserDetailsService 구현
-- [ ] `security/CustomUserDetailsService.java` 생성
-  - [ ] `loadUserByUsername(String email)` 메서드
-  - [ ] Account → UserDetails 변환 로직
-  - [ ] AccountRepository 의존성 주입
+- [x] `security/CustomUserDetailsService.java` 생성
+  - [x] `loadUserByUsername(String email)` 메서드
+  - [x] Account → UserDetails 변환 로직
+  - [x] AccountRepository 의존성 주입
 
 ### 3. JWT 인증 Filter 구현
-- [ ] `security/JwtAuthenticationFilter.java` 생성
-  - [ ] `OncePerRequestFilter` 상속
-  - [ ] Authorization 헤더 파싱 ("Bearer " 제거)
-  - [ ] JWT 검증 및 SecurityContext 설정
-  - [ ] 예외 처리 (유효하지 않은 토큰)
+- [x] `security/JwtAuthenticationFilter.java` 생성
+  - [x] `OncePerRequestFilter` 상속
+  - [x] Authorization 헤더 파싱 ("Bearer " 제거)
+  - [x] JWT 검증 및 SecurityContext 설정
+  - [x] 예외 처리 (유효하지 않은 토큰)
 
 ### 4. SecurityFilterChain 완성
-- [ ] `config/SecurityConfig.java` 수정
-  - [ ] JwtAuthenticationFilter 등록 (UsernamePasswordAuthenticationFilter 앞)
-  - [ ] CSRF disable
-  - [ ] CORS 활성화
-  - [ ] permitAll: `/api/v1/auth/**`
-  - [ ] authenticated: `/api/v1/mypage/**`
+- [x] `config/SecurityConfig.java` 수정
+  - [x] JwtAuthenticationFilter 등록 (UsernamePasswordAuthenticationFilter 앞)
+  - [x] CSRF disable
+  - [x] CORS 활성화
+  - [x] permitAll: `/api/auth/**`
+  - [x] authenticated: `/api/mypage/**`
 
 ### 5. 환경 설정
-- [ ] `pom.xml` JWT 의존성 추가 (jjwt 0.13.0)
-- [ ] `application.properties` JWT 설정 추가
-- [ ] `.env` 파일 JWT_SECRET 추가
+- [x] `pom.xml` JWT 의존성 추가 (jjwt 0.12.6)
+- [x] `application.properties` JWT 설정 추가
+- [x] `.env` 파일 JWT_SECRET 추가
 
 ### 6. 빌드 및 검증
-- [ ] `mvn clean compile` 성공
-- [ ] 기존 테스트 90개 유지 (`mvn test`)
+- [x] `mvn clean compile` 성공
+- [x] 기존 테스트 82개 유지 + 통합 테스트 40개 통과 (`mvn test`)
 
 ---
 
