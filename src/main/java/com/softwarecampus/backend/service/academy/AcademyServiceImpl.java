@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AcademyServiceImpl implements AcademyService {
 
     private final AcademyRepository academyRepository;
@@ -70,6 +71,7 @@ public class AcademyServiceImpl implements AcademyService {
      * 훈련기관 정보 수정 (부분/전체)
      */
     @Override
+    @Transactional
     public AcademyResponse updateAcademy(Long id, AcademyUpdateRequest request) {
         Academy academy = findAcademyOrThrow(id);
 
