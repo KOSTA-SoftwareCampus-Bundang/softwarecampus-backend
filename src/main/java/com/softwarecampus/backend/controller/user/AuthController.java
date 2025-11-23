@@ -4,6 +4,7 @@ import com.softwarecampus.backend.dto.auth.RefreshTokenRequest;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.MessageResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
+import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
 import com.softwarecampus.backend.service.auth.TokenService;
 import com.softwarecampus.backend.service.user.signup.SignupService;
 import com.softwarecampus.backend.util.EmailUtils;
@@ -44,9 +45,7 @@ public class AuthController {
     
     private final SignupService signupService;
     private final TokenService tokenService;
-    
-    // Refresh 엔드포인트에서 만료 시간 반환용
-    private static final long ACCESS_TOKEN_EXPIRATION_SECONDS = 900L; // 15분 = 900초
+    private final JwtTokenProvider jwtTokenProvider;
     
     /**
      * 회원가입 API
@@ -162,9 +161,12 @@ public class AuthController {
             
             log.info("Access Token refreshed for user: {}", EmailUtils.maskEmail(request.email()));
             
+            // JWT 실제 만료 시간을 동적으로 가져오기 (밀리초 → 초)
+            long expiresInSeconds = jwtTokenProvider.getExpiration() / 1000;
+            
             return ResponseEntity.ok(Map.of(
                 "accessToken", newAccessToken,
-                "expiresIn", ACCESS_TOKEN_EXPIRATION_SECONDS,
+                "expiresIn", expiresInSeconds,
                 "tokenType", "Bearer"
             ));
             
