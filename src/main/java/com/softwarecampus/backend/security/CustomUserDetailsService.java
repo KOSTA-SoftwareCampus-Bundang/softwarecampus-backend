@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.security;
 
+import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountCacheDto;
 import com.softwarecampus.backend.repository.user.AccountRepository;
@@ -59,14 +60,24 @@ public class CustomUserDetailsService implements UserDetailsService {
      * 이메일로 Account 조회 (캐싱 적용)
      * Redis에 AccountCacheDto를 캐싱하여 DB 조회 최소화
      * 
+     * 보안 검증:
+     * - 삭제된 계정(isDeleted=true) 차단
+     * - 미승인 계정(PENDING, REJECTED) 차단
+     * - APPROVED 상태만 인증 허용
+     * 
      * @param email 사용자 이메일
      * @return AccountCacheDto
-     * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우
+     * @throws UsernameNotFoundException 사용자를 찾을 수 없거나 인증할 수 없는 경우
      */
     @Cacheable(value = "userDetails", key = "#email", unless = "#result == null")
     public AccountCacheDto getAccountByEmail(String email) throws UsernameNotFoundException {
         Account account = accountRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
+        
+        // 삭제되었거나 미승인 상태인 계정은 인증 거부
+        if (!account.isActive() || !ApprovalStatus.APPROVED.equals(account.getAccountApproved())) {
+            throw new UsernameNotFoundException("인증할 수 없는 계정입니다: " + email);
+        }
         
         return AccountCacheDto.from(account);
     }
