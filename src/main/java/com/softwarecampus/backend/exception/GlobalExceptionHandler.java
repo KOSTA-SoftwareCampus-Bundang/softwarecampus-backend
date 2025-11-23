@@ -2,6 +2,7 @@ package com.softwarecampus.backend.exception;
 
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
+import com.softwarecampus.backend.exception.user.InvalidCredentialsException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -177,6 +178,25 @@ public class GlobalExceptionHandler {
         );
         problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/account-not-found"));
         problemDetail.setTitle("Account Not Found");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 로그인 인증 실패 예외 처리
+     * HTTP 401 Unauthorized
+     */
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
+        log.warn("인증 실패: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNAUTHORIZED,
+            ex.getMessage()
+        );
+        
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-credentials"));
+        problemDetail.setTitle("Unauthorized");
         
         return problemDetail;
     }
