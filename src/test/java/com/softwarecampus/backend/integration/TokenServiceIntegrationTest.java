@@ -42,7 +42,7 @@ class TokenServiceIntegrationTest {
     @Autowired(required = false)
     private TokenService tokenService;
     
-    @Autowired(required = false)
+    @Autowired
     private JwtTokenProvider jwtTokenProvider;
     
     @Autowired(required = false)
@@ -105,7 +105,7 @@ class TokenServiceIntegrationTest {
     @Test
     @DisplayName("refreshAccessToken: 유효한 Refresh Token으로 Access Token 갱신 성공")
     void refreshAccessToken_Success() throws InterruptedException {
-        if (tokenService == null) {
+        if (tokenService == null || redisTemplate == null) {
             System.out.println("⚠️ Redis not available, skipping test");
             return;
         }
