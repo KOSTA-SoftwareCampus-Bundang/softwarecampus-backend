@@ -116,22 +116,28 @@ public class GlobalExceptionHandler {
             log.debug("Constraint violation detected for request parameters");
         }
         
-        // 첫 번째 위반 메시지 추출
-        String detail = ex.getConstraintViolations().stream()
-            .findFirst()
-            .map(violation -> violation.getMessage())
-            .orElse("요청 파라미터가 유효하지 않습니다.");
+        // 파라미터별 오류 수집
+        Map<String, String> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(violation -> {
+            String parameterName = violation.getPropertyPath().toString();
+            errors.put(parameterName, violation.getMessage());
+        });
+        
+        // 단일 오류인 경우 해당 메시지를 detail에 직접 표시
+        String detailMessage = errors.size() == 1 
+            ? errors.values().iterator().next()
+            : "요청 파라미터가 유효하지 않습니다.";
         
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
-            detail
+            detailMessage
         );
         problemDetail.setType(URI.create(problemBaseUri + "/validation-error"));
         problemDetail.setTitle("Validation Failed");
+        problemDetail.setProperty("errors", errors);
         
         return problemDetail;
     }
-
     /**
      * 일반 예외 처리 (fallback)
      */
