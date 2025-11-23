@@ -5,10 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,24 +32,6 @@ public class LoginAttemptService {
     private static final String LOGIN_ATTEMPT_PREFIX = "loginattempt:";
     
     /**
-     * Lua Script: INCR + EXPIRE 원자적 처리
-     * 
-     * 문제: increment()와 expire()를 따로 호출하면 원자성 보장 안 됨
-     * - increment() 성공 후 서버 다운 시 expire() 실행 안 됨
-     * - 로그인 실패 카운터가 무한정 유지됨 (사용자 영구 차단 위험)
-     * 
-     * 해결: Lua Script로 INCR + EXPIRE를 한 번에 실행
-     * - Redis 서버에서 원자적 실행 (All or Nothing)
-     * - 네트워크 왕복 50% 감소 (2회 → 1회)
-     */
-    private static final String LUA_INCR_WITH_EXPIRE = 
-        "local count = redis.call('INCR', KEYS[1]) " +
-        "if count == 1 then " +
-        "  redis.call('EXPIRE', KEYS[1], ARGV[1]) " +
-        "end " +
-        "return count";
-    
-    /**
      * 로그인 실패 기록
      * 
      * @param ip 클라이언트 IP
@@ -59,14 +39,15 @@ public class LoginAttemptService {
     public void loginFailed(String ip) {
         String key = LOGIN_ATTEMPT_PREFIX + ip;
         
-        // Lua Script로 INCR + EXPIRE 원자적 실행
-        Long attempts = redisTemplate.execute(
-            new DefaultRedisScript<>(LUA_INCR_WITH_EXPIRE, Long.class),
-            Collections.singletonList(key),
-            String.valueOf(blockDuration) // TTL (초)
-        );
+        // 실패 횟수 증가
+        Long attempts = redisTemplate.opsForValue().increment(key);
         
         if (attempts != null) {
+            // 첫 실패 또는 최대 시도 도달 시 TTL 설정
+            if (attempts == 1 || attempts >= maxAttempts) {
+                redisTemplate.expire(key, blockDuration, TimeUnit.SECONDS);
+            }
+            
             log.warn("Login failed for IP: {} (attempt {}/{})", 
                 ip, attempts, maxAttempts);
         }

@@ -9,12 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Rate Limiting 필터
@@ -38,24 +37,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
     
     private static final String RATE_LIMIT_PREFIX = "ratelimit:";
     
-    /**
-     * Lua Script: INCR + EXPIRE 원자적 처리
-     * 
-     * 문제: increment()와 expire()를 따로 호출하면 원자성 보장 안 됨
-     * - increment() 성공 후 서버 다운 시 expire() 실행 안 됨
-     * - TTL 없는 키가 Redis에 영구 저장 (메모리 누수)
-     * 
-     * 해결: Lua Script로 INCR + EXPIRE를 한 번에 실행
-     * - Redis 서버에서 원자적 실행 (All or Nothing)
-     * - 네트워크 왕복 50% 감소 (2회 → 1회)
-     */
-    private static final String LUA_INCR_WITH_EXPIRE = 
-        "local count = redis.call('INCR', KEYS[1]) " +
-        "if count == 1 then " +
-        "  redis.call('EXPIRE', KEYS[1], ARGV[1]) " +
-        "end " +
-        "return count";
-    
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -74,14 +55,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String key = RATE_LIMIT_PREFIX + clientIp;
         
         try {
-            // 2. Lua Script로 INCR + EXPIRE 원자적 실행
-            Long requests = redisTemplate.execute(
-                new DefaultRedisScript<>(LUA_INCR_WITH_EXPIRE, Long.class),
-                Collections.singletonList(key),
-                String.valueOf(60) // 60초 TTL
-            );
+            // 2. Redis에서 요청 수 증가
+            Long requests = redisTemplate.opsForValue().increment(key);
             
-            // 3. 제한 초과 확인
+            // 3. 첫 요청이면 TTL 설정 (1분)
+            if (requests != null && requests == 1) {
+                redisTemplate.expire(key, 1, TimeUnit.MINUTES);
+            }
+            
+            // 4. 제한 초과 확인
             if (requests != null && requests > requestsPerMinute) {
                 log.warn("Rate limit exceeded for IP: {} ({})", clientIp, requests);
                 
