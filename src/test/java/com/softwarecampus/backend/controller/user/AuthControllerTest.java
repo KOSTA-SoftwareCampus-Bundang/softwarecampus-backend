@@ -1,7 +1,6 @@
 package com.softwarecampus.backend.controller.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.softwarecampus.backend.security.JwtAuthenticationFilter;
 import com.softwarecampus.backend.security.jwt.JwtProperties;
 import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
 import com.softwarecampus.backend.domain.common.AccountType;
@@ -10,7 +9,6 @@ import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
-import com.softwarecampus.backend.security.CustomUserDetailsService;
 import com.softwarecampus.backend.service.user.signup.SignupService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,12 +17,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -32,8 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * AuthController 통합 테스트
  * 
  * 테스트 대상:
- * - POST /api/v1/auth/signup: 회원가입
- * - GET /api/v1/auth/check-email: 이메일 중복 확인
+ * - POST /api/auth/signup: 회원가입
+ * - GET /api/auth/check-email: 이메일 중복 확인
  * 
  * 테스트 도구:
  * - @WebMvcTest: Controller Layer만 로드
@@ -60,12 +56,6 @@ class AuthControllerTest {
     
     @MockBean
     private JwtProperties jwtProperties;
-    
-    @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-    
-    @MockBean
-    private CustomUserDetailsService customUserDetailsService;
     
     @Test
     @DisplayName("POST /signup - 회원가입 성공 (USER)")
@@ -98,11 +88,11 @@ class AuthControllerTest {
         when(signupService.signup(any(SignupRequest.class))).thenReturn(response);
         
         // When & Then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
-            .andExpect(header().string("Location", "/api/v1/accounts/1"))
+            .andExpect(header().string("Location", "/api/accounts/1"))
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.email").value("user@example.com"))
             .andExpect(jsonPath("$.userName").value("홍길동"))
@@ -143,11 +133,11 @@ class AuthControllerTest {
         when(signupService.signup(any(SignupRequest.class))).thenReturn(response);
         
         // When & Then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
-            .andExpect(header().string("Location", "/api/v1/accounts/2"))
+            .andExpect(header().string("Location", "/api/accounts/2"))
             .andExpect(jsonPath("$.accountType").value("ACADEMY"))
             .andExpect(jsonPath("$.approvalStatus").value("PENDING"));
         
@@ -169,7 +159,7 @@ class AuthControllerTest {
         );
         
         // When & Then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
@@ -193,7 +183,7 @@ class AuthControllerTest {
         );
         
         // When & Then (Bean Validation이 먼저 잡음)
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
@@ -222,7 +212,7 @@ class AuthControllerTest {
             .thenThrow(new DuplicateEmailException("이메일이 이미 등록되었습니다."));
         
         // When & Then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isConflict())
@@ -250,7 +240,7 @@ class AuthControllerTest {
             .thenThrow(new InvalidInputException("이미 사용 중인 전화번호입니다."));
         
         // When & Then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
@@ -277,7 +267,7 @@ class AuthControllerTest {
             .thenThrow(new InvalidInputException("관리자 계정은 회원가입으로 생성할 수 없습니다."));
         
         // When & Then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
@@ -303,7 +293,7 @@ class AuthControllerTest {
         );
         
         // When & Then (Bean Validation이 먼저 잡음)
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
@@ -320,7 +310,7 @@ class AuthControllerTest {
         when(signupService.isEmailAvailable("newuser@example.com")).thenReturn(true);
         
         // When & Then
-        mockMvc.perform(get("/api/v1/auth/check-email")
+        mockMvc.perform(get("/api/auth/check-email")
                 .param("email", "newuser@example.com"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("사용 가능한 이메일입니다."));
@@ -335,7 +325,7 @@ class AuthControllerTest {
         when(signupService.isEmailAvailable("user@example.com")).thenReturn(false);
         
         // When & Then
-        mockMvc.perform(get("/api/v1/auth/check-email")
+        mockMvc.perform(get("/api/auth/check-email")
                 .param("email", "user@example.com"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("이미 사용 중인 이메일입니다."));
@@ -349,7 +339,7 @@ class AuthControllerTest {
         // Given - Bean Validation 실패 시 컨트롤러 메서드 호출 안 됨
         
         // When & Then
-        mockMvc.perform(get("/api/v1/auth/check-email")
+        mockMvc.perform(get("/api/auth/check-email")
                 .param("email", "invalid-email"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.detail").value("올바른 이메일 형식이 아닙니다."));
@@ -385,11 +375,11 @@ class AuthControllerTest {
         when(signupService.signup(any(SignupRequest.class))).thenReturn(response);
         
         // When & Then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
-            .andExpect(header().string("Location", "/api/v1/accounts/123"));
+            .andExpect(header().string("Location", "/api/accounts/123"));
         
         verify(signupService).signup(any(SignupRequest.class));
     }
