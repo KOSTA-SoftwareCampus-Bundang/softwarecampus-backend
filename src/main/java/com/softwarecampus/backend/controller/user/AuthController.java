@@ -1,19 +1,25 @@
 package com.softwarecampus.backend.controller.user;
 
+import com.softwarecampus.backend.dto.auth.RefreshTokenRequest;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.MessageResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
+import com.softwarecampus.backend.service.auth.TokenService;
 import com.softwarecampus.backend.service.user.signup.SignupService;
 import com.softwarecampus.backend.util.EmailUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Map;
 
 /**
  * 회원가입 및 인증 API 컨트롤러
@@ -37,6 +43,10 @@ import java.net.URI;
 public class AuthController {
     
     private final SignupService signupService;
+    private final TokenService tokenService;
+    
+    // Refresh 엔드포인트에서 만료 시간 반환용
+    private static final long ACCESS_TOKEN_EXPIRATION_SECONDS = 900L; // 15분 = 900초
     
     /**
      * 회원가입 API
@@ -107,5 +117,60 @@ public class AuthController {
         log.info("이메일 중복 확인 결과 - available: {}", available);
         
         return ResponseEntity.ok(MessageResponse.of(message));
+    }
+    
+    /**
+     * Access Token 갱신 API
+     * 
+     * 보안 검증:
+     * - 현재 인증된 사용자의 이메일과 요청 이메일이 일치하는지 확인
+     * - Refresh Token 유효성 검증 (Redis 조회)
+     * 
+     * @param request Refresh Token 갱신 요청 (refreshToken, email)
+     * @return 200 OK - 새로운 Access Token
+     * 
+     * @throws IllegalArgumentException 401 - Refresh Token 유효하지 않음
+     * @throws org.springframework.web.bind.MethodArgumentNotValidException 400 - Bean Validation 실패
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        try {
+            // 보안 검증: 현재 인증된 사용자와 요청 이메일 일치 여부 확인
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            
+            // 인증되지 않은 경우 또는 익명 사용자인 경우
+            if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+                log.warn("Unauthenticated refresh attempt for email: {}", EmailUtils.maskEmail(request.email()));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            String authenticatedEmail = auth.getName();
+            
+            // 인증된 이메일과 요청 이메일이 다른 경우 (보안 위협)
+            if (!authenticatedEmail.equals(request.email())) {
+                log.warn("Email mismatch - authenticated: {}, requested: {}", 
+                    EmailUtils.maskEmail(authenticatedEmail), 
+                    EmailUtils.maskEmail(request.email()));
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            
+            // Refresh Token으로 새 Access Token 발급
+            String newAccessToken = tokenService.refreshAccessToken(
+                request.email(), 
+                request.refreshToken()
+            );
+            
+            log.info("Access Token refreshed for user: {}", EmailUtils.maskEmail(request.email()));
+            
+            return ResponseEntity.ok(Map.of(
+                "accessToken", newAccessToken,
+                "expiresIn", ACCESS_TOKEN_EXPIRATION_SECONDS,
+                "tokenType", "Bearer"
+            ));
+            
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid refresh token for user: {}", EmailUtils.maskEmail(request.email()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 }
