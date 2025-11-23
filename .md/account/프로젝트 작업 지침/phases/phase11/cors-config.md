@@ -168,7 +168,7 @@ curl -H "Origin: http://localhost:3000" \
      -H "Access-Control-Request-Method: POST" \
      -H "Access-Control-Request-Headers: Content-Type" \
      -X OPTIONS \
-     http://localhost:8081/api/v1/auth/signup \
+     http://localhost:8081/api/auth/signup \
      -v
 ```
 

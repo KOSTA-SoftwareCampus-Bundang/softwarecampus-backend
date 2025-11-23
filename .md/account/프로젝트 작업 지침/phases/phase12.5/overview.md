@@ -82,7 +82,7 @@ Phase 12에서 구현한 기본 JWT 인증에 Redis 캐싱과 고급 보안 기�
     - **Redis에서 Refresh Token 삭제**
 - [ ] `JwtTokenProvider` 수정
   - [ ] Access Token 유효기간 15분으로 변경
-  - [ ] getExpiration(String token) 메서드 추가
+  - [ ] getExpiration() 메서드 확인 (설정값 반환, 이미 구현됨)
 - [ ] AuthController 수정
   - [ ] 로그인 시 TokenResponse 반환
   - [ ] POST /api/auth/refresh 엔드포인트 추가
@@ -135,7 +135,7 @@ softwarecampus-backend/
 │   │   └── RateLimitFilter.java          (NEW)
 │   │
 │   ├── security/jwt/
-│   │   └── JwtTokenProvider.java         (MODIFIED - getExpiration)
+│   │   └── JwtTokenProvider.java         (현재 상태 확인 - getExpiration())
 │   │
 │   └── controller/user/
 │       └── AuthController.java           (MODIFIED - Refresh, Logout)

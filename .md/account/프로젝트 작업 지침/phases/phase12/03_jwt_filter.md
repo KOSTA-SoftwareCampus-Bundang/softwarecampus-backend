@@ -133,7 +133,7 @@ if (token == null) {
 if (!jwtTokenProvider.validateToken(token)) {
     // 인증 설정 안 함
     // → SecurityContext에 인증 정보 없음
-    // → SecurityConfig의 authenticated() 경로는 403 Forbidden
+    // → JwtAuthenticationEntryPoint를 통해 401 Unauthorized 반환
     filterChain.doFilter(request, response);
     return;
 }
@@ -206,7 +206,7 @@ GET /api/v1/mypage/profile
 1. ⚠️ `resolveToken()`: 토큰 없음 (null)
 2. ⚠️ `SecurityContext`에 인증 정보 미설정
 3. ❌ `SecurityConfig`: `/api/v1/mypage/**`는 인증 필요
-4. ❌ 403 Forbidden 반환
+4. ❌ `JwtAuthenticationEntryPoint`를 통해 401 Unauthorized 반환
 
 ### 시나리오 3: 만료된 토큰
 
@@ -218,7 +218,7 @@ Authorization: Bearer expired_token
 1. ✅ `resolveToken()`: 토큰 추출 성공
 2. ❌ `validateToken()`: 만료 토큰 검증 실패
 3. ⚠️ `SecurityContext`에 인증 정보 미설정
-4. ❌ 403 Forbidden 반환
+4. ❌ `JwtAuthenticationEntryPoint`를 통해 401 Unauthorized 반환
 
 ---
 
