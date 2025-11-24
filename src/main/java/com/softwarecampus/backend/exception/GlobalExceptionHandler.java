@@ -4,6 +4,7 @@ import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.exception.user.InvalidCredentialsException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
+import com.softwarecampus.backend.exception.user.PhoneNumberAlreadyExistsException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -157,6 +158,27 @@ public class GlobalExceptionHandler {
         );
         problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-email"));
         problemDetail.setTitle("Duplicate Email");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 전화번호 중복 예외 처리
+     * HTTP 409 Conflict
+     */
+    @ExceptionHandler(PhoneNumberAlreadyExistsException.class)
+    public ProblemDetail handlePhoneNumberAlreadyExistsException(PhoneNumberAlreadyExistsException ex) {
+        log.warn("Phone number duplicate detected for a request");
+        if (log.isDebugEnabled()) {
+            log.debug("PhoneNumberAlreadyExistsException details", ex);
+        }
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            "이미 사용 중인 전화번호입니다."
+        );
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-phone-number"));
+        problemDetail.setTitle("Duplicate Phone Number");
         
         return problemDetail;
     }

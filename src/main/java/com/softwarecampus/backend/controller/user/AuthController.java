@@ -78,7 +78,7 @@ public class AuthController {
         AccountResponse response = signupService.signup(request);
         
         // Location 헤더 생성 (RESTful)
-        URI location = URI.create("/api/v1/accounts/" + response.id());
+        URI location = URI.create("/api/accounts/" + response.id());
         
         log.info("회원가입 성공 - accountId: {}, accountType: {}, approvalStatus: {}", 
             response.id(), response.accountType(), response.approvalStatus());

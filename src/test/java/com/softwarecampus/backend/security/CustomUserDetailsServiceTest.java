@@ -67,7 +67,7 @@ class CustomUserDetailsServiceTest {
                 .userName("테스트학원")
                 .phoneNumber("01087654321")
                 .accountType(AccountType.ACADEMY)
-                .accountApproved(ApprovalStatus.PENDING)
+                .accountApproved(ApprovalStatus.APPROVED)  // PENDING → APPROVED로 변경
                 .academyId(100L)
                 .build();
 
