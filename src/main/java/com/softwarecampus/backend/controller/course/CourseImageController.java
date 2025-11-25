@@ -1,6 +1,8 @@
 package com.softwarecampus.backend.controller.course;
 
+import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.CourseImage;
+import com.softwarecampus.backend.dto.course.CourseImageResponse;
 import com.softwarecampus.backend.service.course.CourseImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,29 +20,33 @@ public class CourseImageController {
 
     // 이미지 업로드
     @PostMapping("/{courseId}/images")
-    public ResponseEntity<CourseImage> uploadCourseImage(
+    public ResponseEntity<CourseImageResponse> uploadCourseImage(
+            @PathVariable("type") CategoryType type,
             @PathVariable Long courseId,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "isThumbnail", defaultValue = "false") boolean isThumbnail
     ) {
-        CourseImage saved = courseImageService.uploadCourseImage(courseId, file, isThumbnail);
+        CourseImageResponse saved = courseImageService.uploadCourseImage(type, courseId, file, isThumbnail);
         return ResponseEntity.ok(saved);
     }
 
     // 이미지 조회
     @GetMapping("/{courseId}/images")
-    public ResponseEntity<List<CourseImage>> getCourseImages(
+    public ResponseEntity<List<CourseImageResponse>> getCourseImages(
+            @PathVariable("type") CategoryType type,
             @PathVariable Long courseId
     ) {
-        return ResponseEntity.ok(courseImageService.getCourseImages(courseId));
+        return ResponseEntity.ok(courseImageService.getCourseImages(type, courseId));
     }
 
     // Soft Delete
     @DeleteMapping("/images/{imageId}")
     public ResponseEntity<Void> deleteCourseImage(
+            @PathVariable("type") CategoryType type,
             @PathVariable Long imageId
     ) {
-        courseImageService.deleteCourseImage(imageId);
+        courseImageService.deleteCourseImage(type, imageId);
         return ResponseEntity.noContent().build();
     }
+
 }

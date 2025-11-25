@@ -4,6 +4,7 @@ import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.dto.course.CourseReviewRequest;
 import com.softwarecampus.backend.dto.course.CourseReviewResponse;
 import com.softwarecampus.backend.service.course.CourseReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +41,7 @@ public class CourseReviewController {
             @PathVariable Long courseId,
             @PathVariable Long reviewId,
             @RequestParam Long accountId,
-            @RequestBody CourseReviewRequest request
+            @Valid @RequestBody CourseReviewRequest request
     ) {
         return ResponseEntity.ok(reviewService.updateReview(type, courseId, reviewId, accountId, request));
     }

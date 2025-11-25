@@ -22,31 +22,39 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     @Transactional
     public ReviewLike toggleLike(Long reviewId, Long accountId, LikeType type) {
 
+        // 1) 리뷰와 계정 존재 확인
         var review = courseReviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("Review not found: " + reviewId));
 
         var account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found: " + accountId));
 
+        // 2) soft-delete 포함 기존 좋아요/싫어요 조회
         var existing = reviewLikeRepository
-                .findByReviewIdAndAccountIdAndIsDeletedFalse(reviewId, accountId);
+                .findByReviewIdAndAccountId(reviewId, accountId); // soft-deleted 포함
 
-        // 이미 존재하는 좋아요/싫어요가 있을 때
         if (existing.isPresent()) {
             var like = existing.get();
 
-            // 같은 타입이면 → 취소(soft delete)
+            if (!like.isActive()) {
+                // soft-deleted 상태면 재활성화 + 타입 변경
+                like.restore();
+                like.setType(type);
+                return like;
+            }
+
+            // 같은 타입이면 취소 (soft delete)
             if (like.getType() == type) {
                 like.markDeleted();
                 return like;
             }
 
-            // 다른 타입이면 → 타입 변경
+            // 다른 타입이면 타입 변경
             like.setType(type);
             return like;
         }
 
-        // 없으면 새로 생성
+        // 3) 기존 레코드 없으면 새로 생성
         ReviewLike newLike = ReviewLike.builder()
                 .review(review)
                 .account(account)
@@ -55,6 +63,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
 
         return reviewLikeRepository.save(newLike);
     }
+
 
     @Override
     public long getLikeCount(Long reviewId) {

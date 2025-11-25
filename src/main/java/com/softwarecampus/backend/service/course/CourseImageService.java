@@ -1,5 +1,7 @@
 package com.softwarecampus.backend.service.course;
 
+import com.softwarecampus.backend.domain.course.CategoryType;
+import com.softwarecampus.backend.dto.course.CourseImageResponse;
 import org.springframework.web.multipart.MultipartFile;
 import com.softwarecampus.backend.domain.course.CourseImage;
 
@@ -7,9 +9,9 @@ import java.util.List;
 
 public interface CourseImageService {
 
-    CourseImage uploadCourseImage(Long courseId, MultipartFile file, boolean isThumbnail);
+    CourseImageResponse uploadCourseImage(CategoryType type, Long courseId, MultipartFile file, boolean isThumbnail);
 
-    void deleteCourseImage(Long imageId);
+    void deleteCourseImage(CategoryType type, Long imageId);
 
-    List<CourseImage> getCourseImages(Long courseId);
+    List<CourseImageResponse> getCourseImages(CategoryType type, Long courseId);
 }

@@ -42,17 +42,19 @@ public class CourseReview extends BaseSoftDeleteSupportEntity {
 
     // child 관계
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ReviewSection> sections = new ArrayList<>();
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<CourseReviewAttachment> attachments = new ArrayList<>();
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ReviewLike> likes = new ArrayList<>();
 
     /**
      * 평균 점수 계산 (Section 평균)
-     * 프론트 or 서비스 단에서도 자주 사용할 가능성이 높아 여기에 도메인 로직 포함
      */
     public double calculateAverageScore() {
         if (sections == null || sections.isEmpty()) return 0.0;
@@ -63,4 +65,3 @@ public class CourseReview extends BaseSoftDeleteSupportEntity {
                 .orElse(0.0);
     }
 }
-

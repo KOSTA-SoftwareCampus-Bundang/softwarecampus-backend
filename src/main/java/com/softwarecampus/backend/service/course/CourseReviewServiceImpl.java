@@ -8,6 +8,7 @@ import com.softwarecampus.backend.exception.course.BadRequestException;
 import com.softwarecampus.backend.exception.course.ForbiddenException;
 import com.softwarecampus.backend.repository.course.CourseRepository;
 import com.softwarecampus.backend.repository.course.CourseReviewRepository;
+import com.softwarecampus.backend.repository.course.ReviewSectionRepository;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
     private final CourseReviewRepository reviewRepository;
     private final AccountRepository accountRepository;
     private final CourseRepository courseRepository;
+    private final ReviewSectionRepository reviewSectionRepository;
 
     @Override
     public CourseReviewResponse getReview(CategoryType type, Long courseId, Long reviewId) {
@@ -91,9 +93,15 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                                         .build()
                                 ).toList()
                 )
-                .attachments(List.of()) // 아직 구현 안 된 첨부파일
-                .likeCount(0)
-                .dislikeCount(0)
+                .attachments(review.getAttachments().stream()
+                .map(ReviewAttachmentResponse::fromEntity)
+                .toList())
+                .likeCount((int) review.getLikes().stream()
+                .filter(l -> !l.getIsDeleted() && l.getType() == ReviewLike.LikeType.LIKE)
+                .count())
+                .dislikeCount((int) review.getLikes().stream()
+                        .filter(l -> !l.getIsDeleted() && l.getType() == ReviewLike.LikeType.DISLIKE)
+                .count())
                 .build();
     }
 
@@ -119,41 +127,23 @@ public class CourseReviewServiceImpl implements CourseReviewService {
 
         review.getSections().clear();
 
-        for (ReviewSectionRequest sec : request.getSections()) {
+        if (request.getSections() != null) {
+            for (ReviewSectionRequest sec : request.getSections()) {
+                ReviewSectionType sectionType = ReviewSectionType.from(sec.getSectionType());
 
-            ReviewSectionType sectionType = ReviewSectionType.from(sec.getSectionType());
+                ReviewSection newSection = ReviewSection.builder()
+                        .review(review)
+                        .sectionType(sectionType)
+                        .score(sec.getScore())
+                        .build();
 
-            ReviewSection newSection = ReviewSection.builder()
-                    .review(review)
-                    .sectionType(sectionType)
-                    .score(sec.getScore())
-                    .build();
-
-            review.getSections().add(newSection);
+                review.getSections().add(newSection);
+            }
         }
 
         reviewRepository.save(review);
 
-        return CourseReviewResponse.builder()
-                .reviewId(review.getId())
-                .writerId(review.getWriter().getId())
-                .courseId(review.getCourse().getId())
-                .comment(review.getComment())
-                .approvalStatus(review.getApprovalStatus().name())
-                .averageScore(review.calculateAverageScore())
-                .sections(review.getSections().stream()
-                        .map(ReviewSectionResponse::fromEntity)
-                        .toList())
-                .attachments(review.getAttachments().stream()
-                        .map(ReviewAttachmentResponse::fromEntity)
-                        .toList())
-                .likeCount((int) review.getLikes().stream()
-                        .filter(l -> !l.getIsDeleted() && l.getType() == ReviewLike.LikeType.LIKE)
-                        .count())
-                .dislikeCount((int) review.getLikes().stream()
-                        .filter(l -> !l.getIsDeleted() && l.getType() == ReviewLike.LikeType.DISLIKE)
-                        .count())
-                .build();
+        return toDto(review);
     }
 
     @Override
@@ -174,8 +164,12 @@ public class CourseReviewServiceImpl implements CourseReviewService {
             throw new ForbiddenException("본인이 작성한 리뷰만 삭제할 수 있습니다.");
         }
 
+        // 리뷰 소프트 삭제
         review.markDeleted();
         reviewRepository.save(review);
+
+        // 리뷰 섹션 소프트 삭제
+        reviewSectionRepository.softDeleteByReviewId(reviewId);
     }
 
 

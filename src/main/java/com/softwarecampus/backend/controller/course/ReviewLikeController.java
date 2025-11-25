@@ -19,6 +19,7 @@ public class ReviewLikeController {
      */
     @PostMapping("/{reviewId}/recommend")
     public ResponseEntity<ReviewLikeResponse> toggleLike(
+            @PathVariable String type,
             @PathVariable Long reviewId,
             @RequestParam Long accountId,
             @RequestBody ReviewLikeRequest request
@@ -41,9 +42,11 @@ public class ReviewLikeController {
     /**
      * 좋아요/싫어요 개수 조회
      */
-    @GetMapping("/counts")
-    public ResponseEntity<?> getCounts(@PathVariable Long reviewId) {
-
+    @GetMapping("/{reviewId}/counts")
+    public ResponseEntity<?> getCounts(
+            @PathVariable String type,
+            @PathVariable Long reviewId)
+    {
         var like = reviewLikeService.getLikeCount(reviewId);
         var dislike = reviewLikeService.getDislikeCount(reviewId);
 

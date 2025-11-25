@@ -42,4 +42,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     // courseId 와 categoryType 으로 단일 Course 조회
     Optional<Course> findByIdAndCategory(Long id, CategoryType category);
 
+    Optional<Course> findByIdAndCategory_CategoryType(Long id, CategoryType type);
+
+
 }
