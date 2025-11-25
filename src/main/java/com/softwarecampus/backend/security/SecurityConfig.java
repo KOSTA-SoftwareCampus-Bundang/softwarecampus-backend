@@ -3,6 +3,7 @@ package com.softwarecampus.backend.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -27,6 +28,8 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
+//@PreAuthorize 사용하기 위해 추가
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Value("${ALLOWED_ORIGINS:http://localhost:3000}")

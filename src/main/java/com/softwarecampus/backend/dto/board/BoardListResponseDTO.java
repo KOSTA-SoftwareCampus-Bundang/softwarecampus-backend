@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.dto.board;
 
+import com.softwarecampus.backend.domain.board.BoardCategory;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ public class BoardListResponseDTO {
 
     private Long id;
 
-    private String category;
+    private BoardCategory category;
 
     private String title;
 
@@ -22,7 +23,7 @@ public class BoardListResponseDTO {
 
     private String userNickName;
 
-    private boolean like;
+    private int commentsCount;
 
     private String createdAt;
 

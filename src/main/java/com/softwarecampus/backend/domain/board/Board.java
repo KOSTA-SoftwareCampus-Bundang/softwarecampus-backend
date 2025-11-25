@@ -4,6 +4,7 @@ import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import com.softwarecampus.backend.domain.user.Account;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.ArrayList;
@@ -40,10 +41,12 @@ public class Board extends BaseSoftDeleteSupportEntity {
 
     @OneToMany(mappedBy = "board")
     @Builder.Default
+    @BatchSize(size = 100)
     private List<Comment> comments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "board")
+    @OneToMany(mappedBy = "board",cascade = CascadeType.ALL)
     @Builder.Default
+    @BatchSize(size = 100)
     private List<BoardAttach> boardAttaches = new ArrayList<>();
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.REMOVE, orphanRemoval = true)
