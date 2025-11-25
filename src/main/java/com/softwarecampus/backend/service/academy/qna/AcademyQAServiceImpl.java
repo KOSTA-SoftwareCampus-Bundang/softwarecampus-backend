@@ -93,6 +93,13 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     @Transactional
     public void deleteQuestion(Long qaId, Long academyId) {
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
+
+//        // 연결된 첨푸파일 삭제
+//        attachmentRepository.softDeleteAllByCategoryTypeAndCategoryId(
+//                AttachmentCategoryType.QNA,
+//                qaId
+//        );
+
         academyQARepository.delete(qa);
     }
 

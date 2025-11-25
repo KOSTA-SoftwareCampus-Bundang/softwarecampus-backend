@@ -56,15 +56,26 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     /**
-     * 훈련기관 전체 조회
+     * 훈련기관 전체 조회 (이름만 보여줌)
      */
     @Override
     @Transactional
-    public List<AcademyResponse> getAllAcademies() {
+    public List<AcademyResponse> getAllAcademyNames() {
         return academyRepository.findAll()
                 .stream()
                 .map(AcademyResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     *  훈련기관 상세 정보 조회
+     */
+    @Override
+    public AcademyResponse getAcademyDetails(Long id) {
+        Academy academy = academyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 훈련기관입니다.: " + id));
+
+        return AcademyResponse.from(academy);
     }
 
     /**
