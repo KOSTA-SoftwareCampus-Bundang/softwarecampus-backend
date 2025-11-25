@@ -1,7 +1,6 @@
 package com.softwarecampus.backend.controller.board;
 
 
-import com.softwarecampus.backend.domain.board.Board;
 import com.softwarecampus.backend.domain.board.BoardCategory;
 import com.softwarecampus.backend.dto.board.*;
 import com.softwarecampus.backend.exception.board.BoardException;
@@ -10,17 +9,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -83,7 +79,7 @@ public class BoardController {
         commentCreateRequestDTO.setBoardId(boardId);
         //1L자리에 사용자 id 전달
         Long commentId = boardService.createComment(commentCreateRequestDTO, 1L);
-        return ResponseEntity.created(URI.create("/boards/id/comments/" + commentId)).build();
+        return ResponseEntity.created(URI.create("/boards/" + boardId + "/comments/" + commentId)).build();
     }
 
     //댓글 수정

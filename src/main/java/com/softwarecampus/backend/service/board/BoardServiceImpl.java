@@ -32,7 +32,7 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     public Page<BoardListResponseDTO> getBoards(int pageNo, BoardCategory category, String searchType, String searchText) {
-        PageRequest pageRequest = PageRequest.of(pageNo, 10, Sort.by("id").descending());
+        PageRequest pageRequest = PageRequest.of(pageNo - 1, 10, Sort.by("id").descending());
 
         if (searchType == null || "".equals(searchType) || searchText == null || "".equals(searchText)) {
             return boardRepository.findBoardsByCategory(category, pageRequest);
@@ -69,10 +69,12 @@ public class BoardServiceImpl implements BoardService {
 
         //파일업로드 코드 작성
         List<BoardAttach> boardAttachList = board.getBoardAttaches();
-        for (MultipartFile file : files) {
-            BoardAttach boardAttach = uploadFile(file);
-            boardAttachList.add(boardAttach);
-            boardAttach.setBoard(board);
+        if (files != null && files.length > 0) {
+            for (MultipartFile file : files) {
+                BoardAttach boardAttach = uploadFile(file);
+                boardAttachList.add(boardAttach);
+                boardAttach.setBoard(board);
+            }
         }
         //사용자 조회하는 코드 작성(실제론 1l 대신 로그인한 사용자의 id값 인자로 전달)
         Account account = accountRepository.findById(1L).get();
@@ -89,7 +91,7 @@ public class BoardServiceImpl implements BoardService {
     public void updateBoard(BoardUpdateRequestDTO boardUpdateRequestDTO, MultipartFile[] files) {
         Board board = boardRepository.findById(boardUpdateRequestDTO.getId()).orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
         List<BoardAttach> boardAttachList = board.getBoardAttaches();
-        if (files.length > 0) {
+        if (files != null && files.length > 0) {
             if (boardAttachList.size() > 0) {
                 for (BoardAttach boardAttach : board.getBoardAttaches()) {
                     deleteFile(boardAttach);
@@ -175,7 +177,7 @@ public class BoardServiceImpl implements BoardService {
     public void recommendComment(Long commentId, Long userId) {
         Account account = accountRepository.findById(userId).get();
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
-        if (commentRecommendRepository.findByBoardIdAndUserId(commentId, userId) != null) {
+        if (commentRecommendRepository.findByCommentIdAndUserId(commentId, userId) != null) {
             throw new BoardException(BoardErrorCode.ALREADY_RECOMMEND_COMMENT);
         }
         CommentRecommend commentRecommend = new CommentRecommend();
@@ -188,7 +190,7 @@ public class BoardServiceImpl implements BoardService {
     @Transactional
     @Override
     public void unRecommendComment(Long commentId, Long userId) {
-        CommentRecommend commentRecommend = commentRecommendRepository.findByBoardIdAndUserId(commentId, userId);
+        CommentRecommend commentRecommend = commentRecommendRepository.findByCommentIdAndUserId(commentId, userId);
         if (commentRecommend == null) {
             throw new BoardException(BoardErrorCode.NOT_RECOMMEND_COMMENT);
         }

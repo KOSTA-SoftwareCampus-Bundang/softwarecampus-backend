@@ -10,6 +10,6 @@ import org.springframework.data.repository.query.Param;
 public interface CommentRecommendRepository extends JpaRepository<CommentRecommend, Long> {
 
     @Query("SELECT cr from CommentRecommend cr join cr.comment join cr.account where cr.comment.id=:boardId and cr.account.id=:userId")
-    CommentRecommend findByBoardIdAndUserId(@Param("boardId") Long boardId, @Param("userId") Long userId);
+    CommentRecommend findByCommentIdAndUserId(@Param("boardId") Long boardId, @Param("userId") Long userId);
 
 }

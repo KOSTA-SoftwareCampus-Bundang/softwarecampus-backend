@@ -35,7 +35,7 @@ public interface BoardService {
     public void deleteBoardById(Long id);
 
     //게시글 추천
-    public void recommendBoard(Long BoardId, Long userId);
+    public void recommendBoard(Long boardId, Long userId);
 
     //게시글 추천취소
     public void unRecommendBoard(Long boardId, Long userId);
