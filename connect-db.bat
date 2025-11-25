@@ -15,7 +15,7 @@ echo.
 echo ========================================================
 
 :: 설정 변수 (팀원들과 공유 시 IP만 변경하면 됨)
-set EC2_IP=3.34.123.123
+set EC2_IP=서버 IP입력
 set KEY_FILE=swcampus-key.pem
 set LOCAL_PORT=3307
 set REMOTE_PORT=3306
@@ -28,15 +28,40 @@ if not exist "%KEY_FILE%" (
     exit /b
 )
 
+:: 권한 자동 수정 (Windows 전용)
+echo [권한 수정] %KEY_FILE% 권한을 현재 사용자로 제한합니다...
+icacls "%KEY_FILE%" /reset > nul
+icacls "%KEY_FILE%" /grant:r "%USERNAME%":"R" > nul
+icacls "%KEY_FILE%" /inheritance:r > nul
+
+
 echo.
 echo [연결 시도] %EC2_IP% 서버로 터널링을 시작합니다...
-echo (처음 접속 시 'yes'를 입력해야 할 수 있습니다)
+echo ----------------------------------------------------------------
+echo  * 별도의 창에서 SSH 터널링이 실행됩니다.
+echo  * 해당 창을 닫으면 연결이 종료됩니다.
+echo ----------------------------------------------------------------
 echo.
 
-:: SSH 터널링 실행
-ssh -i "%KEY_FILE%" -N -L %LOCAL_PORT%:127.0.0.1:%REMOTE_PORT% ubuntu@%EC2_IP%
+:: SSH 터널링을 별도 창에서 실행 (창 제목 설정)
+start "SoftCampus DB Tunneling" ssh -i "%KEY_FILE%" -N -L %LOCAL_PORT%:127.0.0.1:%REMOTE_PORT% ubuntu@%EC2_IP%
 
-:: 연결 종료 시
-echo.
-echo [연결 종료] 터널링이 종료되었습니다.
+echo [상태 확인] 연결을 확인하는 중입니다 (3초 대기)...
+timeout /t 3 /nobreak > nul
+
+:: 포트 리스닝 확인
+netstat -an | find "%LOCAL_PORT%" | find "LISTENING" > nul
+if %errorlevel% equ 0 (
+    echo.
+    echo [성공] 터널링이 성공적으로 연결되었습니다!
+    echo [접속 정보] Host: localhost, Port: %LOCAL_PORT%
+    echo.
+    echo  * 터널링 창을 닫지 마세요.
+) else (
+    echo.
+    echo [실패] 터널링 연결에 실패했습니다.
+    echo  * 키 파일 권한이나 네트워크 상태를 확인해주세요.
+    echo  * 새로 열린 창의 에러 메시지를 확인하세요.
+)
+
 pause
