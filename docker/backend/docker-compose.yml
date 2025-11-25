@@ -1,0 +1,82 @@
+# ==============================================================================
+# [Backend Docker Compose Configuration]
+#
+# 목적: 백엔드 애플리케이션과 필수 인프라(DB, Redis)를 컨테이너로 실행
+# 실행: docker compose up -d
+# ==============================================================================
+services:
+  # --------------------------------------------------------------------------
+  # 1. Spring Boot Backend Application
+  # GHCR에서 빌드된 이미지를 가져와 실행합니다.
+  # --------------------------------------------------------------------------
+  softcampus-backend:
+    image: ghcr.io/kosta-softcampus/softwarecampus-backend/backend:latest
+    container_name: softcampus-backend
+    restart: always
+    ports:
+      - "${PORT_NO}:${PORT_NO}"
+    # 환경변수 파일 (.env) 로드
+    env_file:
+      - .env
+    networks:
+      - softcampus-network
+    depends_on:
+      softcampus-mysql:
+        condition: service_healthy
+      softcampus-redis:
+        condition: service_started
+
+  # --------------------------------------------------------------------------
+  # 2. MySQL Database
+  # 데이터 영속성을 위해 볼륨을 마운트하고, .env의 설정값으로 초기화합니다.
+  # --------------------------------------------------------------------------
+  softcampus-mysql:
+    image: mysql:8.0
+    container_name: softcampus-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    # 한글 깨짐 방지를 위한 문자셋 설정 (utf8mb4)
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    # DB가 완전히 준비되었는지 확인하는 헬스체크
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER}", "-p${DB_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - softcampus-network
+
+  # --------------------------------------------------------------------------
+  # 3. Redis Cache Server
+  # 세션 저장소 및 데이터 캐싱을 위한 Redis 서버입니다.
+  # --------------------------------------------------------------------------
+  softcampus-redis:
+    image: redis:latest
+    container_name: softcampus-redis
+    restart: always
+    networks:
+      - softcampus-network
+
+# --------------------------------------------------------------------------
+# Network Configuration
+# 프론트엔드 및 Nginx와 통신하기 위한 외부 네트워크입니다.
+# --------------------------------------------------------------------------
+networks:
+  softcampus-network:
+    external: true
+
+# --------------------------------------------------------------------------
+# Volume Configuration
+# DB 데이터 영구 저장을 위한 볼륨입니다.
+# --------------------------------------------------------------------------
+volumes:
+  mysql_data:
