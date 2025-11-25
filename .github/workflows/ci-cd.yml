@@ -193,7 +193,14 @@ jobs:
             docker network create softcampus-network || true
 
             # ------------------------------------------------------------------
-            # Step 4: Backend 서비스 배포
+            # Step 4: GHCR 로그인
+            # Private 패키지를 Pull하기 위해 로그인이 필요합니다.
+            # ------------------------------------------------------------------
+            echo "Logging into GHCR..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # ------------------------------------------------------------------
+            # Step 5: Backend 서비스 배포
             # 최신 이미지를 Pull하고 컨테이너를 재시작합니다.
             # ------------------------------------------------------------------
             echo "Deploying Backend..."
