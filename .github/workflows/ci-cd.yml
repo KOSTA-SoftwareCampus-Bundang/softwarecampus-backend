@@ -35,11 +35,12 @@ jobs:
   # [Job 1] Build
   # 애플리케이션을 컴파일하고 테스트하여 JAR 파일을 생성합니다.
   # ==========================================================================
+  # ==========================================================================
+  # [Job 1] Build
+  # 애플리케이션을 컴파일하고 테스트하여 JAR 파일을 생성합니다.
+  # ==========================================================================
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: softwarecampus-backend
 
     steps:
     # 1. 소스 코드 체크아웃
@@ -53,7 +54,7 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: 'maven'
-        cache-dependency-path: 'softwarecampus-backend/pom.xml'
+        cache-dependency-path: 'pom.xml'
 
     # 3. Maven Wrapper 실행 권한 부여
     - name: Grant execute permission for mvnw
@@ -69,7 +70,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: backend-jar
-        path: softwarecampus-backend/target/*.jar
+        path: target/*.jar
         retention-days: 1
 
   # ==========================================================================
@@ -91,7 +92,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: backend-jar
-        path: softwarecampus-backend/target
+        path: target
 
     # 3. GHCR 로그인
     - name: Log in to the Container registry
@@ -115,8 +116,8 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: softwarecampus-backend
-        file: softwarecampus-backend/docker/backend/Dockerfile
+        context: .
+        file: docker/backend/Dockerfile
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
@@ -140,7 +141,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "softwarecampus-backend/docker/backend/docker-compose.yml,softwarecampus-backend/docker/nginx/*"
+          source: "docker/backend/docker-compose.yml,docker/nginx/*"
           target: "/home/${{ secrets.EC2_USERNAME }}/deploy_temp"
           strip_components: 2
 
