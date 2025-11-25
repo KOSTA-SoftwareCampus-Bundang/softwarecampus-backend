@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
@@ -37,5 +38,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     // 등록 요청 목록 (승인 대기 중)
     List<Course> findByIsApproved(ApprovalStatus status);
+
+    // courseId 와 categoryType 으로 단일 Course 조회
+    Optional<Course> findByIdAndCategory(Long id, CategoryType category);
+
+    Optional<Course> findByIdAndCategory_CategoryType(Long id, CategoryType type);
+
 
 }
