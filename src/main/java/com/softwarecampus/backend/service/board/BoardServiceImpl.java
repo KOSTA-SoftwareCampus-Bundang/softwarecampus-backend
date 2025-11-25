@@ -53,6 +53,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public BoardResponseDTO getBoardById(Long id, Long userId) {
         Board board = boardRepository.findById(id).orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
+        board.setHits(board.getHits() + 1);
         BoardResponseDTO boardResponseDTO = BoardResponseDTO.from(board);
         if (userId != null) {
             boardResponseDTO.setLike(board.getBoardRecommends().stream().anyMatch(br -> br.getAccount().getId().equals(userId)));
