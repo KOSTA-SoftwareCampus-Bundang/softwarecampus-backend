@@ -123,6 +123,10 @@ public class CourseReviewServiceImpl implements CourseReviewService {
             throw new ForbiddenException("본인이 작성한 리뷰만 수정할 수 있습니다.");
         }
 
+        if (review.getIsDeleted()) {
+            throw new BadRequestException("이미 삭제된 리뷰는 수정할 수 없습니다.");
+        }
+
         review.setComment(request.getComment());
 
         review.getSections().clear();
