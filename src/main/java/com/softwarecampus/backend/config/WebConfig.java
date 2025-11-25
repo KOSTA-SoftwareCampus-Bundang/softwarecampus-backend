@@ -15,10 +15,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    
+
     @Value("${FRONTEND_PORT:3000}")
     private String frontendPort;
-    
+
     /**
      * CORS 설정
      * 
@@ -36,7 +36,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins("http://localhost:" + frontendPort)
+                .allowedOrigins(
+                        "http://localhost:" + frontendPort,
+                        "https://softwarecampus.earlydreamer.dev")
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("Authorization", "Content-Type", "X-Requested-With")
                 .allowCredentials(true)
