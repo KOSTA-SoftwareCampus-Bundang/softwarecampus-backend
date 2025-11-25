@@ -10,7 +10,7 @@ services:
   # GHCR에서 빌드된 이미지를 가져와 실행합니다.
   # --------------------------------------------------------------------------
   softcampus-backend:
-    image: ghcr.io/kosta-softcampus/softwarecampus-backend/backend:latest
+    image: ${DOCKER_IMAGE_NAME}
     container_name: softcampus-backend
     restart: always
     ports:
