@@ -33,12 +33,13 @@ public class WebConfig implements WebMvcConfigurer {
      * - allowedOrigins에 실제 도메인 추가 필요
      * - 환경별 분리 또는 프로파일 사용 권장
      */
+    @Value("${cors.allowed-origins}")
+    private String[] allowedOrigins;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins(
-                        "http://localhost:" + frontendPort,
-                        "https://softwarecampus.earlydreamer.dev")
+                .allowedOrigins(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("Authorization", "Content-Type", "X-Requested-With")
                 .allowCredentials(true)
