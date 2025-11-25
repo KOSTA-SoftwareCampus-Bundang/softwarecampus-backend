@@ -27,4 +27,7 @@ public class CourseImage extends BaseSoftDeleteSupportEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id")
     private Course course;
+
+    @Column(length = 255)
+    private String originalFilename;
 }
