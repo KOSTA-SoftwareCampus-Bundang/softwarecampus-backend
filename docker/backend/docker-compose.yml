@@ -40,6 +40,9 @@ services:
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Seoul
+    # 보안을 위해 로컬호스트(127.0.0.1)에만 포트 노출 -> SSH Tunneling으로 접속 가능
+    ports:
+      - "127.0.0.1:3306:3306"
     # 한글 깨짐 방지를 위한 문자셋 설정 (utf8mb4)
     command:
       - --character-set-server=utf8mb4
