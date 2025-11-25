@@ -1,25 +1,44 @@
 package com.softwarecampus.backend.controller.academy.qna;
 
 import com.softwarecampus.backend.dto.academy.qna.QACreateRequest;
+import com.softwarecampus.backend.dto.academy.qna.QAFileDetail;
 import com.softwarecampus.backend.dto.academy.qna.QAResponse;
 import com.softwarecampus.backend.dto.academy.qna.QAUpdateRequest;
 import com.softwarecampus.backend.service.academy.qna.AcademyQAService;
+import com.softwarecampus.backend.service.academy.qna.AttachmentService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/academies/{academyId}/qna")
 @RequiredArgsConstructor
+@Slf4j
 public class AcademyQAController {
 
     private final AcademyQAService academyQAService;
+    private final AttachmentService attachmentService;
+
+    /**
+     *  Q/A 첨부파일 임시로 S3에 업로드
+     */
+    @PostMapping("/files/upload")
+    public ResponseEntity<List<QAFileDetail>> uploadQnaFiles(
+            @RequestParam("files") List<MultipartFile> files) {
+
+        log.info("Q/A 첨부파일 {}건 임시 업도르 요청 수신.", files.size());
+        List<QAFileDetail> fileDetails = attachmentService.uploadFiles(files);
+
+        return ResponseEntity.ok(fileDetails);
+    }
 
     /**
      *  Q/A 조회
@@ -44,6 +63,9 @@ public class AcademyQAController {
      */
     @PostMapping
     public ResponseEntity<QAResponse> createQuestion(@PathVariable @Positive Long academyId, @RequestBody @Valid QACreateRequest request) {
+
+        log.info("Q/A 생성 요청 수신.");
+
         QAResponse response = academyQAService.createQuestion(academyId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

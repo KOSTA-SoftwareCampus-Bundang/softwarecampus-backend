@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.dto.banner;
 
+import com.softwarecampus.backend.dto.academy.qna.QAFileDetail;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -24,5 +25,5 @@ public class BannerCreateRequest {
     @NotNull(message = "활성화 상태는 필수입니다.")
     private Boolean isActivated;
 
-
+    private QAFileDetail imageAttachment;
 }

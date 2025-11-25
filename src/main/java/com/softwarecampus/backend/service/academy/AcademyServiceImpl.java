@@ -72,9 +72,7 @@ public class AcademyServiceImpl implements AcademyService {
      */
     @Override
     public AcademyResponse getAcademyDetails(Long id) {
-        Academy academy = academyRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 훈련기관입니다.: " + id));
-
+        Academy academy = findAcademyOrThrow(id);
         return AcademyResponse.from(academy);
     }
 

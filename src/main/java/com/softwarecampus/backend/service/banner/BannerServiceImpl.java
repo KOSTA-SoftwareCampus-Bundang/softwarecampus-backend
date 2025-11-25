@@ -1,13 +1,18 @@
 package com.softwarecampus.backend.service.banner;
 
+import com.softwarecampus.backend.domain.academy.qna.Attachment;
 import com.softwarecampus.backend.domain.banner.Banner;
+import com.softwarecampus.backend.domain.common.AttachmentCategoryType;
+import com.softwarecampus.backend.dto.academy.qna.QAFileDetail;
 import com.softwarecampus.backend.dto.banner.BannerCreateRequest;
 import com.softwarecampus.backend.dto.banner.BannerResponse;
 import com.softwarecampus.backend.dto.banner.BannerUpdateRequest;
 import com.softwarecampus.backend.repository.banner.BannerRepository;
+import com.softwarecampus.backend.service.academy.qna.AttachmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,28 +23,50 @@ import java.util.stream.Collectors;
 public class BannerServiceImpl implements BannerService {
 
     private final BannerRepository bannerRepository;
-    private final FileService fileService;
+    private final AttachmentService attachmentService;
 
-    private static final String BANNER_IMAGE_DIR = "banner";
+    private static final AttachmentCategoryType BANNER_TYPE = AttachmentCategoryType.BANNER;
 
     /**
      *  배너 등록
      */
+    @Override
     @Transactional
     public BannerResponse createBanner(BannerCreateRequest request) {
-        // 파일 S3 업로드 및 URL 획득
-        String imageUrl = fileService.uploadFile(request.getImageFile(), BANNER_IMAGE_DIR);
-
         Banner banner = new Banner(
                 null,
                 request.getTitle(),
-                imageUrl,
+                null,
                 request.getLinkUrl(),
                 request.getSequence(),
                 request.getIsActivated()
         );
 
         Banner savedBanner = bannerRepository.save(banner);
+
+        String finalImageUrl = null;
+        QAFileDetail imageAttachment = request.getImageAttachment();
+
+        if (imageAttachment != null) {
+            // 단일 파일이지만 List로 감싸서 호출
+            attachmentService.confirmAttachments(
+                    List.of(imageAttachment), savedBanner.getId(), BANNER_TYPE
+            );
+
+            List<QAFileDetail> confirmedFiles = attachmentService.getActiveFileDetailsByQAId(BANNER_TYPE, savedBanner.getId());
+            if (!confirmedFiles.isEmpty()) {
+                finalImageUrl = confirmedFiles.get(0).getFilename();
+            }
+        }
+
+        savedBanner.update(
+                request.getTitle(),
+                finalImageUrl,
+                request.getLinkUrl(),
+                request.getSequence(),
+                request.getIsActivated()
+        );
+
         return BannerResponse.from(savedBanner);
     }
 
@@ -57,14 +84,22 @@ public class BannerServiceImpl implements BannerService {
 
         String newImageUrl = banner.getImageUrl();
 
-        if (request.getNewImageFile() != null && !request.getNewImageFile().isEmpty()) {
+        // 새로운 파일이 제공된 경우
+        MultipartFile newAttachment = request.getNewImageFile();
+        if (newAttachment != null) {
+            List<Attachment> attachmentsToHardDelete =
+                    attachmentService.softDeleteAllByQAId(BANNER_TYPE, bannerId);
+            attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
 
-            newImageUrl = fileService.uploadFile(request.getNewImageFile(), BANNER_IMAGE_DIR);
-            if (newImageUrl != null) {
-                fileService.deleteFile(banner.getImageUrl());
-            }
+            // 새 파일 확정
+            attachmentService.confirmAttachments(
+                    List.of(), bannerId, BANNER_TYPE
+            );
+            // 새 파일의 URL을 조회하여 newImageUrl 변수에 업데이트
+            List<QAFileDetail> updatedFiles = attachmentService.getActiveFileDetailsByQAId(BANNER_TYPE, bannerId);
+            newImageUrl = updatedFiles.isEmpty() ? null : updatedFiles.get(0).getFilename();
         }
-
+        // Banner 엔티티 업데이트
         banner.update(
                 request.getTitle(),
                 newImageUrl, // ⬅️ 새 URL 또는 기존 URL
@@ -78,17 +113,23 @@ public class BannerServiceImpl implements BannerService {
     /**
      *  배너 삭제
      */
+    @Override
     @Transactional
     public void deleteBanner(Long bannerId) {
 
         Banner banner = bannerRepository.findById(bannerId)
                 .orElseThrow(() -> new IllegalArgumentException("Banner not found!"));
 
-        if (!banner.isActive()) {
+        if (!banner.getIsActivated() || banner.getIsDeleted()) {
             throw new IllegalStateException("Banner is not active.");
         }
-        fileService.deleteFile(banner.getImageUrl());
+
+        List<Attachment> attachmentsToHardDelete =
+                attachmentService.softDeleteAllByCategoryAndId(BANNER_TYPE, bannerId);
+
         banner.markDeleted();
+
+        attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
     }
 
     /**

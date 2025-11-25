@@ -1,0 +1,37 @@
+package com.softwarecampus.backend.repository.academy.academyQA;
+
+import com.softwarecampus.backend.domain.academy.qna.Attachment;
+import com.softwarecampus.backend.domain.common.AttachmentCategoryType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+
+public interface AttachmentRepository extends JpaRepository<Attachment,Long> {
+
+    /**
+     *  Q/A 화면에 표시할 활성 파일 목록 조회
+     */
+    List<Attachment> findByCategoryTypeAndCategoryIdAndIsDeletedFalse(
+            AttachmentCategoryType categoryType, Long categoryId
+    );
+
+    /**
+     *  특정 목록을 Soft Delete 처리 (게시글 수정 시 파일 제거용)
+     */
+    @Modifying
+    @Query("UPDATE Attachment a SET a.isDeleted = TRUE, a.deletedAt = CURRENT_TIMESTAMP WHERE a.id IN :ids AND a.isDeleted = FALSE")
+    int softDeleteByIds(@Param("ids") List<Long> attachmentIds);
+
+    /**
+     *  Q/A 게시글 삭제 시 연결된 모든 파일을 처리
+     */
+    @Modifying
+    @Query("UPDATE Attachment a SET a.isDeleted = TRUE, a.deletedAt = CURRENT_TIMESTAMP WHERE a.categoryType = :type AND a.categoryId = :id AND a.isDeleted = FALSE")
+    int softDeleteAllByCategoryTypeAndCategoryId(
+            @Param("type") AttachmentCategoryType categoryType,
+            @Param("id") Long categoryId
+    );
+}
