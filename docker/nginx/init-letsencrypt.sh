@@ -21,10 +21,17 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-domains="softwarecampus.earlydreamer.dev"
+# .env 파일 로드 (존재할 경우)
+if [ -f .env ]; then
+  export $(cat .env | grep -v '#' | xargs)
+elif [ -f ../../.env ]; then
+  export $(cat ../../.env | grep -v '#' | xargs)
+fi
+
+domains="${DOMAIN_NAME:-softwarecampus.earlydreamer.dev}"
 rsa_key_size=4096
 data_path="./data/certbot"
-email="earlydreamer@naver.com" # 이메일 주소 입력
+email="${CERT_EMAIL:-earlydreamer@naver.com}" # 이메일 주소 입력
 staging=0 # 테스트 시 1, 실제 발급 시 0
 
 if [ -d "$data_path" ]; then
