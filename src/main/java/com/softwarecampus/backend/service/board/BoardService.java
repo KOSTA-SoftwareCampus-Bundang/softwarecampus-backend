@@ -1,16 +1,11 @@
 package com.softwarecampus.backend.service.board;
 
 
-import com.softwarecampus.backend.domain.board.Board;
 import com.softwarecampus.backend.domain.board.BoardAttach;
 import com.softwarecampus.backend.domain.board.BoardCategory;
 import com.softwarecampus.backend.dto.board.*;
 import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.util.List;
 
 
 public interface BoardService {

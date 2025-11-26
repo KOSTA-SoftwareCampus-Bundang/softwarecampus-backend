@@ -33,7 +33,8 @@ public class BoardServiceImpl implements BoardService {
     @Transactional(readOnly = true)
     @Override
     public Page<BoardListResponseDTO> getBoards(int pageNo, BoardCategory category, String searchType, String searchText) {
-        PageRequest pageRequest = PageRequest.of(pageNo - 1, 10, Sort.by("id").descending());
+        int pageIndex = Math.max(pageNo - 1, 0);
+        PageRequest pageRequest = PageRequest.of(pageIndex, 10, Sort.by("id").descending());
 
         if (searchType == null || "".equals(searchType) || searchText == null || "".equals(searchText)) {
             return boardRepository.findBoardsByCategory(category, pageRequest);
@@ -51,7 +52,7 @@ public class BoardServiceImpl implements BoardService {
     }
 
     //
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public BoardResponseDTO getBoardById(Long id, Long userId) {
         Board board = boardRepository.findById(id).orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
@@ -177,14 +178,16 @@ public class BoardServiceImpl implements BoardService {
         //실제론 1L 대신 userId가 인자로 전달
         Account account = accountRepository.findById(1L).get();
         Comment comment = commentCreateRequestDTO.toEntity(board, account);
-        Comment topComment = null;
+
         if (commentCreateRequestDTO.getTopCommentId() != null) {
-            topComment = commentRepository.findById(commentCreateRequestDTO.getTopCommentId()).orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
+            Comment topComment = commentRepository.findById(commentCreateRequestDTO.getTopCommentId()).orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
+            if (!topComment.isActive()) {
+                throw new BoardException(BoardErrorCode.COMMENT_NOT_FOUND);
+            }
+            comment.setTopComment(topComment);
         }
-        if (!topComment.isActive()) {
-            throw new BoardException(BoardErrorCode.COMMENT_NOT_FOUND);
-        }
-        comment.setTopComment(topComment);
+
+
         commentRepository.save(comment);
 
         return comment.getId();
