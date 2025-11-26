@@ -43,13 +43,20 @@ public class HomeServiceImpl implements HomeService {
          * 재직자 베스트 과정 조회
          * - 승인된 과정만 (APPROVED)
          * - 삭제되지 않은 과정 (deletedAt is null)
-         * - 최신순 정렬 (id 역순)
+         * - 정렬: (찜 + 리뷰 수) DESC, 리뷰 수 DESC, ID ASC
          */
         private List<HomeCourseDTO> getEmployeeBestCourses(int limit) {
                 return courseRepository.findByCategory_CategoryTypeAndDeletedAtIsNull(CategoryType.EMPLOYEE)
                                 .stream()
                                 .filter(course -> course.getIsApproved() == ApprovalStatus.APPROVED)
-                                .sorted(Comparator.comparing(Course::getId).reversed()) // 최신순
+                                .sorted(Comparator
+                                                .comparingInt((Course c) -> c.getFavorites().size()
+                                                                + c.getReviews().size())
+                                                .reversed()
+                                                .thenComparing(Comparator
+                                                                .comparingInt((Course c) -> c.getReviews().size())
+                                                                .reversed())
+                                                .thenComparing(Course::getId))
                                 .limit(limit)
                                 .map(HomeCourseDTO::fromEntity)
                                 .toList();
@@ -59,13 +66,20 @@ public class HomeServiceImpl implements HomeService {
          * 취업예정자 베스트 과정 조회
          * - 승인된 과정만 (APPROVED)
          * - 삭제되지 않은 과정 (deletedAt is null)
-         * - 최신순 정렬 (id 역순)
+         * - 정렬: (찜 + 리뷰 수) DESC, 리뷰 수 DESC, ID ASC
          */
         private List<HomeCourseDTO> getJobSeekerBestCourses(int limit) {
                 return courseRepository.findByCategory_CategoryTypeAndDeletedAtIsNull(CategoryType.JOB_SEEKER)
                                 .stream()
                                 .filter(course -> course.getIsApproved() == ApprovalStatus.APPROVED)
-                                .sorted(Comparator.comparing(Course::getId).reversed()) // 최신순
+                                .sorted(Comparator
+                                                .comparingInt((Course c) -> c.getFavorites().size()
+                                                                + c.getReviews().size())
+                                                .reversed()
+                                                .thenComparing(Comparator
+                                                                .comparingInt((Course c) -> c.getReviews().size())
+                                                                .reversed())
+                                                .thenComparing(Course::getId))
                                 .limit(limit)
                                 .map(HomeCourseDTO::fromEntity)
                                 .toList();
@@ -74,11 +88,13 @@ public class HomeServiceImpl implements HomeService {
         /**
          * 마감 임박 과정 조회
          * - 승인된 과정만 (APPROVED)
-         * - 모집 중인 과정만 (recruitEnd >= 오늘)
+         * - 삭제되지 않은 과정 (deletedAt is null)
+         * - 모집 종료일이 오늘 ~ 7일 후 이내
          * - 모집 종료일 가까운 순으로 정렬
          */
         private List<HomeCourseDTO> getClosingSoonCourses(int limit) {
                 LocalDate today = LocalDate.now();
+                LocalDate endDate = today.plusDays(7);
 
                 // 재직자 + 취업예정자 모두 조회
                 List<Course> employeeCourses = courseRepository
@@ -89,8 +105,9 @@ public class HomeServiceImpl implements HomeService {
                 return Stream.concat(employeeCourses.stream(), jobSeekerCourses.stream())
                                 .filter(course -> course.getIsApproved() == ApprovalStatus.APPROVED)
                                 .filter(course -> course.getRecruitEnd() != null
-                                                && !course.getRecruitEnd().isBefore(today))
-                                .sorted(Comparator.comparing(Course::getRecruitEnd)) // 모집 종료일 가까운 순
+                                                && !course.getRecruitEnd().isBefore(today)
+                                                && !course.getRecruitEnd().isAfter(endDate))
+                                .sorted(Comparator.comparing(Course::getRecruitEnd))
                                 .limit(limit)
                                 .map(HomeCourseDTO::fromEntity)
                                 .toList();
