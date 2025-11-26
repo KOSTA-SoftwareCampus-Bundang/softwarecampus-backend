@@ -54,10 +54,12 @@ MAIL_USERNAME=your-email@gmail.com
 MAIL_APP_PASSWORD=your-16-digit-app-password
 ```
 
-**⚠️ 주의사항:**
+**⚠️ 보안 주의사항:**
+- **절대로 실제 비밀번호를 문서나 Git에 포함하지 마세요**
 - `.env` 파일은 `.gitignore`에 추가 필수
-- Gmail 앱 비밀번호 생성: https://myaccount.google.com/apppasswords
+- Gmail 앱 비밀번호 생성: [Google 앱 비밀번호](https://myaccount.google.com/apppasswords)
 - 2단계 인증 활성화 필요
+- 비밀번호 노출 시 즉시 폐기 후 재생성
 
 ---
 

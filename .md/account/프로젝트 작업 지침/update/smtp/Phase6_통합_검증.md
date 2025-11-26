@@ -643,9 +643,15 @@ MAIL_USERNAME=your-production-email@gmail.com
 MAIL_APP_PASSWORD=your-16-digit-app-password
 ```
 
+**⚠️ 보안 경고:**
+- **절대로 실제 비밀번호를 문서나 Git에 포함하지 마세요**
+- `.env` 파일은 반드시 `.gitignore`에 추가되어야 합니다
+- 비밀번호가 노출되었다면 즉시 폐기하고 재생성하세요
+- 프로덕션 환경에서는 환경 변수 또는 비밀 관리 시스템을 사용하세요
+
 ### Gmail SMTP 설정 확인
 1. Google 계정 → 보안 → 2단계 인증 활성화
-2. 앱 비밀번호 생성 (https://myaccount.google.com/apppasswords)
+2. 앱 비밀번호 생성 ([Google 앱 비밀번호](https://myaccount.google.com/apppasswords))
 3. `.env` 파일에 비밀번호 입력
 4. `.gitignore`에 `.env` 추가 확인
 
