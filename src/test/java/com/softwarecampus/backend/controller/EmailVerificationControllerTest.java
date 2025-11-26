@@ -23,6 +23,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * EmailVerificationController 통합 테스트
+ * 
+ * @apiNote @SpringBootTest를 사용하여 전체 애플리케이션 컨텍스트를 로드하는 통합 테스트입니다.
+ *          Security 필터는 테스트 간소화를 위해 비활성화되었습니다.
  */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false) // Security 필터 비활성화
