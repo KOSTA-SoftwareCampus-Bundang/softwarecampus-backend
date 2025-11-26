@@ -1,17 +1,38 @@
 package com.softwarecampus.backend.controller.sample;
 
+import com.softwarecampus.backend.dto.home.HomeResponseDTO;
+import com.softwarecampus.backend.service.home.HomeService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 기본 홈 컨트롤러
- * API 서버 상태 확인용
+ * 홈 화면 전용 컨트롤러
+ * - 메인페이지에서 필요한 데이터만 최적화하여 제공
  */
 @RestController
+@RequestMapping("/api/home")
+@RequiredArgsConstructor
 public class HomeController {
+
+    private final HomeService homeService;
+
+    /**
+     * 메인페이지 데이터 조회
+     * - 재직자 베스트 과정 (4개)
+     * - 취업예정자 베스트 과정 (4개)
+     * - 마감 임박 과정 (4개)
+     */
+    @GetMapping("/courses")
+    public ResponseEntity<HomeResponseDTO> getHomeCourses() {
+        HomeResponseDTO data = homeService.getHomePageData();
+        return ResponseEntity.ok(data);
+    }
 
     /**
      * 루트 경로 - API 서버 상태 확인
@@ -35,4 +56,3 @@ public class HomeController {
         return response;
     }
 }
-
