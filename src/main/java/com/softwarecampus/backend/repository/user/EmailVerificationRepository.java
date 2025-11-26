@@ -44,14 +44,6 @@ public interface EmailVerificationRepository extends JpaRepository<EmailVerifica
     );
     
     /**
-     * 특정 시간 이전에 생성되고 인증 완료된 레코드 삭제
-     * (배치 작업용 - 인증 완료 후 24시간 지난 데이터 삭제)
-     */
-    @Modifying
-    @Query("DELETE FROM EmailVerification e WHERE e.expiresAt < :threshold AND e.verified = true")
-    void deleteByExpiresAtBeforeAndVerifiedTrue(@Param("threshold") LocalDateTime threshold);
-    
-    /**
      * 특정 시간 이전에 생성되고 미인증 상태인 레코드 삭제
      * (배치 작업용 - 미인증 상태로 24시간 지난 데이터 삭제)
      */
@@ -75,13 +67,6 @@ public interface EmailVerificationRepository extends JpaRepository<EmailVerifica
      */
     @Modifying
     void deleteByEmailAndType(String email, VerificationType type);
-    
-    /**
-     * 만료된 인증 코드 삭제 (스케줄러용)
-     */
-    @Modifying
-    @Query("DELETE FROM EmailVerification ev WHERE ev.expiresAt < :now")
-    int deleteExpired(@Param("now") LocalDateTime now);
     
     /**
      * 특정 시간 이전 인증 완료 데이터 삭제
