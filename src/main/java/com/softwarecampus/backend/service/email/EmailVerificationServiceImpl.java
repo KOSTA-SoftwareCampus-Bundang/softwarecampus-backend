@@ -97,7 +97,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
             .orElseThrow(() -> new EmailVerificationException("인증 요청 기록이 없습니다"));
         
         // 2. 차단 상태 체크 (만료 시 자동 해제)
-        if (verification.checkAndUnblockIfExpired()) {
+        if (verification.isStillBlocked()) {
             throw new TooManyAttemptsException(
                 "인증 시도 횟수를 초과했습니다. " + verification.getBlockedUntil() + "까지 차단됩니다",
                 verification.getBlockedUntil()
@@ -174,7 +174,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         Optional<EmailVerification> recent = verificationRepository
             .findTopByEmailAndTypeOrderByCreatedAtDesc(email, type);
         
-        if (recent.isPresent() && recent.get().checkAndUnblockIfExpired()) {
+        if (recent.isPresent() && recent.get().isStillBlocked()) {
             throw new TooManyAttemptsException(
                 "인증 시도 횟수를 초과하여 차단되었습니다",
                 recent.get().getBlockedUntil()

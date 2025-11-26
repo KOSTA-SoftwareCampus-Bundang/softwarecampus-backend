@@ -126,7 +126,7 @@ public class EmailVerification {
      *          - JPA dirty checking으로 인한 자동 DB 업데이트 발생 가능
      * @return 현재 차단 상태 (true: 차단 중, false: 차단 아님)
      */
-    public boolean checkAndUnblockIfExpired() {
+    public boolean isStillBlocked() {
         if (!blocked) {
             return false;
         }

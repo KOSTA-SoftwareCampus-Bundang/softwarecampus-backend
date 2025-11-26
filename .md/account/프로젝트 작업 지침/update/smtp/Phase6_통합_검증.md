@@ -16,12 +16,15 @@
 package com.softwarecampus.backend.service.user;
 
 import com.softwarecampus.backend.exception.email.EmailNotVerifiedException;
+import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.model.dto.user.SignupRequest;
 import com.softwarecampus.backend.model.dto.user.AccountResponse;
 import com.softwarecampus.backend.model.entity.User;
+import com.softwarecampus.backend.model.enums.UserRole;
 import com.softwarecampus.backend.model.enums.VerificationType;
 import com.softwarecampus.backend.repository.UserRepository;
 import com.softwarecampus.backend.service.email.EmailVerificationService;
+import com.softwarecampus.backend.service.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,8 +38,8 @@ public class SignupServiceImpl implements SignupService {
     
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailVerificationService verificationService; // 추가
-    // ... 기타 의존성 (JwtService 등)
+    private final EmailVerificationService verificationService;
+    private final JwtService jwtService;
     
     @Override
     @Transactional
