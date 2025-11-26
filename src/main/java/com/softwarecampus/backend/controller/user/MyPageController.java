@@ -40,7 +40,7 @@ public class MyPageController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        log.info("프로필 조회 요청 - email: {}", email);
+        log.info("프로필 조회 요청");
         
         AccountResponse response = profileService.getAccountByEmail(email);
         return ResponseEntity.ok(response);
@@ -59,7 +59,7 @@ public class MyPageController {
             @Valid @RequestBody UpdateProfileRequest request) {
         
         String email = userDetails.getUsername();
-        log.info("프로필 수정 요청 - email: {}", email);
+        log.info("프로필 수정 요청");
         
         AccountResponse response = profileService.updateProfile(email, request);
         return ResponseEntity.ok(response);
@@ -76,7 +76,7 @@ public class MyPageController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String email = userDetails.getUsername();
-        log.info("계정 삭제 요청 - email: {}", email);
+        log.info("계정 삭제 요청");
         
         profileService.deleteAccount(email);
         return ResponseEntity.noContent().build();
