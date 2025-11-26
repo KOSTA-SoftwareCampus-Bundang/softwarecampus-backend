@@ -2,9 +2,13 @@ package com.softwarecampus.backend.controller.user;
 
 import com.softwarecampus.backend.dto.auth.RefreshTokenRequest;
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.LoginRequest;
+import com.softwarecampus.backend.dto.user.LoginResponse;
 import com.softwarecampus.backend.dto.user.MessageResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
+import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
 import com.softwarecampus.backend.service.auth.TokenService;
+import com.softwarecampus.backend.service.user.login.LoginService;
 import com.softwarecampus.backend.service.user.signup.SignupService;
 import com.softwarecampus.backend.util.EmailUtils;
 import jakarta.validation.Valid;
@@ -26,7 +30,9 @@ import java.util.Map;
  * 
  * 엔드포인트:
  * - POST /api/auth/signup: 회원가입
+ * - POST /api/auth/login: 로그인
  * - GET /api/auth/check-email: 이메일 중복 확인
+ * - POST /api/auth/refresh: Access Token 갱신
  * 
  * RESTful 원칙:
  * - HTTP 201 Created + Location 헤더 (리소스 URI)
@@ -43,10 +49,9 @@ import java.util.Map;
 public class AuthController {
     
     private final SignupService signupService;
+    private final LoginService loginService;
     private final TokenService tokenService;
-    
-    // Refresh 엔드포인트에서 만료 시간 반환용
-    private static final long ACCESS_TOKEN_EXPIRATION_SECONDS = 900L; // 15분 = 900초
+    private final JwtTokenProvider jwtTokenProvider;
     
     /**
      * 회원가입 API
@@ -73,7 +78,7 @@ public class AuthController {
         AccountResponse response = signupService.signup(request);
         
         // Location 헤더 생성 (RESTful)
-        URI location = URI.create("/api/v1/accounts/" + response.id());
+        URI location = URI.create("/api/accounts/" + response.id());
         
         log.info("회원가입 성공 - accountId: {}, accountType: {}, approvalStatus: {}", 
             response.id(), response.accountType(), response.approvalStatus());
@@ -120,6 +125,27 @@ public class AuthController {
     }
     
     /**
+     * 로그인 API
+     * 
+     * @param request 로그인 요청 (email, password)
+     * @return 200 OK + LoginResponse (accessToken, refreshToken, account)
+     * 
+     * @throws com.softwarecampus.backend.exception.user.InvalidCredentialsException 401 - 이메일 없음 또는 비밀번호 불일치
+     * @throws com.softwarecampus.backend.exception.user.InvalidCredentialsException 401 - 비활성화된 계정
+     * @throws com.softwarecampus.backend.exception.user.InvalidCredentialsException 401 - 미승인 ACADEMY 계정
+     */
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        log.info("로그인 API 호출");
+        
+        LoginResponse response = loginService.login(request);
+        
+        log.info("로그인 성공 - accountType: {}", response.account().accountType());
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
      * Access Token 갱신 API
      * 
      * 보안 검증:
@@ -162,9 +188,12 @@ public class AuthController {
             
             log.info("Access Token refreshed for user: {}", EmailUtils.maskEmail(request.email()));
             
+            // JWT 실제 만료 시간을 동적으로 가져오기 (밀리초 → 초)
+            long expiresInSeconds = jwtTokenProvider.getExpiration() / 1000;
+            
             return ResponseEntity.ok(Map.of(
                 "accessToken", newAccessToken,
-                "expiresIn", ACCESS_TOKEN_EXPIRATION_SECONDS,
+                "expiresIn", expiresInSeconds,
                 "tokenType", "Bearer"
             ));
             

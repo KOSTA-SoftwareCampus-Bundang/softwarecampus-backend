@@ -55,13 +55,53 @@ rate.limit.login.block-duration=300  # 5분 (초)
 
 ---
 
-## 2. RateLimitFilter 생성
+## 2. RedisScripts 유틸리티 클래스 생성
+
+**패키지:** `com.softwarecampus.backend.infrastructure.redis`
+
+**목적:** Lua 스크립트 중복 제거 및 한 곳에서 관리
+
+```java
+package com.softwarecampus.backend.infrastructure.redis;
+
+/**
+ * Redis Lua Script 공유 유틸리티 클래스
+ * 
+ * Redis Lua Script를 한 곳에서 관리하여 코드 중복 방지 및 유지보수성 향상
+ * 
+ * @since 2025-11-26
+ */
+public final class RedisScripts {
+    
+    private RedisScripts() {
+        // 유틸리티 클래스: 인스턴스 생성 방지
+    }
+    
+    /**
+     * INCR + EXPIRE 원자적 처리 Lua 스크립트
+     * 
+     * count가 1일 때만 EXPIRE 설정하여 첫 생성 시에만 TTL 적용
+     * 이미 존재하는 키의 TTL은 유지 (중요: TTL 리셋 방지)
+     */
+    public static final String INCR_WITH_EXPIRE = 
+        "local count = redis.call('INCR', KEYS[1]) " +
+        "if count == 1 then " +
+        "  redis.call('EXPIRE', KEYS[1], ARGV[1]) " +
+        "end " +
+        "return count";
+}
+```
+
+---
+
+## 3. RateLimitFilter 생성
 
 **패키지:** `com.softwarecampus.backend.security`
 
 ```java
 package com.softwarecampus.backend.security;
 
+import com.softwarecampus.backend.infrastructure.redis.RedisScripts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -70,11 +110,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
 
 /**
  * Rate Limiting 필터
@@ -97,6 +138,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
     
     private static final String RATE_LIMIT_PREFIX = "ratelimit:";
     
+    /**
+     * Lua Script: INCR + EXPIRE 원자적 처리
+     * 
+     * @see RedisScripts#INCR_WITH_EXPIRE 상세 설명 참조
+     */
+    private static final String LUA_SCRIPT = RedisScripts.INCR_WITH_EXPIRE;
+    
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -115,15 +163,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String key = RATE_LIMIT_PREFIX + clientIp;
         
         try {
-            // 2. Redis에서 요청 수 증가
-            Long requests = redisTemplate.opsForValue().increment(key);
+            // 2. Lua Script로 INCR + EXPIRE 원자적 실행
+            Long requests = redisTemplate.execute(
+                new DefaultRedisScript<>(LUA_SCRIPT, Long.class),
+                Collections.singletonList(key),
+                String.valueOf(60) // 60초 TTL
+            );
             
-            // 3. 첫 요청이면 TTL 설정 (1분)
-            if (requests != null && requests == 1) {
-                redisTemplate.expire(key, 1, TimeUnit.MINUTES);
-            }
-            
-            // 4. 제한 초과 확인
+            // 3. 제한 초과 확인
             if (requests != null && requests > requestsPerMinute) {
                 log.warn("Rate limit exceeded for IP: {} ({})", clientIp, requests);
                 
@@ -136,7 +183,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 return;
             }
             
-            // 5. 정상 요청 - 다음 필터로
+            // 4. 정상 요청 - 다음 필터로
             filterChain.doFilter(request, response);
             
         } catch (Exception e) {
@@ -166,7 +213,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         
         // X-Forwarded-For: client, proxy1, proxy2
-        // → 첫 번째 IP만 사용
+        // 맨 첫번째 IP만 사용
         if (ip != null && ip.contains(",")) {
             ip = ip.split(",")[0].trim();
         }
@@ -185,12 +232,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
 ```java
 package com.softwarecampus.backend.service.auth;
 
+import com.softwarecampus.backend.infrastructure.redis.RedisScripts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -215,6 +265,13 @@ public class LoginAttemptService {
     private static final String LOGIN_ATTEMPT_PREFIX = "loginattempt:";
     
     /**
+     * Lua Script: INCR + EXPIRE 원자적 처리
+     * 
+     * @see RedisScripts#INCR_WITH_EXPIRE 상세 설명 참조
+     */
+    private static final String LUA_SCRIPT = RedisScripts.INCR_WITH_EXPIRE;
+    
+    /**
      * 로그인 실패 기록
      * 
      * @param ip 클라이언트 IP
@@ -222,15 +279,14 @@ public class LoginAttemptService {
     public void loginFailed(String ip) {
         String key = LOGIN_ATTEMPT_PREFIX + ip;
         
-        // 실패 횟수 증가
-        Long attempts = redisTemplate.opsForValue().increment(key);
+        // Lua Script로 INCR + EXPIRE 원자적 실행
+        Long attempts = redisTemplate.execute(
+            new DefaultRedisScript<>(LUA_SCRIPT, Long.class),
+            Collections.singletonList(key),
+            String.valueOf(blockDuration) // TTL (초)
+        );
         
         if (attempts != null) {
-            // 첫 실패 또는 최대 시도 도달 시 TTL 설정
-            if (attempts == 1 || attempts >= maxAttempts) {
-                redisTemplate.expire(key, blockDuration, TimeUnit.SECONDS);
-            }
-            
             log.warn("Login failed for IP: {} (attempt {}/{})", 
                 ip, attempts, maxAttempts);
         }
@@ -398,14 +454,20 @@ Value: 5 (실패 횟수)
 TTL: 300초 (5분)
 
 동작:
-1-4회 실패
-→ INCR loginattempt:192.168.1.100 → 1, 2, 3, 4
+첫 실패 (count == 1)
+→ INCR loginattempt:192.168.1.100 → 1
+→ EXPIRE loginattempt:192.168.1.100 300 (첫 실패 시점부터 5분 TTL 시작)
+→ 5 미만 → 로그인 허용 ✅
+
+2-4회 실패
+→ INCR loginattempt:192.168.1.100 → 2, 3, 4
+→ TTL 유지 (첫 실패 시점부터 계속 카운트다운)
 → 5 미만 → 로그인 허용 ✅
 
 5회 실패
 → INCR loginattempt:192.168.1.100 → 5
-→ EXPIRE loginattempt:192.168.1.100 300
-→ 5분간 차단 ❌
+→ TTL 유지 (리셋 안 됨)
+→ 5 이상 → 로그인 차단 ❌ (TTL 만료까지)
 
 로그인 성공
 → DEL loginattempt:192.168.1.100
@@ -532,9 +594,10 @@ rate.limit.login.max-attempts=100
 
 ## ✅ 완료 체크리스트
 
-- [ ] application.properties Rate Limit 설정 확인 (이미 완료)
-- [ ] RateLimitFilter.java 확인 (이미 완료)
-- [ ] LoginAttemptService.java 확인 (이미 완료)
+- [x] RedisScripts 유틸리티 클래스 생성 (2025-11-26)
+- [x] application.properties Rate Limit 설정 확인 (이미 완료)
+- [x] RateLimitFilter.java 리팩터링 완료
+- [x] LoginAttemptService.java 리팩터링 완료
 - [ ] SecurityConfig에 RateLimitFilter 등록 확인 (이미 완료)
 - [ ] AuthController 로그인에 차단 체크 추가 (Phase 14)
 - [ ] mvn clean compile 성공

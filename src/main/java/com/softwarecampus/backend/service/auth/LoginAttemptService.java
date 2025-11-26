@@ -1,12 +1,15 @@
 package com.softwarecampus.backend.service.auth;
 
+import com.softwarecampus.backend.infrastructure.redis.RedisScripts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -32,6 +35,13 @@ public class LoginAttemptService {
     private static final String LOGIN_ATTEMPT_PREFIX = "loginattempt:";
     
     /**
+     * Lua Script: INCR + EXPIRE 원자적 처리
+     * 
+     * @see RedisScripts#INCR_WITH_EXPIRE 상세 설명 참조
+     */
+    private static final String LUA_SCRIPT = RedisScripts.INCR_WITH_EXPIRE;
+    
+    /**
      * 로그인 실패 기록
      * 
      * @param ip 클라이언트 IP
@@ -39,15 +49,14 @@ public class LoginAttemptService {
     public void loginFailed(String ip) {
         String key = LOGIN_ATTEMPT_PREFIX + ip;
         
-        // 실패 횟수 증가
-        Long attempts = redisTemplate.opsForValue().increment(key);
+        // Lua Script로 INCR + EXPIRE 원자적 실행
+        Long attempts = redisTemplate.execute(
+            new DefaultRedisScript<>(LUA_SCRIPT, Long.class),
+            Collections.singletonList(key),
+            String.valueOf(blockDuration) // TTL (초)
+        );
         
         if (attempts != null) {
-            // 첫 실패 또는 최대 시도 도달 시 TTL 설정
-            if (attempts == 1 || attempts >= maxAttempts) {
-                redisTemplate.expire(key, blockDuration, TimeUnit.SECONDS);
-            }
-            
             log.warn("Login failed for IP: {} (attempt {}/{})", 
                 ip, attempts, maxAttempts);
         }

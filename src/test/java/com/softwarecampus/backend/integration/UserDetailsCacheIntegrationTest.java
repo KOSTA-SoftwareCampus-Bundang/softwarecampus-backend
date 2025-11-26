@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 2025-11-19
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @DisplayName("UserDetailsService 캐싱 통합 테스트")
 class UserDetailsCacheIntegrationTest {
     
