@@ -55,13 +55,53 @@ rate.limit.login.block-duration=300  # 5분 (초)
 
 ---
 
-## 2. RateLimitFilter 생성
+## 2. RedisScripts 유틸리티 클래스 생성
+
+**패키지:** `com.softwarecampus.backend.infrastructure.redis`
+
+**목적:** Lua 스크립트 중복 제거 및 한 곳에서 관리
+
+```java
+package com.softwarecampus.backend.infrastructure.redis;
+
+/**
+ * Redis Lua Script 공유 유틸리티 클래스
+ * 
+ * Redis Lua Script를 한 곳에서 관리하여 코드 중복 방지 및 유지보수성 향상
+ * 
+ * @since 2025-11-26
+ */
+public final class RedisScripts {
+    
+    private RedisScripts() {
+        // 유틸리티 클래스: 인스턴스 생성 방지
+    }
+    
+    /**
+     * INCR + EXPIRE 원자적 처리 Lua 스크립트
+     * 
+     * count가 1일 때만 EXPIRE 설정하여 첫 생성 시에만 TTL 적용
+     * 이미 존재하는 키의 TTL은 유지 (중요: TTL 리셋 방지)
+     */
+    public static final String INCR_WITH_EXPIRE = 
+        "local count = redis.call('INCR', KEYS[1]) " +
+        "if count == 1 then " +
+        "  redis.call('EXPIRE', KEYS[1], ARGV[1]) " +
+        "end " +
+        "return count";
+}
+```
+
+---
+
+## 3. RateLimitFilter 생성
 
 **패키지:** `com.softwarecampus.backend.security`
 
 ```java
 package com.softwarecampus.backend.security;
 
+import com.softwarecampus.backend.infrastructure.redis.RedisScripts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -100,20 +140,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     /**
      * Lua Script: INCR + EXPIRE 원자적 처리
      * 
-     * 문제: increment()와 expire()를 따로 호출하면 원자성 보장 안 됨
-     * - increment() 성공 후 서버 다운 시 expire() 실행 안 됨
-     * - TTL 없는 키가 Redis에 영구 저장 (메모리 누수)
-     * 
-     * 해결: Lua Script로 INCR + EXPIRE를 한 번에 실행
-     * - Redis 서버에서 원자적 실행 (All or Nothing)
-     * - 네트워크 왕복 50% 감소 (2회 → 1회)
+     * @see RedisScripts#INCR_WITH_EXPIRE 상세 설명 참조
      */
-    private static final String LUA_INCR_WITH_EXPIRE = 
-        "local count = redis.call('INCR', KEYS[1]) " +
-        "if count == 1 then " +
-        "  redis.call('EXPIRE', KEYS[1], ARGV[1]) " +
-        "end " +
-        "return count";
+    private static final String LUA_SCRIPT = RedisScripts.INCR_WITH_EXPIRE;
     
     @Override
     protected void doFilterInternal(
@@ -135,7 +164,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         try {
             // 2. Lua Script로 INCR + EXPIRE 원자적 실행
             Long requests = redisTemplate.execute(
-                new DefaultRedisScript<>(LUA_INCR_WITH_EXPIRE, Long.class),
+                new DefaultRedisScript<>(LUA_SCRIPT, Long.class),
                 Collections.singletonList(key),
                 String.valueOf(60) // 60초 TTL
             );
@@ -202,6 +231,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 ```java
 package com.softwarecampus.backend.service.auth;
 
+import com.softwarecampus.backend.infrastructure.redis.RedisScripts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -234,20 +264,9 @@ public class LoginAttemptService {
     /**
      * Lua Script: INCR + EXPIRE 원자적 처리
      * 
-     * 문제: increment()와 expire()를 따로 호출하면 원자성 보장 안 됨
-     * - increment() 성공 후 서버 다운 시 expire() 실행 안 됨
-     * - 로그인 실패 카운터가 무한정 유지됨 (사용자 영구 차단 위험)
-     * 
-     * 해결: Lua Script로 INCR + EXPIRE를 한 번에 실행
-     * - Redis 서버에서 원자적 실행 (All or Nothing)
-     * - 네트워크 왕복 50% 감소 (2회 → 1회)
+     * @see RedisScripts#INCR_WITH_EXPIRE 상세 설명 참조
      */
-    private static final String LUA_INCR_WITH_EXPIRE = 
-        "local count = redis.call('INCR', KEYS[1]) " +
-        "if count == 1 then " +
-        "  redis.call('EXPIRE', KEYS[1], ARGV[1]) " +
-        "end " +
-        "return count";
+    private static final String LUA_SCRIPT = RedisScripts.INCR_WITH_EXPIRE;
     
     /**
      * 로그인 실패 기록
@@ -259,7 +278,7 @@ public class LoginAttemptService {
         
         // Lua Script로 INCR + EXPIRE 원자적 실행
         Long attempts = redisTemplate.execute(
-            new DefaultRedisScript<>(LUA_INCR_WITH_EXPIRE, Long.class),
+            new DefaultRedisScript<>(LUA_SCRIPT, Long.class),
             Collections.singletonList(key),
             String.valueOf(blockDuration) // TTL (초)
         );
@@ -566,9 +585,10 @@ rate.limit.login.max-attempts=100
 
 ## ✅ 완료 체크리스트
 
-- [ ] application.properties Rate Limit 설정 확인 (이미 완료)
-- [ ] RateLimitFilter.java 확인 (이미 완료)
-- [ ] LoginAttemptService.java 확인 (이미 완료)
+- [x] RedisScripts 유틸리티 클래스 생성 (2025-11-26)
+- [x] application.properties Rate Limit 설정 확인 (이미 완료)
+- [x] RateLimitFilter.java 리팩터링 완료
+- [x] LoginAttemptService.java 리팩터링 완료
 - [ ] SecurityConfig에 RateLimitFilter 등록 확인 (이미 완료)
 - [ ] AuthController 로그인에 차단 체크 추가 (Phase 14)
 - [ ] mvn clean compile 성공

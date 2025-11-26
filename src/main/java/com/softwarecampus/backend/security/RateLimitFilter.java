@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.security;
 
+import com.softwarecampus.backend.infrastructure.redis.RedisScripts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,20 +42,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     /**
      * Lua Script: INCR + EXPIRE 원자적 처리
      * 
-     * 문제: increment()와 expire()를 따로 호출하면 원자성 보장 안 됨
-     * - increment() 성공 후 서버 다운 시 expire() 실행 안 됨
-     * - TTL 없는 키가 Redis에 영구 저장 (메모리 누수)
-     * 
-     * 해결: Lua Script로 INCR + EXPIRE를 한 번에 실행
-     * - Redis 서버에서 원자적 실행 (All or Nothing)
-     * - 네트워크 왕복 50% 감소 (2회 → 1회)
+     * @see RedisScripts#INCR_WITH_EXPIRE 상세 설명 참조
      */
-    private static final String LUA_INCR_WITH_EXPIRE = 
-        "local count = redis.call('INCR', KEYS[1]) " +
-        "if count == 1 then " +
-        "  redis.call('EXPIRE', KEYS[1], ARGV[1]) " +
-        "end " +
-        "return count";
+    private static final String LUA_SCRIPT = RedisScripts.INCR_WITH_EXPIRE;
     
     @Override
     protected void doFilterInternal(
@@ -76,7 +66,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         try {
             // 2. Lua Script로 INCR + EXPIRE 원자적 실행
             Long requests = redisTemplate.execute(
-                new DefaultRedisScript<>(LUA_INCR_WITH_EXPIRE, Long.class),
+                new DefaultRedisScript<>(LUA_SCRIPT, Long.class),
                 Collections.singletonList(key),
                 String.valueOf(60) // 60초 TTL
             );
