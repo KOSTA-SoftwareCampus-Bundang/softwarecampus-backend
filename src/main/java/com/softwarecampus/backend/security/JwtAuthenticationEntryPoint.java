@@ -29,7 +29,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     ) throws IOException {
         log.debug("인증 실패: {}", authException.getMessage());
         
-        // 401 Unauthorized 응답
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+        // 401 Unauthorized 응답 (한국어 메시지)
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "인증이 필요합니다");
     }
 }
