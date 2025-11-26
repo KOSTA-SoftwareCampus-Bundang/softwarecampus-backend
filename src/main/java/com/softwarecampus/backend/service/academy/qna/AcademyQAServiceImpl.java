@@ -77,7 +77,17 @@ public class AcademyQAServiceImpl implements AcademyQAService {
                 .academy(academy)
                 .build();
 
-        return QAResponse.from(academyQARepository.save(qa));
+        AcademyQA save = academyQARepository.save(qa);
+
+        // 첨부파일 확정 로직 : 파일 상세 정보가 있다면 확정
+        if (request.getFileDetails() != null && !request.getFileDetails().isEmpty()) {
+            attachmentService.confirmAttachments(
+                    request.getFileDetails(),
+                    save.getId(),
+                    AttachmentCategoryType.QNA
+            );
+        }
+        return QAResponse.from(save);
     }
 
     /**
@@ -89,6 +99,22 @@ public class AcademyQAServiceImpl implements AcademyQAService {
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
         qa.updateQuestion(request.getTitle(), request.getQuestionText());
 
+        // 삭제 파일 처리
+        if (request.getDeletedFileIds() != null && !request.getDeletedFileIds().isEmpty()) {
+            List<Attachment> attachmentsToProcess = attachmentRepository.findAllById(request.getDeletedFileIds());
+
+            attachmentsToProcess.forEach(Attachment::softDelete);
+            attachmentService.hardDeleteS3Files(attachmentsToProcess);
+        }
+
+        // 새로운 파일 확정 처리
+        if (request.getNewFileDetails() != null && !request.getNewFileDetails().isEmpty()) {
+            attachmentService.confirmAttachments(
+                    request.getNewFileDetails(),
+                    qaId,
+                    AttachmentCategoryType.QNA
+            );
+        }
         return QAResponse.from(qa);
     }
 

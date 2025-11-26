@@ -81,34 +81,36 @@ public class BannerServiceImpl implements BannerService {
         Banner banner = bannerRepository.findById(bannerId)
                 .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
-        // 배너 상태 확인 : 비활성 또는 삭제된 배너는 수정 불가
-        if (!banner.getIsActivated() || banner.getIsDeleted()) {
-            BannerErrorCode errorCode = banner.getIsDeleted() ? BannerErrorCode.BANNER_ALREADY_DELETED : BannerErrorCode.BANNER_NOT_ACTIVE;
-            throw new BannerException(errorCode);
+        if (banner.getIsDeleted()) {
+            throw new BannerException(BannerErrorCode.BANNER_ALREADY_DELETED);
         }
 
-        String newImageUrl = banner.getImageUrl();
+        MultipartFile newImageFile = request.getNewImageFile();
 
-        // 새로운 파일이 제공된 경우
-        MultipartFile newAttachment = request.getNewImageFile();
-        if (newAttachment != null && !newAttachment.isEmpty()) {
-            List<Attachment> attachmentsToHardDelete =
-                    attachmentService.softDeleteAllByCategoryAndId(BANNER_TYPE, bannerId);
-            attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
+        String updatedImageUrl = banner.getImageUrl();
 
-            // 새 파일의 URL을 조회하여 newImageUrl 변수에 업데이트
-            List<QAFileDetail> updatedFiles = attachmentService.getActiveFileDetailsByQAId(BANNER_TYPE, bannerId);
-            newImageUrl = updatedFiles.isEmpty() ? null : updatedFiles.get(0).getFilename();
+        // 새로운 배너 등록된 경우
+        if (newImageFile != null && !newImageFile.isEmpty()) {
+            List<QAFileDetail> uploadedFileDetails = attachmentService.uploadFiles(List.of(newImageFile));
+
+            if (!uploadedFileDetails.isEmpty()) {
+                QAFileDetail newFileDetail = uploadedFileDetails.get(0);
+
+                attachmentService.confirmAttachments(uploadedFileDetails, banner.getId(), BANNER_TYPE);
+
+                updatedImageUrl = newFileDetail.getFilename();
+            }
         }
-        // Banner 엔티티 업데이트
         banner.update(
                 request.getTitle(),
-                newImageUrl, // ⬅️ 새 URL 또는 기존 URL
+                updatedImageUrl,
                 request.getLinkUrl(),
                 request.getSequence(),
                 request.getIsActivated()
         );
-        return BannerResponse.from(banner);
+
+        Banner updatedBanner = bannerRepository.save(banner);
+        return BannerResponse.from(updatedBanner);
     }
 
     /**

@@ -4,6 +4,9 @@ import com.softwarecampus.backend.domain.academy.qna.Attachment;
 import com.softwarecampus.backend.domain.common.AttachmentCategoryType;
 import com.softwarecampus.backend.dto.academy.qna.QAFileDetail;
 import com.softwarecampus.backend.repository.academy.academyQA.AttachmentRepository;
+import com.softwarecampus.backend.service.common.FileType;
+import com.softwarecampus.backend.service.common.S3Folder;
+import com.softwarecampus.backend.service.common.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +27,7 @@ public class AttachmentServiceImpl implements AttachmentService {
 
     private static final AttachmentCategoryType QNA_TYPE = AttachmentCategoryType.QNA;
     private static final FileType.FileTypeEnum QNA_FILE_TYPE = FileType.FileTypeEnum.BOARD_ATTACH;
-    private static final S3Folder QNA_S3_FOLDER = S3Folder.academy;
+    private static final S3Folder QNA_S3_FOLDER = S3Folder.ACADEMY;
 
     /**
      *  파일 업로드 및 임시 저장
@@ -38,7 +41,7 @@ public class AttachmentServiceImpl implements AttachmentService {
         for (MultipartFile file : files) {
 
             // 🟢 1. S3Service를 사용하여 파일 업로드.
-            String s3FileUrl = s3Service.uploadFile(file, QNA_S3_FOLDER, QNA_FILE_TYPE);
+            String s3FileUrl = s3Service.uploadFile(file, String.valueOf(QNA_S3_FOLDER), QNA_FILE_TYPE);
 
             // 🟢 2. DB에 임시 Attachment 레코드 저장
             Attachment attachment = Attachment.builder()

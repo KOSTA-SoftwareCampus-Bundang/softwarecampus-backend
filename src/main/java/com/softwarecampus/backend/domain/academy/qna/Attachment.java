@@ -55,4 +55,8 @@ public class Attachment extends BaseSoftDeleteSupportEntity {
     public void updateCategoryType(AttachmentCategoryType categoryType) {
         this.categoryType = categoryType;
     }
+
+    public void softDelete() {
+        this.isDeleted = true;
+    }
 }
