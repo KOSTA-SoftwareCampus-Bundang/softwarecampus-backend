@@ -199,11 +199,12 @@ jobs:
             #       현재 구조상 backend/.env만 생성하고 있으므로, nginx/.env도 생성해주거나
             #       nginx docker-compose 실행 시 환경변수를 주입해야 함.
             
-            # Nginx용 .env 생성
+            # Nginx용 .env 생성 (필요 시)
+            # 현재는 하드코딩된 nginx.conf를 사용하므로 환경변수가 필요 없지만,
+            # 추후 확장을 위해 NETWORK_NAME 정도는 남겨둘 수 있음.
+            # 하지만 롤백 요청에 따라 최대한 단순하게 유지.
             echo "Creating Nginx .env file..."
-            echo "DOMAIN_NAME=$DOMAIN_NAME" > $DEPLOY_PATH/nginx/.env
-            echo "CERT_EMAIL=$CERT_EMAIL" >> $DEPLOY_PATH/nginx/.env
-            echo "NETWORK_NAME=$NETWORK_NAME" >> $DEPLOY_PATH/nginx/.env
+            echo "NETWORK_NAME=$NETWORK_NAME" > $DEPLOY_PATH/nginx/.env
 
             # Repository 이름을 소문자로 변환하여 이미지 태그 생성
             REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
