@@ -3,7 +3,6 @@ package com.softwarecampus.backend.model.dto.email;
 import com.softwarecampus.backend.model.enums.VerificationType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,6 +21,6 @@ public class EmailVerificationRequest {
     @Email(message = "유효한 이메일 형식이 아닙니다")
     private String email;
     
-    @NotNull(message = "인증 타입은 필수입니다")
+    // 컨트롤러에서 자동 설정되므로 클라이언트는 보내지 않아도 됨
     private VerificationType type;
 }
