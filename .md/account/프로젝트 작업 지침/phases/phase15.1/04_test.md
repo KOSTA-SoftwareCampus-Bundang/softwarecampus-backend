@@ -331,6 +331,51 @@ class MyPageIntegrationTest {
 7. 계정 삭제 후 로그인 시도 (비활성 계정)
 8. ACADEMY 계정 승인 후 프로필 조회
 
+**시나리오 8 구현 예시:**
+```java
+@Test
+@DisplayName("E2E: ACADEMY 계정 승인 후 프로필 조회")
+void scenario_AcademyApprovalAndProfile() throws Exception {
+    // 1. ACADEMY 회원가입
+    SignupRequest signupReq = SignupRequest.builder()
+        .email("academy@example.com")
+        .password("Test1234!")
+        .userName("소프트캠퍼스")
+        .phoneNumber("010-3333-4444")
+        .accountType("ACADEMY")
+        .build();
+    
+    mockMvc.perform(post("/api/auth/signup")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(signupReq)))
+        .andExpect(status().isCreated());
+
+    // 2. 관리자가 승인 처리 (직접 DB 수정)
+    Account academyAccount = accountRepository.findByEmail("academy@example.com")
+        .orElseThrow();
+    academyAccount.setAccountApproved(ApprovalStatus.APPROVED);
+    accountRepository.save(academyAccount);
+
+    // 3. 로그인
+    LoginRequest loginReq = new LoginRequest("academy@example.com", "Test1234!");
+    MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(loginReq)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.account.approvalStatus").value("APPROVED"))
+        .andReturn();
+    
+    String accessToken = extractToken(loginResult);
+
+    // 4. 프로필 조회
+    mockMvc.perform(get("/api/mypage/profile")
+            .header("Authorization", "Bearer " + accessToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.email").value("academy@example.com"))
+        .andExpect(jsonPath("$.approvalStatus").value("APPROVED"));
+}
+```
+
 ---
 
 ## 📊 테스트 커버리지
