@@ -4,15 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.softwarecampus.backend.model.dto.email.EmailVerificationCodeRequest;
 import com.softwarecampus.backend.model.dto.email.EmailVerificationRequest;
 import com.softwarecampus.backend.model.dto.email.EmailVerificationResponse;
-import com.softwarecampus.backend.security.CustomUserDetailsService;
-import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
 import com.softwarecampus.backend.service.email.EmailVerificationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -24,7 +24,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * EmailVerificationController 통합 테스트
  */
-@WebMvcTest(EmailVerificationController.class)
+@SpringBootTest
+@AutoConfigureMockMvc(addFilters = false) // Security 필터 비활성화
+@ActiveProfiles("test")
 @DisplayName("이메일 인증 Controller 테스트")
 class EmailVerificationControllerTest {
     
@@ -36,12 +38,6 @@ class EmailVerificationControllerTest {
     
     @MockBean
     private EmailVerificationService verificationService;
-    
-    @MockBean
-    private JwtTokenProvider jwtTokenProvider;
-    
-    @MockBean
-    private CustomUserDetailsService customUserDetailsService;
     
     @Test
     @DisplayName("POST /api/auth/email/send-verification - 성공")

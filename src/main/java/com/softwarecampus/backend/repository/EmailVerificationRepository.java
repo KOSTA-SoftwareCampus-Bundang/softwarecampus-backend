@@ -68,4 +68,35 @@ public interface EmailVerificationRepository extends JpaRepository<EmailVerifica
             VerificationType type, 
             String code
     );
+    
+    /**
+     * 특정 이메일과 타입의 모든 인증 레코드 삭제
+     * (새 인증 코드 발송 전 기존 코드 삭제용)
+     */
+    @Modifying
+    void deleteByEmailAndType(String email, VerificationType type);
+    
+    /**
+     * 만료된 인증 코드 삭제 (스케줄러용)
+     */
+    @Modifying
+    @Query("DELETE FROM EmailVerification ev WHERE ev.expiresAt < :now")
+    int deleteExpired(@Param("now") LocalDateTime now);
+    
+    /**
+     * 특정 시간 이전 인증 완료 데이터 삭제
+     */
+    @Modifying
+    @Query("DELETE FROM EmailVerification ev WHERE ev.verified = true AND ev.verifiedAt < :cutoff")
+    int deleteOldVerified(@Param("cutoff") LocalDateTime cutoff);
+    
+    /**
+     * 만료된 데이터 카운트 (로깅용)
+     */
+    long countByExpiresAtBefore(LocalDateTime now);
+    
+    /**
+     * 인증 완료 데이터 카운트
+     */
+    long countByVerifiedTrueAndVerifiedAtBefore(LocalDateTime cutoff);
 }

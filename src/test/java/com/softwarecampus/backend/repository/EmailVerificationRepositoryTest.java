@@ -122,35 +122,61 @@ class EmailVerificationRepositoryTest {
     }
     
     @Test
-    @DisplayName("만료된 인증 완료 데이터를 삭제할 수 있다")
-    void deleteByExpiresAtBeforeAndVerifiedTrue_ShouldDeleteExpired() {
+    @DisplayName("만료된 인증 레코드를 삭제할 수 있다")
+    void deleteExpired_ShouldDeleteExpiredRecords() {
+        // given
+        EmailVerification expired = createVerification(testEmail, testCode);
+        expired = EmailVerification.builder()
+                .email(testEmail)
+                .code(testCode)
+                .type(VerificationType.SIGNUP)
+                .verified(false)
+                .attempts(0)
+                .blocked(false)
+                .expiresAt(LocalDateTime.now().minusMinutes(1)) // 1분 전 만료
+                .build();
+        repository.save(expired);
+        
+        // when
+        int deleted = repository.deleteExpired(LocalDateTime.now());
+        repository.flush();
+        
+        // then
+        assertThat(deleted).isEqualTo(1);
+        assertThat(repository.findAll()).isEmpty();
+    }
+    
+    @Test
+    @DisplayName("인증 완료된 오래된 데이터를 삭제할 수 있다")
+    void deleteOldVerified_ShouldDeleteOldVerifiedRecords() {
         // given
         EmailVerification verified = createVerification(testEmail, testCode);
         verified.markAsVerified();
         repository.save(verified);
         
         // when
-        LocalDateTime threshold = LocalDateTime.now().plusHours(1);
-        repository.deleteByExpiresAtBeforeAndVerifiedTrue(threshold);
+        LocalDateTime cutoff = LocalDateTime.now().plusDays(1); // 미래 시점
+        int deleted = repository.deleteOldVerified(cutoff);
         repository.flush();
         
         // then
-        assertThat(repository.findAll()).isEmpty();
+        assertThat(deleted).isEqualTo(1);
     }
     
     @Test
-    @DisplayName("미인증 데이터를 삭제할 수 있다")
-    void deleteByCreatedAtBeforeAndVerifiedFalse_ShouldDeleteUnverified() {
+    @DisplayName("특정 이메일과 타입의 모든 레코드를 삭제할 수 있다")
+    void deleteByEmailAndType_ShouldDeleteAllRecordsForEmailAndType() {
         // given
-        repository.save(createVerification(testEmail, testCode));
+        repository.save(createVerification(testEmail, "111111"));
+        repository.save(createVerification(testEmail, "222222"));
+        repository.save(createVerification("other@example.com", "333333"));
         
         // when
-        LocalDateTime threshold = LocalDateTime.now().plusHours(1);
-        repository.deleteByCreatedAtBeforeAndVerifiedFalse(threshold);
+        repository.deleteByEmailAndType(testEmail, VerificationType.SIGNUP);
         repository.flush();
         
         // then
-        assertThat(repository.findAll()).isEmpty();
+        assertThat(repository.count()).isEqualTo(1); // other@example.com만 남음
     }
     
     private EmailVerification createVerification(String email, String code) {
