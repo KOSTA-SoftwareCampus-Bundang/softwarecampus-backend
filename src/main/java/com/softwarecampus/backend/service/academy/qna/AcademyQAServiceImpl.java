@@ -103,6 +103,14 @@ public class AcademyQAServiceImpl implements AcademyQAService {
         if (request.getDeletedFileIds() != null && !request.getDeletedFileIds().isEmpty()) {
             List<Attachment> attachmentsToProcess = attachmentRepository.findAllById(request.getDeletedFileIds());
 
+            // 요청된 첨부파일이 현재 Q&A에 속하는지 검증
+            for (Attachment attachment : attachmentsToProcess) {
+                if (!AttachmentCategoryType.QNA.equals(attachment.getCategoryType())
+                || !qaId.equals(attachment.getCategoryId())) {
+                    throw new AcademyException(AcademyErrorCode.ATTACHMENT_NOT_BELONG_TO_QA);
+                }
+            }
+
             attachmentsToProcess.forEach(Attachment::softDelete);
             attachmentService.hardDeleteS3Files(attachmentsToProcess);
         }

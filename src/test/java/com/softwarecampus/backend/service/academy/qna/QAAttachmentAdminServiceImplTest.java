@@ -6,7 +6,6 @@ import com.softwarecampus.backend.dto.academy.qna.QAFileDetail;
 import com.softwarecampus.backend.exception.attachment.AttachmentErrorCode;
 import com.softwarecampus.backend.exception.attachment.AttachmentException;
 import com.softwarecampus.backend.repository.academy.academyQA.AttachmentRepository;
-import com.softwarecampus.backend.service.academy.qna.AttachmentService;
 import com.softwarecampus.backend.service.admin.QAAttachmentAdminServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

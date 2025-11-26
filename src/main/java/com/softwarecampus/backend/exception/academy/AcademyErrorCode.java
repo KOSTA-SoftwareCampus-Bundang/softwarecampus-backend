@@ -15,7 +15,9 @@ public enum AcademyErrorCode {
     QA_MISSING_ACADEMY_RELATION(HttpStatus.INTERNAL_SERVER_ERROR, 2007, "Q&A 게시글과 훈련기관의 연결 정보가 일치하지 않습니다."),
 
     ANSWER_TEXT_REQUIRED(HttpStatus.BAD_REQUEST, 2008, "답변 내용을 입력해야 합니다."),
-    ANSWER_NOT_EXIST(HttpStatus.BAD_REQUEST, 2009, "삭제할 답변이 존재하지 않습니다.");
+    ANSWER_NOT_EXIST(HttpStatus.BAD_REQUEST, 2009, "삭제할 답변이 존재하지 않습니다."),
+
+    ATTACHMENT_NOT_BELONG_TO_QA(HttpStatus.BAD_REQUEST, 2010, "첨부파일이 Q&A에 속하지 않습니다.."),;
 
 
     private final HttpStatus status;

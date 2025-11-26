@@ -109,10 +109,6 @@ public class AcademyQAServiceFileUploadImplTest {
         );
     }
 
-    /**
-     *  기존 질문 수정 시, 새로운 첨부 파일 정보를 추가한 경우,
-     *  기존 내용 수정 외에 새로운 파일들을 대핟 ID에 연결하여 확정 처리하는 로직이 올바르게 되는지
-     */
     @Test
     @DisplayName("Q/A 질문 등록 시, 첨부파일이 없으면 confirmAttachments가 호출되지 않아야 한다")
     void createQuestion_withoutFiles_shouldNotCallConfirmAttachments() {
