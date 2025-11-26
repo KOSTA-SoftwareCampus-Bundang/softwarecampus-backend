@@ -2,7 +2,9 @@ package com.softwarecampus.backend.exception;
 
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
+import com.softwarecampus.backend.exception.user.InvalidCredentialsException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
+import com.softwarecampus.backend.exception.user.PhoneNumberAlreadyExistsException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -202,6 +204,27 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * 전화번호 중복 예외 처리
+     * HTTP 409 Conflict
+     */
+    @ExceptionHandler(PhoneNumberAlreadyExistsException.class)
+    public ProblemDetail handlePhoneNumberAlreadyExistsException(PhoneNumberAlreadyExistsException ex) {
+        log.warn("Phone number duplicate detected for a request");
+        if (log.isDebugEnabled()) {
+            log.debug("PhoneNumberAlreadyExistsException details", ex);
+        }
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            "이미 사용 중인 전화번호입니다."
+        );
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-phone-number"));
+        problemDetail.setTitle("Duplicate Phone Number");
+        
+        return problemDetail;
+    }
+    
+    /**
      * 계정 미존재 예외 처리
      * HTTP 404 Not Found
      */
@@ -218,6 +241,25 @@ public class GlobalExceptionHandler {
         );
         problemDetail.setType(URI.create(problemBaseUri + "/account-not-found"));
         problemDetail.setTitle("Account Not Found");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 로그인 인증 실패 예외 처리
+     * HTTP 401 Unauthorized
+     */
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
+        log.warn("인증 실패: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNAUTHORIZED,
+            ex.getMessage()
+        );
+        
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-credentials"));
+        problemDetail.setTitle("Unauthorized");
         
         return problemDetail;
     }

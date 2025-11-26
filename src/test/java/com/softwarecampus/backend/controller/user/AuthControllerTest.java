@@ -6,9 +6,13 @@ import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
 import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.LoginRequest;
+import com.softwarecampus.backend.dto.user.LoginResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
+import com.softwarecampus.backend.exception.user.InvalidCredentialsException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
+import com.softwarecampus.backend.service.user.login.LoginService;
 import com.softwarecampus.backend.service.user.signup.SignupService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +53,16 @@ class AuthControllerTest {
     
     @MockBean
     private SignupService signupService;
+    
+    @MockBean
+    private LoginService loginService;
+    
+    @MockBean
+    private com.softwarecampus.backend.service.auth.TokenService tokenService;
+    
+    // Security Filter Mock
+    @MockBean
+    private com.softwarecampus.backend.security.RateLimitFilter rateLimitFilter;
     
     // JWT 관련 빈 Mock 추가
     @MockBean
@@ -382,5 +396,176 @@ class AuthControllerTest {
             .andExpect(header().string("Location", "/api/accounts/123"));
         
         verify(signupService).signup(any(SignupRequest.class));
+    }
+    
+    // ===== 로그인 테스트 =====
+    
+    @Test
+    @DisplayName("POST /login - 로그인 성공")
+    void login_Success() throws Exception {
+        // given
+        LoginRequest loginRequest = new LoginRequest(
+            "user@example.com",
+            "Password123!"
+        );
+        
+        AccountResponse accountResponse = new AccountResponse(
+            1L,
+            "user@example.com",
+            "홍길동",
+            "010-1234-5678",
+            AccountType.USER,
+            ApprovalStatus.APPROVED,
+            "서울시 강남구",
+            null,
+            null
+        );
+        
+        LoginResponse loginResponse = LoginResponse.of(
+            "access-token-123",
+            "refresh-token-456",
+            180L,  // 3분
+            accountResponse
+        );
+        
+        when(loginService.login(any(LoginRequest.class)))
+            .thenReturn(loginResponse);
+        
+        // when & then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accessToken").value("access-token-123"))
+            .andExpect(jsonPath("$.refreshToken").value("refresh-token-456"))
+            .andExpect(jsonPath("$.tokenType").value("Bearer"))
+            .andExpect(jsonPath("$.expiresIn").value(180))
+            .andExpect(jsonPath("$.account.email").value("user@example.com"))
+            .andExpect(jsonPath("$.account.userName").value("홍길동"))
+            .andExpect(jsonPath("$.account.accountType").value("USER"));
+        
+        verify(loginService).login(any(LoginRequest.class));
+    }
+    
+    @Test
+    @DisplayName("POST /login - Bean Validation 실패 (이메일 누락)")
+    void login_Fail_EmailBlank() throws Exception {
+        // given
+        LoginRequest invalidRequest = new LoginRequest(
+            "",  // 빈 이메일
+            "Password123!"
+        );
+        
+        // when & then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRequest)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400));
+        
+        verify(loginService, never()).login(any(LoginRequest.class));
+    }
+    
+    @Test
+    @DisplayName("POST /login - Bean Validation 실패 (이메일 형식 오류)")
+    void login_Fail_EmailInvalid() throws Exception {
+        // given
+        LoginRequest invalidRequest = new LoginRequest(
+            "invalid-email",  // 잘못된 이메일 형식
+            "Password123!"
+        );
+        
+        // when & then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRequest)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400));
+        
+        verify(loginService, never()).login(any(LoginRequest.class));
+    }
+    
+    @Test
+    @DisplayName("POST /login - Bean Validation 실패 (비밀번호 누락)")
+    void login_Fail_PasswordBlank() throws Exception {
+        // given
+        LoginRequest invalidRequest = new LoginRequest(
+            "user@example.com",
+            ""  // 빈 비밀번호
+        );
+        
+        // when & then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRequest)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400));
+        
+        verify(loginService, never()).login(any(LoginRequest.class));
+    }
+    
+    @Test
+    @DisplayName("POST /login - 인증 실패 (잘못된 자격증명)")
+    void login_Fail_InvalidCredentials() throws Exception {
+        // given
+        LoginRequest loginRequest = new LoginRequest(
+            "user@example.com",
+            "WrongPassword"
+        );
+        
+        when(loginService.login(any(LoginRequest.class)))
+            .thenThrow(new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다"));
+        
+        // when & then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.detail").value("이메일 또는 비밀번호가 올바르지 않습니다"));
+        
+        verify(loginService).login(any(LoginRequest.class));
+    }
+    
+    @Test
+    @DisplayName("POST /login - 인증 실패 (비활성화된 계정)")
+    void login_Fail_InactiveAccount() throws Exception {
+        // given
+        LoginRequest loginRequest = new LoginRequest(
+            "inactive@example.com",
+            "Password123!"
+        );
+        
+        when(loginService.login(any(LoginRequest.class)))
+            .thenThrow(new InvalidCredentialsException("비활성화된 계정입니다"));
+        
+        // when & then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.detail").value("비활성화된 계정입니다"));
+    }
+    
+    @Test
+    @DisplayName("POST /login - 인증 실패 (미승인 ACADEMY 계정)")
+    void login_Fail_PendingAcademy() throws Exception {
+        // given
+        LoginRequest loginRequest = new LoginRequest(
+            "pending@example.com",
+            "Password123!"
+        );
+        
+        when(loginService.login(any(LoginRequest.class)))
+            .thenThrow(new InvalidCredentialsException("승인 대기 중인 계정입니다"));
+        
+        // when & then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.detail").value("승인 대기 중인 계정입니다"));
     }
 }

@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.security;
 
+import com.softwarecampus.backend.infrastructure.redis.RedisScripts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,11 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
 
 /**
  * Rate Limiting 필터
@@ -37,6 +39,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
     
     private static final String RATE_LIMIT_PREFIX = "ratelimit:";
     
+    /**
+     * Lua Script: INCR + EXPIRE 원자적 처리
+     * 
+     * @see RedisScripts#INCR_WITH_EXPIRE 상세 설명 참조
+     */
+    private static final String LUA_SCRIPT = RedisScripts.INCR_WITH_EXPIRE;
+    
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -55,15 +64,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String key = RATE_LIMIT_PREFIX + clientIp;
         
         try {
-            // 2. Redis에서 요청 수 증가
-            Long requests = redisTemplate.opsForValue().increment(key);
+            // 2. Lua Script로 INCR + EXPIRE 원자적 실행
+            Long requests = redisTemplate.execute(
+                new DefaultRedisScript<>(LUA_SCRIPT, Long.class),
+                Collections.singletonList(key),
+                String.valueOf(60) // 60초 TTL
+            );
             
-            // 3. 첫 요청이면 TTL 설정 (1분)
-            if (requests != null && requests == 1) {
-                redisTemplate.expire(key, 1, TimeUnit.MINUTES);
-            }
-            
-            // 4. 제한 초과 확인
+            // 3. 제한 초과 확인
             if (requests != null && requests > requestsPerMinute) {
                 log.warn("Rate limit exceeded for IP: {} ({})", clientIp, requests);
                 
