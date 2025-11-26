@@ -107,6 +107,7 @@ public class AcademyQAServiceImpl implements AcademyQAService {
                         qaId
                 );
         attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
+        academyQARepository.delete(qa);
     }
 
     /**
