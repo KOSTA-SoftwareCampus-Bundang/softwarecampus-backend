@@ -54,7 +54,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         // 5. 이메일 발송
         emailSendService.sendVerificationCode(email, code, type);
         
-        log.info("인증 코드 발송 완료 - email: {}, type: {}", email, type);
+        log.info("인증 코드 발송 완료 - type: {}", type);
         
         return EmailVerificationResponse.withExpiry(
             "인증 코드가 발송되었습니다",
@@ -142,7 +142,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         verification.markAsVerified();
         verificationRepository.save(verification);
         
-        log.info("이메일 인증 성공 - email: {}, type: {}", email, type);
+        log.info("이메일 인증 성공 - type: {}", type);
         
         return EmailVerificationResponse.success(successMessage);
     }

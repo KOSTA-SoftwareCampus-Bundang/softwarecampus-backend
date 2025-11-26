@@ -255,7 +255,6 @@ package com.softwarecampus.backend.model.dto.email;
 import com.softwarecampus.backend.model.enums.VerificationType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -274,10 +273,16 @@ public class EmailVerificationRequest {
     @Email(message = "유효한 이메일 형식이 아닙니다")
     private String email;
     
-    @NotNull(message = "인증 타입은 필수입니다")
+    // 컨트롤러에서 자동 설정되므로 클라이언트는 보내지 않아도 됨
+    // Phase 4에서 각 엔드포인트가 타입을 자동으로 설정함
     private VerificationType type;
 }
 ```
+
+**⚠️ 설계 변경 사항 (Phase 4):**
+- `type` 필드는 클라이언트가 보내지 않음
+- 각 API 엔드포인트(`/send-verification`, `/send-reset-code`)가 서버에서 타입을 강제 설정
+- 이를 통해 클라이언트가 잘못된 타입을 보내는 것을 방지
 
 ### `src/main/java/com/softwarecampus/backend/model/dto/email/EmailVerificationCodeRequest.java`
 ```java

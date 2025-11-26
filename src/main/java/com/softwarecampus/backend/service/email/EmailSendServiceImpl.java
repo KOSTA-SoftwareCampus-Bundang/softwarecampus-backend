@@ -32,9 +32,9 @@ public class EmailSendServiceImpl implements EmailSendService {
         try {
             MimeMessage message = createMessage(to, code, type);
             mailSender.send(message);
-            log.info("이메일 발송 성공 - to: {}, type: {}", to, type);
+            log.info("이메일 발송 성공 - type: {}", type);
         } catch (MessagingException | IOException e) {
-            log.error("이메일 발송 실패 - to: {}, type: {}, error: {}", to, type, e.getMessage());
+            log.error("이메일 발송 실패 - type: {}, error: {}", type, e.getMessage());
             throw new EmailSendException("이메일 발송에 실패했습니다", e);
         }
     }

@@ -69,9 +69,9 @@ public class EmailSendServiceImpl implements EmailSendService {
         try {
             MimeMessage message = createMessage(to, code, type);
             mailSender.send(message);
-            log.info("이메일 발송 성공 - to: {}, type: {}", to, type);
+            log.info("이메일 발송 성공 - type: {}", type);
         } catch (MessagingException e) {
-            log.error("이메일 발송 실패 - to: {}, type: {}, error: {}", to, type, e.getMessage());
+            log.error("이메일 발송 실패 - type: {}, error: {}", type, e.getMessage());
             throw new EmailSendException("이메일 발송에 실패했습니다", e);
         }
     }
@@ -231,7 +231,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         // 5. 이메일 발송
         emailSendService.sendVerificationCode(email, code, type);
         
-        log.info("인증 코드 발송 완료 - email: {}, type: {}", email, type);
+        log.info("인증 코드 발송 완료 - type: {}", type);
         
         return EmailVerificationResponse.withExpiry(
             "인증 코드가 발송되었습니다",
@@ -242,12 +242,29 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     @Override
     @Transactional
     public EmailVerificationResponse verifyCode(EmailVerificationCodeRequest request) {
+        return verifyCodeInternal(request, VerificationType.SIGNUP, "이메일 인증이 완료되었습니다");
+    }
+    
+    @Override
+    @Transactional
+    public EmailVerificationResponse verifyResetCode(EmailVerificationCodeRequest request) {
+        return verifyCodeInternal(request, VerificationType.PASSWORD_RESET, "인증이 완료되었습니다. 새 비밀번호를 설정하세요");
+    }
+    
+    /**
+     * 인증 코드 검증 내부 로직 (회원가입/비밀번호 재설정 공통)
+     */
+    private EmailVerificationResponse verifyCodeInternal(
+            EmailVerificationCodeRequest request, 
+            VerificationType type, 
+            String successMessage
+    ) {
         String email = request.getEmail();
         String code = request.getCode();
         
         // 1. 최근 인증 레코드 조회
         EmailVerification verification = verificationRepository
-            .findTopByEmailAndTypeOrderByCreatedAtDesc(email, VerificationType.SIGNUP)
+            .findTopByEmailAndTypeOrderByCreatedAtDesc(email, type)
             .orElseThrow(() -> new EmailVerificationException("인증 요청 기록이 없습니다"));
         
         // 2. 차단 상태 체크
@@ -296,9 +313,9 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         verification.markAsVerified();
         verificationRepository.save(verification);
         
-        log.info("이메일 인증 성공 - email: {}", email);
+        log.info("이메일 인증 성공 - type: {}", type);
         
-        return EmailVerificationResponse.success("이메일 인증이 완료되었습니다");
+        return EmailVerificationResponse.success(successMessage);
     }
     
     @Override
@@ -376,6 +393,8 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 5. **이메일 발송** (`EmailSendService`)
 
 ### `verifyCode()` - 인증 코드 검증
+공통 메서드 `verifyCodeInternal()`을 호출하여 검증 로직 실행:
+
 1. **레코드 조회** (최근 인증 요청)
 2. **차단 상태 체크**
 3. **만료 체크** (3분 초과 시 예외)
@@ -385,86 +404,58 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
    - 일치: `verified = true`, `verifiedAt` 설정
 6. **성공 응답**
 
+### `verifyResetCode()` - 비밀번호 재설정 코드 검증
+`verifyCode()`와 동일한 로직을 `VerificationType.PASSWORD_RESET`로 실행
+
+### `verifyCodeInternal()` - 공통 검증 로직 (Private)
+회원가입/비밀번호 재설정 코드 검증의 공통 로직을 처리하는 내부 메서드
+
 ### `isEmailVerified()` - 인증 완료 여부 확인
-- 회원가입 시 이메일 인증 완료 여부 체크용
+- 회원가입/비밀번호 재설정 시 이메일 인증 완료 여부 체크용
+- Repository의 `existsByEmailAndTypeAndVerifiedTrue()` 메서드 활용
 
 ---
 
-## 5️⃣ 비밀번호 재설정용 Service 확장
+## 5️⃣ 공통 로직 리팩토링
 
-### `EmailVerificationServiceImpl.java`에 메서드 추가
+### 중복 코드 제거
+`verifyCode()`와 `verifyResetCode()` 메서드는 `VerificationType`만 다르고 로직이 동일하므로, 공통 메서드로 추출합니다.
+
 ```java
 /**
- * 비밀번호 재설정 인증 코드 검증
- * (기존 verifyCode와 동일하지만 VerificationType.PASSWORD_RESET 사용)
+ * 인증 코드 검증 내부 로직 (회원가입/비밀번호 재설정 공통)
+ * 
+ * @param request 이메일 및 인증 코드
+ * @param type 인증 타입 (SIGNUP 또는 PASSWORD_RESET)
+ * @param successMessage 성공 시 반환할 메시지
+ * @return 검증 결과
  */
+private EmailVerificationResponse verifyCodeInternal(
+        EmailVerificationCodeRequest request, 
+        VerificationType type, 
+        String successMessage
+) {
+    // 공통 검증 로직 (차단 체크, 만료 체크, 코드 일치 검증 등)
+    // ...
+}
+
+@Override
+@Transactional
+public EmailVerificationResponse verifyCode(EmailVerificationCodeRequest request) {
+    return verifyCodeInternal(request, VerificationType.SIGNUP, "이메일 인증이 완료되었습니다");
+}
+
+@Override
 @Transactional
 public EmailVerificationResponse verifyResetCode(EmailVerificationCodeRequest request) {
-    String email = request.getEmail();
-    String code = request.getCode();
-    
-    // 1. 최근 인증 레코드 조회 (PASSWORD_RESET 타입)
-    EmailVerification verification = verificationRepository
-        .findTopByEmailAndTypeOrderByCreatedAtDesc(email, VerificationType.PASSWORD_RESET)
-        .orElseThrow(() -> new EmailVerificationException("인증 요청 기록이 없습니다"));
-    
-    // 2. 차단 상태 체크
-    if (verification.isBlocked()) {
-        throw new TooManyAttemptsException(
-            "인증 시도 횟수를 초과했습니다. " + verification.getBlockedUntil() + "까지 차단됩니다",
-            verification.getBlockedUntil()
-        );
-    }
-    
-    // 3. 만료 체크
-    if (verification.isExpired()) {
-        throw new VerificationCodeExpiredException("인증 코드가 만료되었습니다. 새로운 코드를 요청하세요");
-    }
-    
-    // 4. 이미 인증 완료된 경우
-    if (verification.getVerified()) {
-        return EmailVerificationResponse.success("이미 인증이 완료되었습니다");
-    }
-    
-    // 5. 코드 일치 여부 확인
-    if (!verification.getCode().equals(code)) {
-        verification.incrementAttempts();
-        
-        // 5회 실패 시 차단
-        if (verification.getAttempts() >= EmailConstants.MAX_ATTEMPTS) {
-            verification.block(EmailConstants.BLOCK_DURATION_MINUTES);
-            verificationRepository.save(verification);
-            
-            throw new TooManyAttemptsException(
-                "인증 시도 횟수를 초과했습니다. 30분간 차단됩니다",
-                verification.getBlockedUntil()
-            );
-        }
-        
-        verificationRepository.save(verification);
-        int remaining = EmailConstants.MAX_ATTEMPTS - verification.getAttempts();
-        
-        return EmailVerificationResponse.withAttempts(
-            "인증 코드가 일치하지 않습니다",
-            remaining
-        );
-    }
-    
-    // 6. 인증 성공
-    verification.markAsVerified();
-    verificationRepository.save(verification);
-    
-    log.info("비밀번호 재설정 인증 성공 - email: {}", email);
-    
-    return EmailVerificationResponse.success("인증이 완료되었습니다. 새 비밀번호를 설정하세요");
+    return verifyCodeInternal(request, VerificationType.PASSWORD_RESET, "인증이 완료되었습니다. 새 비밀번호를 설정하세요");
 }
 ```
 
-**인터페이스에도 추가:**
-```java
-// EmailVerificationService.java
-EmailVerificationResponse verifyResetCode(EmailVerificationCodeRequest request);
-```
+**리팩토링 효과:**
+- 코드 중복 제거 (100줄 이상 → 공통 메서드 1개)
+- 유지보수성 향상 (로직 변경 시 한 곳만 수정)
+- 버그 발생 가능성 감소
 
 ---
 
