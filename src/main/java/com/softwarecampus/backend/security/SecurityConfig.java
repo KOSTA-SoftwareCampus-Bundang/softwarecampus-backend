@@ -51,6 +51,11 @@ public class SecurityConfig {
                                 "/api/courses/**", // 강좌 목록 조회
                                 "/api/home/**", // 메인페이지 데이터
                                 "/boards/**", // 커뮤니티 게시글
+                                "/swagger-ui/**", // Swagger UI
+                                "/swagger-ui.html", // Swagger UI 진입점
+                                "/v3/api-docs/**", // OpenAPI 문서
+                                "/api-docs/**", // API 문서
+                                "/webjars/**", // Swagger 리소스
                                 "/error")
                         .permitAll()
 
