@@ -17,13 +17,13 @@ package com.softwarecampus.backend.service.user;
 
 import com.softwarecampus.backend.exception.email.EmailNotVerifiedException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
-import com.softwarecampus.backend.model.dto.user.SignupRequest;
-import com.softwarecampus.backend.model.dto.user.AccountResponse;
-import com.softwarecampus.backend.model.entity.User;
-import com.softwarecampus.backend.model.enums.UserRole;
-import com.softwarecampus.backend.model.enums.VerificationType;
-import com.softwarecampus.backend.repository.UserRepository;
-import com.softwarecampus.backend.service.email.EmailVerificationService;
+import com.softwarecampus.backend.dto.user.SignupRequest;
+import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.domain.User;
+import com.softwarecampus.backend.domain.common.UserRole;
+import com.softwarecampus.backend.domain.common.VerificationType;
+import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.service.user.email.EmailVerificationService;
 import com.softwarecampus.backend.service.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SignupServiceImpl implements SignupService {
     
-    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationService verificationService;
     private final JwtService jwtService;
@@ -64,7 +64,7 @@ public class SignupServiceImpl implements SignupService {
         // ========================================
         
         // 이메일 중복 체크
-        if (userRepository.existsByEmail(email)) {
+        if (accountRepository.existsByEmail(email)) {
             throw new DuplicateEmailException("이미 가입된 이메일입니다");
         }
         
@@ -79,7 +79,7 @@ public class SignupServiceImpl implements SignupService {
                 .role(UserRole.USER)
                 .build();
         
-        User savedUser = userRepository.save(user);
+        User savedUser = accountRepository.save(user);
         
         // 토큰 발급
         String accessToken = jwtService.generateAccessToken(savedUser.getEmail());
@@ -111,7 +111,7 @@ public class SignupServiceImpl implements SignupService {
 ```java
 package com.softwarecampus.backend.controller;
 
-import com.softwarecampus.backend.model.dto.user.PasswordResetRequest;
+import com.softwarecampus.backend.dto.user.PasswordResetRequest;
 import com.softwarecampus.backend.service.user.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -159,11 +159,11 @@ package com.softwarecampus.backend.service.user;
 
 import com.softwarecampus.backend.exception.email.EmailNotVerifiedException;
 import com.softwarecampus.backend.exception.user.UserNotFoundException;
-import com.softwarecampus.backend.model.dto.user.PasswordResetRequest;
-import com.softwarecampus.backend.model.entity.User;
-import com.softwarecampus.backend.model.enums.VerificationType;
-import com.softwarecampus.backend.repository.UserRepository;
-import com.softwarecampus.backend.service.email.EmailVerificationService;
+import com.softwarecampus.backend.dto.user.PasswordResetRequest;
+import com.softwarecampus.backend.domain.User;
+import com.softwarecampus.backend.domain.common.VerificationType;
+import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.service.user.email.EmailVerificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -178,7 +178,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PasswordResetService {
     
-    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
     private final EmailVerificationService verificationService;
     private final PasswordEncoder passwordEncoder;
     
@@ -198,13 +198,13 @@ public class PasswordResetService {
         }
         
         // 2. 사용자 조회
-        User user = userRepository.findByEmail(email)
+        User user = accountRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다"));
         
         // 3. 비밀번호 변경
         String encodedPassword = passwordEncoder.encode(request.getNewPassword());
         user.changePassword(encodedPassword);
-        userRepository.save(user);
+        accountRepository.save(user);
         
         log.info("비밀번호 재설정 완료");
     }
@@ -222,13 +222,13 @@ public class PasswordResetService {
 package com.softwarecampus.backend.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.softwarecampus.backend.model.dto.email.EmailVerificationCodeRequest;
-import com.softwarecampus.backend.model.dto.email.EmailVerificationRequest;
-import com.softwarecampus.backend.model.dto.user.SignupRequest;
-import com.softwarecampus.backend.model.entity.EmailVerification;
-import com.softwarecampus.backend.model.enums.VerificationType;
-import com.softwarecampus.backend.repository.EmailVerificationRepository;
-import com.softwarecampus.backend.repository.UserRepository;
+import com.softwarecampus.backend.dto.user.EmailVerificationCodeRequest;
+import com.softwarecampus.backend.dto.user.EmailVerificationRequest;
+import com.softwarecampus.backend.dto.user.SignupRequest;
+import com.softwarecampus.backend.domain.EmailVerification;
+import com.softwarecampus.backend.domain.common.VerificationType;
+import com.softwarecampus.backend.repository.user.EmailVerificationRepository;
+import com.softwarecampus.backend.repository.user.AccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -459,15 +459,15 @@ class SignupWithEmailVerificationIntegrationTest {
 package com.softwarecampus.backend.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.softwarecampus.backend.model.dto.email.EmailVerificationCodeRequest;
-import com.softwarecampus.backend.model.dto.email.EmailVerificationRequest;
-import com.softwarecampus.backend.model.dto.user.PasswordResetRequest;
-import com.softwarecampus.backend.model.entity.EmailVerification;
-import com.softwarecampus.backend.model.entity.User;
-import com.softwarecampus.backend.model.enums.UserRole;
-import com.softwarecampus.backend.model.enums.VerificationType;
-import com.softwarecampus.backend.repository.EmailVerificationRepository;
-import com.softwarecampus.backend.repository.UserRepository;
+import com.softwarecampus.backend.dto.user.EmailVerificationCodeRequest;
+import com.softwarecampus.backend.dto.user.EmailVerificationRequest;
+import com.softwarecampus.backend.dto.user.PasswordResetRequest;
+import com.softwarecampus.backend.domain.EmailVerification;
+import com.softwarecampus.backend.domain.User;
+import com.softwarecampus.backend.domain.common.UserRole;
+import com.softwarecampus.backend.domain.common.VerificationType;
+import com.softwarecampus.backend.repository.user.EmailVerificationRepository;
+import com.softwarecampus.backend.repository.user.AccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -505,7 +505,7 @@ class PasswordResetWithEmailVerificationIntegrationTest {
     private EmailVerificationRepository verificationRepository;
     
     @Autowired
-    private UserRepository userRepository;
+    private AccountRepository accountRepository;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -518,7 +518,7 @@ class PasswordResetWithEmailVerificationIntegrationTest {
         testEmail = "test@example.com";
         
         verificationRepository.deleteAll();
-        userRepository.deleteAll();
+        accountRepository.deleteAll();
         
         // 기존 사용자 생성
         testUser = User.builder()
@@ -528,7 +528,7 @@ class PasswordResetWithEmailVerificationIntegrationTest {
                 .role(UserRole.USER)
                 .build();
         
-        userRepository.save(testUser);
+        accountRepository.save(testUser);
     }
     
     @Test
@@ -578,7 +578,7 @@ class PasswordResetWithEmailVerificationIntegrationTest {
                 .andExpect(jsonPath("$.message").value("비밀번호가 성공적으로 변경되었습니다"));
         
         // 5. 비밀번호 변경 확인
-        User updatedUser = userRepository.findByEmail(testEmail).orElseThrow();
+        User updatedUser = accountRepository.findByEmail(testEmail).orElseThrow();
         assertThat(passwordEncoder.matches(newPassword, updatedUser.getPassword())).isTrue();
     }
     
