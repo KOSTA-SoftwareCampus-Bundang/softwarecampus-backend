@@ -31,6 +31,9 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     private Course validateCourse(CategoryType type, Long courseId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new NotFoundException("과정을 찾을 수 없습니다."));
+        if (course.getIsDeleted()) {
+            throw new NotFoundException("과정을 찾을 수 없습니다.");
+        }
         if (course.getCategoryType() != type) {
             throw new NotFoundException("잘못된 타입의 과정입니다.");
         }

@@ -97,8 +97,8 @@ public class CourseImageServiceImpl implements CourseImageService {
     @Transactional
     public void hardDeleteCourseImage(CategoryType type, Long imageId, Long adminId) {
         // 1. 이미지 조회
-        CourseImage image = courseImageRepository.findById(imageId)
-                .orElseThrow(() -> new NotFoundException("삭제할 이미지가 존재하지 않습니다."));
+        CourseImage image = courseImageRepository.findByIdAndCourse_Category_CategoryType(imageId, type)
+                .orElseThrow(() -> new NotFoundException("해당 타입에 삭제할 이미지가 존재하지 않습니다."));
 
         // 2. 관리자 권한 체크
         Account admin = accountRepository.findById(adminId)

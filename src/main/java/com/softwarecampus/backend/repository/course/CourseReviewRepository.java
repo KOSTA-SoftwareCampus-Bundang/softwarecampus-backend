@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.repository.course;
 
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
+import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.CourseReview;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -27,5 +28,7 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
      * courseId 기준으로 삭제되지 않은 리뷰 전체 조회
      */
     List<CourseReview> findAllByCourse_IdAndIsDeletedFalse(Long courseId);
+
+    Optional<CourseReview> findByIdAndCourseIdAndIsDeletedFalse(Long reviewId, Long courseId);
 
 }

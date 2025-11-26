@@ -78,4 +78,8 @@ public class CourseReview extends BaseSoftDeleteSupportEntity {
     public void markDeleted() {
         super.markDeleted();
     }
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CategoryType type;
 }

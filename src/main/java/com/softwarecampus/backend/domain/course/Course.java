@@ -139,6 +139,9 @@ public class Course extends BaseSoftDeleteSupportEntity {
     }
 
     public CategoryType getCategoryType() {
+        if (this.category == null) {
+            return null;
+        }
         return this.category.getCategoryType();
     }
 }

@@ -5,6 +5,7 @@ import com.softwarecampus.backend.dto.course.QnaAnswerRequest;
 import com.softwarecampus.backend.dto.course.QnaRequest;
 import com.softwarecampus.backend.dto.course.QnaResponse;
 import com.softwarecampus.backend.service.course.CourseQnaService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,7 +41,7 @@ public class CourseQnaController {
     public QnaResponse createQuestion(
             @PathVariable CategoryType type,
             @PathVariable Long courseId,
-            @RequestBody QnaRequest request,
+            @RequestBody @Valid QnaRequest request,
             @RequestAttribute("userId") Long writerId
     ) {
         return qnaService.createQuestion(type, courseId, writerId, request);
@@ -51,7 +52,7 @@ public class CourseQnaController {
     public QnaResponse updateQuestion(
             @PathVariable CategoryType type,
             @PathVariable Long qnaId,
-            @RequestBody QnaRequest request,
+            @RequestBody @Valid QnaRequest request,
             @RequestAttribute("userId") Long writerId
     ) {
         return qnaService.updateQuestion(type, qnaId, writerId, request);
@@ -72,7 +73,7 @@ public class CourseQnaController {
     public QnaResponse answerQuestion(
             @PathVariable CategoryType type,
             @PathVariable Long qnaId,
-            @RequestBody QnaAnswerRequest request,
+            @RequestBody @Valid QnaAnswerRequest request,
             @RequestAttribute("userId") Long adminId
     ) {
         return qnaService.answerQuestion(type, qnaId, adminId, request);
@@ -83,7 +84,7 @@ public class CourseQnaController {
     public QnaResponse updateAnswer(
             @PathVariable CategoryType type,
             @PathVariable Long qnaId,
-            @RequestBody QnaAnswerRequest request,
+            @RequestBody @Valid QnaAnswerRequest request,
             @RequestAttribute("userId") Long adminId
     ) {
         return qnaService.updateAnswer(type, qnaId, adminId, request);
