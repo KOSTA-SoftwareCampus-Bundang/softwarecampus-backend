@@ -1,26 +1,38 @@
 package com.softwarecampus.backend.controller.user;
 
+import com.softwarecampus.backend.dto.auth.RefreshTokenRequest;
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.LoginRequest;
+import com.softwarecampus.backend.dto.user.LoginResponse;
 import com.softwarecampus.backend.dto.user.MessageResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
+import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
+import com.softwarecampus.backend.service.auth.TokenService;
+import com.softwarecampus.backend.service.user.login.LoginService;
 import com.softwarecampus.backend.service.user.signup.SignupService;
 import com.softwarecampus.backend.util.EmailUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Map;
 
 /**
  * 회원가입 및 인증 API 컨트롤러
  * 
  * 엔드포인트:
- * - POST /api/v1/auth/signup: 회원가입
- * - GET /api/v1/auth/check-email: 이메일 중복 확인
+ * - POST /api/auth/signup: 회원가입
+ * - POST /api/auth/login: 로그인
+ * - GET /api/auth/check-email: 이메일 중복 확인
+ * - POST /api/auth/refresh: Access Token 갱신
  * 
  * RESTful 원칙:
  * - HTTP 201 Created + Location 헤더 (리소스 URI)
@@ -32,11 +44,14 @@ import java.net.URI;
 @Slf4j
 @Validated
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     
     private final SignupService signupService;
+    private final LoginService loginService;
+    private final TokenService tokenService;
+    private final JwtTokenProvider jwtTokenProvider;
     
     /**
      * 회원가입 API
@@ -63,7 +78,7 @@ public class AuthController {
         AccountResponse response = signupService.signup(request);
         
         // Location 헤더 생성 (RESTful)
-        URI location = URI.create("/api/v1/accounts/" + response.id());
+        URI location = URI.create("/api/accounts/" + response.id());
         
         log.info("회원가입 성공 - accountId: {}, accountType: {}, approvalStatus: {}", 
             response.id(), response.accountType(), response.approvalStatus());
@@ -81,8 +96,9 @@ public class AuthController {
      * - IP 기반 제한 권장: 60 req/min per IP
      * - 로깅 및 모니터링 필요
      * 
-     * TODO Phase 8: Rate Limiter 구현
-     * - Bucket4j + Redis 또는 Spring Cloud Gateway rate limiter
+     * 선택사항: Rate Limiter 추후 구현
+     * - 이메일 중복 체크 API에 Rate Limiting 적용 권장
+     * - 구현 시 Bucket4j 또는 Spring Cloud Gateway 사용 고려
      * - IP 기반 제한: @RateLimit(permits=60, window=1, unit=MINUTES)
      * - 초과 시: 429 Too Many Requests 응답
      * 
@@ -106,5 +122,84 @@ public class AuthController {
         log.info("이메일 중복 확인 결과 - available: {}", available);
         
         return ResponseEntity.ok(MessageResponse.of(message));
+    }
+    
+    /**
+     * 로그인 API
+     * 
+     * @param request 로그인 요청 (email, password)
+     * @return 200 OK + LoginResponse (accessToken, refreshToken, account)
+     * 
+     * @throws com.softwarecampus.backend.exception.user.InvalidCredentialsException 401 - 이메일 없음 또는 비밀번호 불일치
+     * @throws com.softwarecampus.backend.exception.user.InvalidCredentialsException 401 - 비활성화된 계정
+     * @throws com.softwarecampus.backend.exception.user.InvalidCredentialsException 401 - 미승인 ACADEMY 계정
+     */
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        log.info("로그인 API 호출");
+        
+        LoginResponse response = loginService.login(request);
+        
+        log.info("로그인 성공 - accountType: {}", response.account().accountType());
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Access Token 갱신 API
+     * 
+     * 보안 검증:
+     * - 현재 인증된 사용자의 이메일과 요청 이메일이 일치하는지 확인
+     * - Refresh Token 유효성 검증 (Redis 조회)
+     * 
+     * @param request Refresh Token 갱신 요청 (refreshToken, email)
+     * @return 200 OK - 새로운 Access Token
+     * 
+     * @throws IllegalArgumentException 401 - Refresh Token 유효하지 않음
+     * @throws org.springframework.web.bind.MethodArgumentNotValidException 400 - Bean Validation 실패
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        try {
+            // 보안 검증: 현재 인증된 사용자와 요청 이메일 일치 여부 확인
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            
+            // 인증되지 않은 경우 또는 익명 사용자인 경우
+            if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+                log.warn("Unauthenticated refresh attempt for email: {}", EmailUtils.maskEmail(request.email()));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            String authenticatedEmail = auth.getName();
+            
+            // 인증된 이메일과 요청 이메일이 다른 경우 (보안 위협)
+            if (!authenticatedEmail.equals(request.email())) {
+                log.warn("Email mismatch - authenticated: {}, requested: {}", 
+                    EmailUtils.maskEmail(authenticatedEmail), 
+                    EmailUtils.maskEmail(request.email()));
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            
+            // Refresh Token으로 새 Access Token 발급
+            String newAccessToken = tokenService.refreshAccessToken(
+                request.email(), 
+                request.refreshToken()
+            );
+            
+            log.info("Access Token refreshed for user: {}", EmailUtils.maskEmail(request.email()));
+            
+            // JWT 실제 만료 시간을 동적으로 가져오기 (밀리초 → 초)
+            long expiresInSeconds = jwtTokenProvider.getExpiration() / 1000;
+            
+            return ResponseEntity.ok(Map.of(
+                "accessToken", newAccessToken,
+                "expiresIn", expiresInSeconds,
+                "tokenType", "Bearer"
+            ));
+            
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid refresh token for user: {}", EmailUtils.maskEmail(request.email()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 }
