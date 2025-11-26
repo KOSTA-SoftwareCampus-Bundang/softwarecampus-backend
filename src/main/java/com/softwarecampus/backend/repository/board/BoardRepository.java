@@ -16,19 +16,19 @@ import java.util.List;
 
 public interface BoardRepository extends JpaRepository<Board, Long> {
 
-    @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),count(c),DATE_FORMAT(MAX(b.createdAt), '%Y-%m-%d %H:%i:%s')) from Board b left join b.boardRecommends r left join b.comments c join b.account a " +
-            "WHERE b.category=:category GROUP BY b", countQuery = "select count(b) from Board b WHERE b.category=:category")
+    @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(c),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a " +
+            "WHERE b.category=:category and b.isDeleted = false and c.isDeleted=false GROUP BY b.id", countQuery = "select count(b) from Board b WHERE b.category=:category and b.isDeleted=false")
     Page<BoardListResponseDTO> findBoardsByCategory(@Param("category") BoardCategory category, Pageable pageable);
 
-    @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),count(c),DATE_FORMAT(MAX(b.createdAt), '%Y-%m-%d %H:%i:%s')) from Board b left join b.boardRecommends r left join b.comments c join b.account a " +
-            "WHERE b.category=:category and b.title like %:searchText% GROUP BY b", countQuery = "select count(b) from Board b WHERE b.category=:category and b.title like %:searchText%")
+    @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(c), max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a " +
+            "WHERE b.category=:category and b.title like :searchText and b.isDeleted=false and c.isDeleted=false GROUP BY b.id", countQuery = "select count(b) from Board b WHERE b.category=:category and b.title like :searchText and b.isDeleted=false")
     Page<BoardListResponseDTO> findBoardsByTitle(@Param("category") BoardCategory category, @Param("searchText") String searchText, Pageable pageable);
 
-    @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),count(c),DATE_FORMAT(MAX(b.createdAt), '%Y-%m-%d %H:%i:%s')) from Board b left join b.boardRecommends r left join b.comments c join b.account a " +
-            "WHERE b.category=:category and b.text like %:searchText% GROUP BY b", countQuery = "select count(b) from Board b WHERE b.category=:category and b.text like %:searchText%")
+    @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(c),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a " +
+            "WHERE b.category=:category and b.text like :searchText and b.isDeleted=false and c.isDeleted=false GROUP BY b.id", countQuery = "select count(b) from Board b WHERE b.category=:category and b.text like :searchText and b.isDeleted=false")
     Page<BoardListResponseDTO> findBoardsByText(@Param("category") BoardCategory category, @Param("searchText") String searchText, Pageable pageable);
 
-    @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),count(c),DATE_FORMAT(MAX(b.createdAt), '%Y-%m-%d %H:%i:%s')) from Board b left join b.boardRecommends r left join b.comments c join b.account a " +
-            "WHERE b.category=:category and (b.title like %:searchText% OR b.text like %:searchText%) GROUP BY b", countQuery = "select count(b) from Board b WHERE b.category=:category and (b.title like %:searchText% OR b.text like %:searchText%)")
+    @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(c), max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a " +
+            "WHERE b.category=:category and (b.title like :searchText OR b.text like :searchText) and b.isDeleted=false and c.isDeleted=false GROUP BY b.id", countQuery = "select count(b) from Board b WHERE b.category=:category and (b.title like :searchText OR b.text like :searchText) and b.isDeleted=false")
     Page<BoardListResponseDTO> findBoardsByTitleAndText(@Param("category") BoardCategory category, @Param("searchText") String searchText, Pageable pageable);
 }
