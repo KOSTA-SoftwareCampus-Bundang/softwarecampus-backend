@@ -1,11 +1,16 @@
 package com.softwarecampus.backend.service.course;
 
+import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
 import com.softwarecampus.backend.domain.course.CourseImage;
+import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.course.CourseImageResponse;
+import com.softwarecampus.backend.exception.course.ForbiddenException;
+import com.softwarecampus.backend.exception.course.NotFoundException;
 import com.softwarecampus.backend.repository.course.CourseImageRepository;
 import com.softwarecampus.backend.repository.course.CourseRepository;
+import com.softwarecampus.backend.repository.user.AccountRepository;
 import com.softwarecampus.backend.service.common.FileType;
 import com.softwarecampus.backend.service.common.S3Folder;
 import com.softwarecampus.backend.service.common.S3Service;
@@ -21,6 +26,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class CourseImageServiceImpl implements CourseImageService {
 
+    private final AccountRepository accountRepository;
     private final CourseRepository courseRepository;
     private final CourseImageRepository courseImageRepository;
     private final S3Service s3Service;
@@ -85,5 +91,23 @@ public class CourseImageServiceImpl implements CourseImageService {
         return images.stream()
                 .map(CourseImageResponse::from)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public void hardDeleteCourseImage(CategoryType type, Long imageId, Long adminId) {
+        // 1. 이미지 조회
+        CourseImage image = courseImageRepository.findById(imageId)
+                .orElseThrow(() -> new NotFoundException("삭제할 이미지가 존재하지 않습니다."));
+
+        // 2. 관리자 권한 체크
+        Account admin = accountRepository.findById(adminId)
+                .orElseThrow(() -> new NotFoundException("관리자를 찾을 수 없습니다."));
+        if (admin.getAccountType() != AccountType.ADMIN) {
+            throw new ForbiddenException("관리자만 첨부파일을 삭제할 수 있습니다.");
+        }
+
+        // 3. Hard Delete
+        courseImageRepository.delete(image);
     }
 }

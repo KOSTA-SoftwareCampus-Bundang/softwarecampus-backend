@@ -22,4 +22,10 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
 
     // 유저 전체 리뷰 조회
     List<CourseReview> findByWriterIdAndIsDeletedFalse(Long accountId);
+
+    /**
+     * courseId 기준으로 삭제되지 않은 리뷰 전체 조회
+     */
+    List<CourseReview> findAllByCourse_IdAndIsDeletedFalse(Long courseId);
+
 }

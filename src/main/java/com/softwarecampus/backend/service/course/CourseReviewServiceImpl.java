@@ -27,8 +27,27 @@ public class CourseReviewServiceImpl implements CourseReviewService {
     private final CourseRepository courseRepository;
     private final ReviewSectionRepository reviewSectionRepository;
 
+    /**
+     * 1. 리뷰 리스트 조회
+     */
     @Override
-    public CourseReviewResponse getReview(CategoryType type, Long courseId, Long reviewId) {
+    public List<CourseReviewResponse> getReviews(CategoryType type, Long courseId) {
+
+        Course course = courseRepository.findByIdAndCategory(courseId, type)
+                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
+
+        List<CourseReview> reviews = reviewRepository.findAllByCourse_IdAndIsDeletedFalse(courseId);
+
+        return reviews.stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    /**
+     * 2. 리뷰 상세 조회
+     */
+    @Override
+    public CourseReviewResponse getReviewDetail(CategoryType type, Long courseId, Long reviewId) {
 
         Course course = courseRepository.findByIdAndCategory(courseId, type)
                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
@@ -40,6 +59,9 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         return toDto(review);
     }
 
+    /**
+     * 3. 리뷰 등록
+     */
     @Override
     @Transactional
     public CourseReviewResponse createReview(CategoryType type, Long courseId, Long accountId, CourseReviewRequest request) {
@@ -72,11 +94,12 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         }
 
         CourseReview saved = reviewRepository.save(review);
-
-        // 응답 DTO 변환
         return toDto(saved);
     }
 
+    /**
+     * DTO 변환
+     */
     private CourseReviewResponse toDto(CourseReview review) {
         return CourseReviewResponse.builder()
                 .reviewId(review.getId())
@@ -85,26 +108,28 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 .comment(review.getComment())
                 .approvalStatus(review.getApprovalStatus().name())
                 .averageScore(review.calculateAverageScore())
-                .sections(
-                        review.getSections().stream()
-                                .map(sec -> ReviewSectionResponse.builder()
-                                        .sectionType(sec.getSectionType().name())
-                                        .score(sec.getScore())
-                                        .build()
-                                ).toList()
+                .sections(review.getSections().stream()
+                        .map(sec -> ReviewSectionResponse.builder()
+                                .sectionType(sec.getSectionType().name())
+                                .score(sec.getScore())
+                                .build()
+                        ).toList()
                 )
                 .attachments(review.getAttachments().stream()
-                .map(ReviewAttachmentResponse::fromEntity)
-                .toList())
+                        .map(ReviewAttachmentResponse::fromEntity)
+                        .toList())
                 .likeCount((int) review.getLikes().stream()
-                .filter(l -> !l.getIsDeleted() && l.getType() == ReviewLike.LikeType.LIKE)
-                .count())
+                        .filter(l -> !l.getIsDeleted() && l.getType() == ReviewLike.LikeType.LIKE)
+                        .count())
                 .dislikeCount((int) review.getLikes().stream()
                         .filter(l -> !l.getIsDeleted() && l.getType() == ReviewLike.LikeType.DISLIKE)
-                .count())
+                        .count())
                 .build();
     }
 
+    /**
+     * 4. 리뷰 수정
+     */
     @Override
     @Transactional
     public CourseReviewResponse updateReview(CategoryType type, Long courseId, Long reviewId, Long accountId, CourseReviewRequest request) {
@@ -129,6 +154,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
 
         review.setComment(request.getComment());
 
+        // 기존 섹션 삭제 후 다시 생성
         review.getSections().clear();
 
         if (request.getSections() != null) {
@@ -145,11 +171,12 @@ public class CourseReviewServiceImpl implements CourseReviewService {
             }
         }
 
-        reviewRepository.save(review);
-
         return toDto(review);
     }
 
+    /**
+     * 5. 리뷰 삭제 (소프트 삭제)
+     */
     @Override
     @Transactional
     public void deleteReview(CategoryType type, Long courseId, Long reviewId, Long accountId) {
@@ -168,14 +195,37 @@ public class CourseReviewServiceImpl implements CourseReviewService {
             throw new ForbiddenException("본인이 작성한 리뷰만 삭제할 수 있습니다.");
         }
 
-        // 리뷰 소프트 삭제
-        review.markDeleted();
-        reviewRepository.save(review);
-
-        // 리뷰 섹션 소프트 삭제
+        review.markDeleted(); // soft delete
         reviewSectionRepository.softDeleteByReviewId(reviewId);
     }
 
+    /**
+     * 6. 리뷰 삭제 요청
+     */
+    @Override
+    @Transactional
+    public void requestDeleteReview(CategoryType type, Long courseId, Long reviewId, Long accountId) {
 
+        Course course = courseRepository.findByIdAndCategory(courseId, type)
+                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
+        CourseReview review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new EntityNotFoundException("Review not found"));
+
+        if (review.getIsDeleted()) {
+            throw new BadRequestException("이미 삭제된 리뷰는 삭제 요청할 수 없습니다.");
+        }
+
+        if (!review.getCourse().getId().equals(courseId)) {
+            throw new BadRequestException("이 리뷰는 해당 과정의 리뷰가 아닙니다.");
+        }
+
+        // 작성자만 삭제 요청 가능하도록
+        if (!review.getWriter().getId().equals(accountId)) {
+            throw new ForbiddenException("본인이 작성한 리뷰만 삭제 요청할 수 있습니다.");
+        }
+
+        review.requestDelete(); // 삭제 요청 상태로 변경 (도메인에서 구현 필요)
+    }
 }
+

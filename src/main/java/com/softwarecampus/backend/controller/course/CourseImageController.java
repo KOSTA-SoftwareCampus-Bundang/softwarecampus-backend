@@ -1,7 +1,6 @@
 package com.softwarecampus.backend.controller.course;
 
 import com.softwarecampus.backend.domain.course.CategoryType;
-import com.softwarecampus.backend.domain.course.CourseImage;
 import com.softwarecampus.backend.dto.course.CourseImageResponse;
 import com.softwarecampus.backend.service.course.CourseImageService;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +45,17 @@ public class CourseImageController {
             @PathVariable Long imageId
     ) {
         courseImageService.deleteCourseImage(type, imageId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Hard Delete
+    @DeleteMapping("/images/{imageId}/hard")
+    public ResponseEntity<Void> hardDeleteCourseImage(
+            @PathVariable("type") CategoryType type,
+            @PathVariable Long imageId,
+            @RequestAttribute("userId") Long adminId // 관리자만 접근
+    ) {
+        courseImageService.hardDeleteCourseImage(type, imageId, adminId);
         return ResponseEntity.noContent().build();
     }
 
