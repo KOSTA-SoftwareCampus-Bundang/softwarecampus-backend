@@ -365,10 +365,10 @@ public class GlobalExceptionHandler {
         problemDetail.setType(URI.create(problemBaseUri + "/too-many-attempts"));
         problemDetail.setTitle("Too Many Attempts");
         
-        // 차단 해제 시간 추가
+        // 차단 해제 시간 추가 (ISO-8601 형식으로 통일)
         if (ex.getBlockedUntil() != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            problemDetail.setProperty("blockedUntil", ex.getBlockedUntil().format(formatter));
+            problemDetail.setProperty("blockedUntil", 
+                ex.getBlockedUntil().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         }
         
         return problemDetail;

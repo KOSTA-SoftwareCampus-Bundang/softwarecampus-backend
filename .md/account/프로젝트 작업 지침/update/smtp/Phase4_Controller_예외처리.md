@@ -227,8 +227,9 @@ public class GlobalExceptionHandler {
         log.warn("인증 시도 횟수 초과: {}", ex.getMessage());
         
         Map<String, Object> errorDetails = new HashMap<>();
+        // ISO-8601 형식으로 통일 (다른 timestamp와 일관성 유지)
         errorDetails.put("blockedUntil", ex.getBlockedUntil().format(
-                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME
         ));
         
         return ResponseEntity
@@ -268,38 +269,52 @@ public class GlobalExceptionHandler {
 
 ### 성공 응답 예시
 
-#### 1. 인증 코드 발송 성공
+#### 1. 인증 코드 발송 성공 (200 OK)
 ```json
 {
   "message": "인증 코드가 발송되었습니다",
-  "expiresIn": 180
+  "expiresIn": 180,
+  "remainingAttempts": null
 }
 ```
 
-#### 2. 인증 코드 검증 성공
+#### 2. 인증 코드 검증 성공 (200 OK)
 ```json
 {
-  "message": "이메일 인증이 완료되었습니다"
+  "message": "이메일 인증이 완료되었습니다",
+  "expiresIn": null,
+  "remainingAttempts": null
 }
 ```
 
-#### 3. 코드 불일치 (남은 시도 횟수 포함)
+**참고:** 성공 응답은 `EmailVerificationResponse` DTO를 그대로 반환합니다. 프로젝트에서 RFC 9457 ProblemDetail을 사용하므로, 성공 응답에는 별도의 `success` 필드를 추가하지 않습니다.
+
+### 부분 실패 응답 (검증 실패 - 재시도 가능)
+
+#### 3. 코드 불일치 - 남은 시도 횟수 포함 (200 OK)
 ```json
 {
   "message": "인증 코드가 일치하지 않습니다",
+  "expiresIn": null,
   "remainingAttempts": 3
 }
 ```
 
-### 실패 응답 예시
+**참고:** 코드 불일치는 Service 레벨에서 처리되어 정상 응답(`200 OK`)으로 반환되며, `remainingAttempts` 필드로 재시도 가능 여부를 알립니다. 5회 초과 시에만 예외(`TooManyAttemptsException`)가 발생합니다.
+
+### 실패 응답 예시 (RFC 9457 ProblemDetail)
+
+프로젝트는 RFC 9457 표준을 따르는 ProblemDetail 형식을 사용합니다.
 
 #### 1. Validation 실패 (400)
 ```json
 {
-  "success": false,
-  "message": "입력값 검증 실패",
-  "timestamp": "2025-11-26T14:30:00",
-  "details": {
+  "type": "https://api.example.com/problems/validation-failed",
+  "title": "Validation Failed",
+  "status": 400,
+  "detail": "입력값 검증 실패",
+  "instance": "/api/auth/email/send-verification",
+  "errors": {
     "email": "유효한 이메일 형식이 아닙니다",
     "code": "인증 코드는 6자리 숫자여야 합니다"
   }
@@ -309,48 +324,58 @@ public class GlobalExceptionHandler {
 #### 2. 재발송 쿨다운 (400)
 ```json
 {
-  "success": false,
-  "message": "인증 코드는 45초 후에 재발송할 수 있습니다",
-  "timestamp": "2025-11-26T14:30:00"
+  "type": "https://api.example.com/problems/email-verification-failed",
+  "title": "Email Verification Failed",
+  "status": 400,
+  "detail": "인증 코드는 45초 후에 재발송할 수 있습니다",
+  "instance": "/api/auth/email/send-verification"
 }
 ```
 
 #### 3. 코드 만료 (400)
 ```json
 {
-  "success": false,
-  "message": "인증 코드가 만료되었습니다. 새로운 코드를 요청하세요",
-  "timestamp": "2025-11-26T14:30:00"
+  "type": "https://api.example.com/problems/verification-code-expired",
+  "title": "Verification Code Expired",
+  "status": 400,
+  "detail": "인증 코드가 만료되었습니다. 새로운 코드를 요청하세요",
+  "instance": "/api/auth/email/verify"
 }
 ```
 
 #### 4. 시도 횟수 초과 - 차단 (429)
 ```json
 {
-  "success": false,
-  "message": "인증 시도 횟수를 초과했습니다. 30분간 차단됩니다",
-  "timestamp": "2025-11-26T14:30:00",
-  "details": {
-    "blockedUntil": "2025-11-26 15:00:00"
-  }
+  "type": "https://api.example.com/problems/too-many-attempts",
+  "title": "Too Many Attempts",
+  "status": 429,
+  "detail": "인증 시도 횟수를 초과했습니다. 30분간 차단됩니다",
+  "instance": "/api/auth/email/verify",
+  "blockedUntil": "2025-11-26T15:00:00"
 }
 ```
+
+**타임스탬프 형식:** ISO-8601 형식(`yyyy-MM-ddTHH:mm:ss`)으로 통일됩니다.
 
 #### 5. 이메일 미인증 (403)
 ```json
 {
-  "success": false,
-  "message": "이메일 인증이 필요합니다",
-  "timestamp": "2025-11-26T14:30:00"
+  "type": "https://api.example.com/problems/email-not-verified",
+  "title": "Email Not Verified",
+  "status": 403,
+  "detail": "이메일 인증이 필요합니다",
+  "instance": "/api/auth/signup"
 }
 ```
 
 #### 6. 이메일 발송 실패 (500)
 ```json
 {
-  "success": false,
-  "message": "이메일 발송에 실패했습니다",
-  "timestamp": "2025-11-26T14:30:00"
+  "type": "https://api.example.com/problems/email-send-failed",
+  "title": "Email Send Failed",
+  "status": 500,
+  "detail": "이메일 발송에 실패했습니다",
+  "instance": "/api/auth/email/send-verification"
 }
 ```
 
