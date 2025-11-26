@@ -5,6 +5,8 @@ import com.softwarecampus.backend.domain.academy.ApprovalStatus;
 import com.softwarecampus.backend.dto.academy.AcademyCreateRequest;
 import com.softwarecampus.backend.dto.academy.AcademyResponse;
 import com.softwarecampus.backend.dto.academy.AcademyUpdateRequest;
+import com.softwarecampus.backend.exception.academy.AcademyErrorCode;
+import com.softwarecampus.backend.exception.academy.AcademyException;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +25,7 @@ public class AcademyServiceImpl implements AcademyService {
 
     private Academy findAcademyOrThrow(Long id) {
         return academyRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Academy not found with id: " + id));
+                .orElseThrow(() -> new AcademyException(AcademyErrorCode.ACADEMY_NOT_FOUND));
     }
 
     /**

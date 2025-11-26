@@ -7,6 +7,8 @@ import com.softwarecampus.backend.dto.academy.qna.QAFileDetail;
 import com.softwarecampus.backend.dto.banner.BannerCreateRequest;
 import com.softwarecampus.backend.dto.banner.BannerResponse;
 import com.softwarecampus.backend.dto.banner.BannerUpdateRequest;
+import com.softwarecampus.backend.exception.banner.BannerErrorCode;
+import com.softwarecampus.backend.exception.banner.BannerException;
 import com.softwarecampus.backend.repository.banner.BannerRepository;
 import com.softwarecampus.backend.service.academy.qna.AttachmentService;
 import lombok.RequiredArgsConstructor;
@@ -76,10 +78,10 @@ public class BannerServiceImpl implements BannerService {
     @Transactional
     public BannerResponse updateBanner(Long bannerId, BannerUpdateRequest request) {
         Banner banner = bannerRepository.findById(bannerId)
-                .orElseThrow(() -> new IllegalArgumentException("Banner not found!"));
+                .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
-        if (!banner.isActive()) {
-            throw new IllegalStateException("Banner is not active.");
+        if (!banner.getIsActivated() || banner.getIsDeleted()) {
+            throw new BannerException(BannerErrorCode.BANNER_NOT_ACTIVE);
         }
 
         String newImageUrl = banner.getImageUrl();
@@ -118,10 +120,10 @@ public class BannerServiceImpl implements BannerService {
     public void deleteBanner(Long bannerId) {
 
         Banner banner = bannerRepository.findById(bannerId)
-                .orElseThrow(() -> new IllegalArgumentException("Banner not found!"));
+                .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
         if (!banner.getIsActivated() || banner.getIsDeleted()) {
-            throw new IllegalStateException("Banner is not active.");
+            throw new BannerException(BannerErrorCode.BANNER_NOT_ACTIVE);
         }
 
         List<Attachment> attachmentsToHardDelete =
