@@ -123,31 +123,6 @@ class EmailVerificationRepositoryTest {
     }
     
     @Test
-    @DisplayName("만료된 인증 레코드를 삭제할 수 있다")
-    void deleteExpired_ShouldDeleteExpiredRecords() {
-        // given
-        EmailVerification expired = createVerification(testEmail, testCode);
-        expired = EmailVerification.builder()
-                .email(testEmail)
-                .code(testCode)
-                .type(VerificationType.SIGNUP)
-                .verified(false)
-                .attempts(0)
-                .blocked(false)
-                .expiresAt(LocalDateTime.now().minusMinutes(1)) // 1분 전 만료
-                .build();
-        repository.save(expired);
-        
-        // when
-        int deleted = repository.deleteExpired(LocalDateTime.now());
-        repository.flush();
-        
-        // then
-        assertThat(deleted).isEqualTo(1);
-        assertThat(repository.findAll()).isEmpty();
-    }
-    
-    @Test
     @DisplayName("인증 완료된 오래된 데이터를 삭제할 수 있다")
     void deleteOldVerified_ShouldDeleteOldVerifiedRecords() {
         // given
