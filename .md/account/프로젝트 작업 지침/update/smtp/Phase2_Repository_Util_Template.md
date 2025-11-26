@@ -128,8 +128,9 @@ public final class VerificationCodeGenerator {
         byte[] randomBytes = new byte[4];
         SECURE_RANDOM.nextBytes(randomBytes);
         
-        // ByteBuffer로 int 변환 (음수 방지를 위해 절댓값 사용)
-        int randomInt = Math.abs(ByteBuffer.wrap(randomBytes).getInt());
+        // ByteBuffer로 int 변환 (비트 마스킹으로 양수 변환)
+        // Math.abs(Integer.MIN_VALUE)는 음수를 반환하므로 비트 마스킹 사용
+        int randomInt = ByteBuffer.wrap(randomBytes).getInt() & Integer.MAX_VALUE;
         
         // 0 ~ 999999 범위로 제한
         int code = randomInt % CODE_MAX;
@@ -159,7 +160,9 @@ public final class VerificationCodeGenerator {
 **보안 특징:**
 - `SecureRandom`: 예측 불가능한 난수 생성
 - `ByteBuffer`: 바이트 배열을 정수로 안전하게 변환
-- `Math.abs()`: 음수 방지
+- **비트 마스킹** (`& Integer.MAX_VALUE`): 항상 양수 보장
+  - `Math.abs(Integer.MIN_VALUE)`는 여전히 음수를 반환하는 문제 해결
+  - 최상위 부호 비트를 0으로 설정하여 0 ~ 2,147,483,647 범위 보장
 - `String.format("%06d")`: 6자리 고정 (앞자리 0 포함)
 
 ---
@@ -551,6 +554,10 @@ String html = templateLoader.replaceVariable(template, "code", "123456");
 ### SecureRandom vs Random
 - ❌ `Random`: 예측 가능한 난수 (보안 취약)
 - ✅ `SecureRandom`: 암호학적으로 안전한 난수 (인증 코드용)
+
+### Math.abs() vs 비트 마스킹
+- ❌ `Math.abs(Integer.MIN_VALUE)`: 음수 반환 (overflow 문제)
+- ✅ `x & Integer.MAX_VALUE`: 항상 양수 보장 (비트 마스킹)
 
 ### HTML 템플릿 스타일
 - 인라인 CSS 사용 (대부분의 이메일 클라이언트 호환)
