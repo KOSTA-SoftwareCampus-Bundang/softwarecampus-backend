@@ -1,8 +1,8 @@
-package com.softwarecampus.backend.service.email;
+package com.softwarecampus.backend.service.user.email;
 
 import com.softwarecampus.backend.common.constants.EmailConstants;
 import com.softwarecampus.backend.exception.email.EmailSendException;
-import com.softwarecampus.backend.model.enums.VerificationType;
+import com.softwarecampus.backend.domain.common.VerificationType;
 import com.softwarecampus.backend.util.email.EmailTemplateLoader;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

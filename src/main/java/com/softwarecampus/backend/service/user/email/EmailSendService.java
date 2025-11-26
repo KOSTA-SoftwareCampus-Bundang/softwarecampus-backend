@@ -1,6 +1,6 @@
-package com.softwarecampus.backend.service.email;
+package com.softwarecampus.backend.service.user.email;
 
-import com.softwarecampus.backend.model.enums.VerificationType;
+import com.softwarecampus.backend.domain.common.VerificationType;
 
 /**
  * 이메일 발송 서비스

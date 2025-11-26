@@ -1,6 +1,6 @@
-package com.softwarecampus.backend.model.entity;
+package com.softwarecampus.backend.domain;
 
-import com.softwarecampus.backend.model.enums.VerificationType;
+import com.softwarecampus.backend.domain.common.VerificationType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

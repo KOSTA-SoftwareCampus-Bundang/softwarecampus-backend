@@ -1,4 +1,4 @@
-package com.softwarecampus.backend.model.dto.email;
+package com.softwarecampus.backend.dto.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

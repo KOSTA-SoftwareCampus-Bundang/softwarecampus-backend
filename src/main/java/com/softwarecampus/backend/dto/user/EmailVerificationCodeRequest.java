@@ -1,28 +1,27 @@
-package com.softwarecampus.backend.model.dto.email;
+package com.softwarecampus.backend.dto.user;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.softwarecampus.backend.model.enums.VerificationType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 이메일 인증 코드 발송 요청
+ * 이메일 인증 코드 검증 요청
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EmailVerificationRequest {
+public class EmailVerificationCodeRequest {
     
     @NotBlank(message = "이메일은 필수입니다")
     @Email(message = "유효한 이메일 형식이 아닙니다")
     private String email;
     
-    // 컨트롤러에서 자동 설정되므로 클라이언트는 보내지 않아도 됨
-    @JsonIgnore
-    private VerificationType type;
+    @NotBlank(message = "인증 코드는 필수입니다")
+    @Pattern(regexp = "^[0-9]{6}$", message = "인증 코드는 6자리 숫자여야 합니다")
+    private String code;
 }

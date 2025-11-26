@@ -1,6 +1,6 @@
 package com.softwarecampus.backend.scheduler;
 
-import com.softwarecampus.backend.repository.EmailVerificationRepository;
+import com.softwarecampus.backend.repository.user.EmailVerificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

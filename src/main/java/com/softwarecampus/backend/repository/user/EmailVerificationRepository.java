@@ -1,7 +1,7 @@
-package com.softwarecampus.backend.repository;
+package com.softwarecampus.backend.repository.user;
 
-import com.softwarecampus.backend.model.entity.EmailVerification;
-import com.softwarecampus.backend.model.enums.VerificationType;
+import com.softwarecampus.backend.domain.EmailVerification;
+import com.softwarecampus.backend.domain.common.VerificationType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

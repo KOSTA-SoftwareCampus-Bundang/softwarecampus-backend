@@ -1,4 +1,4 @@
-package com.softwarecampus.backend.model.enums;
+package com.softwarecampus.backend.domain.common;
 
 /**
  * 이메일 인증 타입

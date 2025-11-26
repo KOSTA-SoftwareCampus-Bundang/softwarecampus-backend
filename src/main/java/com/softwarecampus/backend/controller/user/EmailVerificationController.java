@@ -1,10 +1,10 @@
-package com.softwarecampus.backend.controller;
+package com.softwarecampus.backend.controller.user;
 
-import com.softwarecampus.backend.model.dto.email.EmailVerificationCodeRequest;
-import com.softwarecampus.backend.model.dto.email.EmailVerificationRequest;
-import com.softwarecampus.backend.model.dto.email.EmailVerificationResponse;
-import com.softwarecampus.backend.model.enums.VerificationType;
-import com.softwarecampus.backend.service.email.EmailVerificationService;
+import com.softwarecampus.backend.dto.user.EmailVerificationCodeRequest;
+import com.softwarecampus.backend.dto.user.EmailVerificationRequest;
+import com.softwarecampus.backend.dto.user.EmailVerificationResponse;
+import com.softwarecampus.backend.domain.common.VerificationType;
+import com.softwarecampus.backend.service.user.email.EmailVerificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
