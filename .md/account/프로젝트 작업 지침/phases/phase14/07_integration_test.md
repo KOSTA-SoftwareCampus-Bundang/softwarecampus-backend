@@ -114,7 +114,7 @@ class LoginIntegrationTest {
             .andExpect(jsonPath("$.account.email").value("integrationuser@example.com"))
             .andExpect(jsonPath("$.account.userName").value("통합테스트"))
             .andExpect(jsonPath("$.account.accountType").value("USER"))
-            .andExpect(jsonPath("$.account.accountApproved").value("APPROVED"));
+            .andExpect(jsonPath("$.account.approvalStatus").value("APPROVED"));
     }
     
     @Test
@@ -205,7 +205,7 @@ class LoginIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(academySignup)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.accountApproved").value("PENDING"));
+            .andExpect(jsonPath("$.approvalStatus").value("PENDING"));
         
         // 2. 로그인 시도 (승인 대기 상태)
         LoginRequest academyLoginRequest = new LoginRequest(

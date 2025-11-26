@@ -110,11 +110,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
 
 /**
  * Rate Limiting 필터
@@ -169,7 +170,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 String.valueOf(60) // 60초 TTL
             );
             
-            // 4. 제한 초과 확인
+            // 3. 제한 초과 확인
             if (requests != null && requests > requestsPerMinute) {
                 log.warn("Rate limit exceeded for IP: {} ({})", clientIp, requests);
                 
@@ -182,7 +183,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 return;
             }
             
-            // 5. 정상 요청 - 다음 필터로
+            // 4. 정상 요청 - 다음 필터로
             filterChain.doFilter(request, response);
             
         } catch (Exception e) {
@@ -212,7 +213,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         
         // X-Forwarded-For: client, proxy1, proxy2
-        // → 첫 번째 IP만 사용
+        // 맨 첫번째 IP만 사용
         if (ip != null && ip.contains(",")) {
             ip = ip.split(",")[0].trim();
         }
@@ -236,8 +237,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -451,14 +454,20 @@ Value: 5 (실패 횟수)
 TTL: 300초 (5분)
 
 동작:
-1-4회 실패
-→ INCR loginattempt:192.168.1.100 → 1, 2, 3, 4
+첫 실패 (count == 1)
+→ INCR loginattempt:192.168.1.100 → 1
+→ EXPIRE loginattempt:192.168.1.100 300 (첫 실패 시점부터 5분 TTL 시작)
+→ 5 미만 → 로그인 허용 ✅
+
+2-4회 실패
+→ INCR loginattempt:192.168.1.100 → 2, 3, 4
+→ TTL 유지 (첫 실패 시점부터 계속 카운트다운)
 → 5 미만 → 로그인 허용 ✅
 
 5회 실패
 → INCR loginattempt:192.168.1.100 → 5
-→ EXPIRE loginattempt:192.168.1.100 300
-→ 5분간 차단 ❌
+→ TTL 유지 (리셋 안 됨)
+→ 5 이상 → 로그인 차단 ❌ (TTL 만료까지)
 
 로그인 성공
 → DEL loginattempt:192.168.1.100

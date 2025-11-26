@@ -73,7 +73,7 @@ class MyPageControllerTest {
             .phoneNumber("010-1234-5678")
             .build();
         
-        when(profileService.getProfile("user@test.com")).thenReturn(response);
+        when(profileService.getAccountByEmail("user@test.com")).thenReturn(response);
 
         // when & then
         mockMvc.perform(get("/api/mypage/profile"))
