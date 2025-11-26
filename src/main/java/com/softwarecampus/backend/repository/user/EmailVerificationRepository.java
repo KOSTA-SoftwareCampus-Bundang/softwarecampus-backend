@@ -36,14 +36,6 @@ public interface EmailVerificationRepository extends JpaRepository<EmailVerifica
     );
     
     /**
-     * 이메일과 타입으로 인증되지 않은 레코드 조회
-     */
-    Optional<EmailVerification> findByEmailAndTypeAndVerifiedFalse(
-            String email, 
-            VerificationType type
-    );
-    
-    /**
      * 특정 시간 이전에 생성되고 미인증 상태인 레코드 삭제
      * (배치 작업용 - 미인증 상태로 24시간 지난 데이터 삭제)
      */
