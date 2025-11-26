@@ -52,7 +52,7 @@ public class SignupServiceImpl implements SignupService {
         );
         
         if (!verified) {
-            log.warn("이메일 미인증 회원가입 시도 - email: {}", email);
+            log.warn("이메일 미인증 회원가입 시도 발생");
             throw new EmailNotVerifiedException("이메일 인증이 완료되지 않았습니다");
         }
         
@@ -82,7 +82,7 @@ public class SignupServiceImpl implements SignupService {
         String accessToken = jwtService.generateAccessToken(savedUser.getEmail());
         String refreshToken = jwtService.generateRefreshToken(savedUser.getEmail());
         
-        log.info("회원가입 완료 - email: {}, username: {}", email, request.getUsername());
+        log.info("회원가입 완료 - username: {}", request.getUsername());
         
         return AccountResponse.builder()
                 .id(savedUser.getId())
@@ -139,7 +139,7 @@ public class PasswordResetController {
     public ResponseEntity<Map<String, String>> resetPassword(
             @Valid @RequestBody PasswordResetRequest request
     ) {
-        log.info("비밀번호 재설정 요청 - email: {}", request.getEmail());
+        log.info("비밀번호 재설정 요청");
         
         passwordResetService.resetPassword(request);
         
@@ -190,7 +190,7 @@ public class PasswordResetService {
         );
         
         if (!verified) {
-            log.warn("이메일 미인증 비밀번호 재설정 시도 - email: {}", email);
+            log.warn("이메일 미인증 비밀번호 재설정 시도 발생");
             throw new EmailNotVerifiedException("이메일 인증이 완료되지 않았습니다");
         }
         
@@ -203,7 +203,7 @@ public class PasswordResetService {
         user.changePassword(encodedPassword);
         userRepository.save(user);
         
-        log.info("비밀번호 재설정 완료 - email: {}", email);
+        log.info("비밀번호 재설정 완료");
     }
 }
 ```

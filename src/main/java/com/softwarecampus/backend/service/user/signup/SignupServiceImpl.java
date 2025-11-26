@@ -54,7 +54,7 @@ public class SignupServiceImpl implements SignupService {
 
         // 1. 이메일 인증 확인
         if (!emailVerificationService.isEmailVerified(request.email(), VerificationType.SIGNUP)) {
-            log.warn("회원가입 실패: 이메일 인증되지 않음 - email={}", request.email());
+            log.warn("회원가입 실패: 이메일 인증되지 않음");
             throw new EmailNotVerifiedException("이메일 인증이 완료되지 않았습니다.");
         }
 
