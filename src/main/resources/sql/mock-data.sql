@@ -15,7 +15,7 @@ VALUES (3, 'KOSTA 분당', '경기도 성남시 성남대로 34 하나플라자 
 
 
 -- 2. CourseCategory (과정 카테고리 데이터)
--- 채용예정자 (JOB_SEEKER)
+-- 채용예정자 (JOB_SEEKER) - 온라인
 INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (1, 'JOB_SEEKER', '웹개발', NOW(), NOW(), false);
 INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (2, 'JOB_SEEKER', '모바일', NOW(), NOW(), false);
 INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (3, 'JOB_SEEKER', '데이터/AI', NOW(), NOW(), false);
@@ -24,24 +24,52 @@ INSERT INTO course_category (id, category_type, category_name, created_at, updat
 INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (6, 'JOB_SEEKER', 'IoT/임베디드', NOW(), NOW(), false);
 INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (7, 'JOB_SEEKER', '게임/블록체인', NOW(), NOW(), false);
 
--- 재직자 (EMPLOYEE)
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (8, 'EMPLOYEE', 'Infra운영', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (9, 'EMPLOYEE', '백엔드 개발', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (10, 'EMPLOYEE', '프론트엔드 개발', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (11, 'EMPLOYEE', 'DB', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (12, 'EMPLOYEE', 'AI', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (13, 'EMPLOYEE', 'SW요구분석', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (14, 'EMPLOYEE', '백엔드개발자', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (15, 'EMPLOYEE', '클라우드엔지니어', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (16, 'EMPLOYEE', '프론트엔드개발자', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (17, 'EMPLOYEE', '데이터엔지니어', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (18, 'EMPLOYEE', 'AI엔지니어', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (19, 'EMPLOYEE', 'SW아키텍트', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (20, 'EMPLOYEE', '정보보안전문가', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (21, 'EMPLOYEE', 'IT기획자/컨설턴트', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (22, 'EMPLOYEE', '데이터분석가', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (23, 'EMPLOYEE', '비즈니스분석가', NOW(), NOW(), false);
-INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (24, 'EMPLOYEE', '데이터사이언티스트', NOW(), NOW(), false);
+-- 채용예정자 (JOB_SEEKER) - 오프라인
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (8, 'JOB_SEEKER', '웹개발', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (9, 'JOB_SEEKER', '모바일', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (10, 'JOB_SEEKER', '데이터/AI', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (11, 'JOB_SEEKER', '클라우드', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (12, 'JOB_SEEKER', '보안', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (13, 'JOB_SEEKER', 'IoT/임베디드', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (14, 'JOB_SEEKER', '게임/블록체인', NOW(), NOW(), false);
+
+-- 재직자 (EMPLOYEE) - 온라인
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (15, 'EMPLOYEE', 'Infra운영', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (16, 'EMPLOYEE', '백엔드 개발', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (17, 'EMPLOYEE', '프론트엔드 개발', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (18, 'EMPLOYEE', 'DB', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (19, 'EMPLOYEE', 'AI', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (20, 'EMPLOYEE', 'SW요구분석', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (21, 'EMPLOYEE', '백엔드개발자', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (22, 'EMPLOYEE', '클라우드엔지니어', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (23, 'EMPLOYEE', '프론트엔드개발자', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (24, 'EMPLOYEE', '데이터엔지니어', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (25, 'EMPLOYEE', 'AI엔지니어', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (26, 'EMPLOYEE', 'SW아키텍트', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (27, 'EMPLOYEE', '정보보안전문가', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (28, 'EMPLOYEE', 'IT기획자/컨설턴트', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (29, 'EMPLOYEE', '데이터분석가', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (30, 'EMPLOYEE', '비즈니스분석가', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (31, 'EMPLOYEE', '데이터사이언티스트', NOW(), NOW(), false);
+
+-- 재직자 (EMPLOYEE) - 오프라인
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (32, 'EMPLOYEE', 'Infra운영', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (33, 'EMPLOYEE', '백엔드 개발', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (34, 'EMPLOYEE', '프론트엔드 개발', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (35, 'EMPLOYEE', 'DB', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (36, 'EMPLOYEE', 'AI', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (37, 'EMPLOYEE', 'SW요구분석', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (38, 'EMPLOYEE', '백엔드개발자', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (39, 'EMPLOYEE', '클라우드엔지니어', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (40, 'EMPLOYEE', '프론트엔드개발자', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (41, 'EMPLOYEE', '데이터엔지니어', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (42, 'EMPLOYEE', 'AI엔지니어', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (43, 'EMPLOYEE', 'SW아키텍트', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (44, 'EMPLOYEE', '정보보안전문가', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (45, 'EMPLOYEE', 'IT기획자/컨설턴트', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (46, 'EMPLOYEE', '데이터분석가', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (47, 'EMPLOYEE', '비즈니스분석가', NOW(), NOW(), false);
+INSERT INTO course_category (id, category_type, category_name, created_at, updated_at, is_deleted) VALUES (48, 'EMPLOYEE', '데이터사이언티스트', NOW(), NOW(), false);
 
 
 -- 3. Account (사용자 데이터)
@@ -71,43 +99,43 @@ VALUES (6, '박민수', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL1
 
 -- 4. Course (과정 데이터)
 -- 재직자 과정 (EMPLOYEE)
--- 1. Spring Boot 백엔드 개발 (온라인) - KOSTA 종로, 백엔드개발자(14번)
+-- 1. Spring Boot 백엔드 개발 (온라인) - KOSTA 종로, 백엔드개발자(21번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (1, 1, 14, 'Spring Boot 백엔드 개발', '2025-01-01', '2025-01-31', '2025-02-01', '2025-05-31', 0, '화목 19:00~22:00', '온라인', false, true, false, 'Java 기초', 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (1, 1, 21, 'Spring Boot 백엔드 개발', '2025-01-01', '2025-01-31', '2025-02-01', '2025-05-31', 0, '화목 19:00~22:00', '온라인', false, true, false, 'Java 기초', 'APPROVED', NOW(), NOW(), NOW(), false);
 
--- 2. React 프론트엔드 실무 (온라인) - KOSTA 가산, 프론트엔드개발자(16번)
+-- 2. React 프론트엔드 실무 (온라인) - KOSTA 가산, 프론트엔드개발자(23번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (2, 2, 16, 'React 프론트엔드 실무', '2025-01-15', '2025-02-14', '2025-02-15', '2025-05-15', 0, '월수금 20:00~22:00', '온라인', false, false, false, 'JavaScript 기초', 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (2, 2, 23, 'React 프론트엔드 실무', '2025-01-15', '2025-02-14', '2025-02-15', '2025-05-15', 0, '월수금 20:00~22:00', '온라인', false, false, false, 'JavaScript 기초', 'APPROVED', NOW(), NOW(), NOW(), false);
 
--- 3. 데이터 엔지니어링 실무 (오프라인) - KOSTA 분당, 데이터엔지니어(17번)
+-- 3. 데이터 엔지니어링 실무 (오프라인) - KOSTA 분당, 데이터엔지니어(41번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (3, 3, 17, '데이터 엔지니어링 실무', '2025-02-01', '2025-02-28', '2025-03-01', '2025-06-30', 0, '평일 19:30~22:30', '경기도 성남시 성남대로 34 하나플라자 6층', false, false, true, 'Python 기초', 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (3, 3, 41, '데이터 엔지니어링 실무', '2025-02-01', '2025-02-28', '2025-03-01', '2025-06-30', 0, '평일 19:30~22:30', '경기도 성남시 성남대로 34 하나플라자 6층', false, false, true, 'Python 기초', 'APPROVED', NOW(), NOW(), NOW(), false);
 
--- 4. 클라우드 아키텍처 설계 (온라인) - KOSTA 종로, 클라우드엔지니어(15번)
+-- 4. 클라우드 아키텍처 설계 (온라인) - KOSTA 종로, 클라우드엔지니어(22번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (4, 1, 15, '클라우드 아키텍처 설계', '2025-01-10', '2025-02-09', '2025-02-10', '2025-05-10', 0, '화목 20:00~22:00', '온라인', false, true, false, '리눅스 기초', 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (4, 1, 22, '클라우드 아키텍처 설계', '2025-01-10', '2025-02-09', '2025-02-10', '2025-05-10', 0, '화목 20:00~22:00', '온라인', false, true, false, '리눅스 기초', 'APPROVED', NOW(), NOW(), NOW(), false);
 
--- 5. DevOps 엔지니어 양성 (온라인) - KOSTA 가산, Infra운영(8번)
+-- 5. DevOps 엔지니어 양성 (온라인) - KOSTA 가산, Infra운영(15번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (5, 2, 8, 'DevOps 엔지니어 양성', '2025-01-20', '2025-02-19', '2025-02-20', '2025-05-20', 0, '수금 20:00~22:30', '온라인', false, false, false, '없음', 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (5, 2, 15, 'DevOps 엔지니어 양성', '2025-01-20', '2025-02-19', '2025-02-20', '2025-05-20', 0, '수금 20:00~22:30', '온라인', false, false, false, '없음', 'APPROVED', NOW(), NOW(), NOW(), false);
 
--- 6. AI/ML 실무 적용 (온라인) - KOSTA 분당, AI엔지니어(18번)
+-- 6. AI/ML 실무 적용 (온라인) - KOSTA 분당, AI엔지니어(25번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (6, 3, 18, 'AI/ML 실무 적용', '2025-02-01', '2025-03-01', '2025-03-02', '2025-06-30', 0, '월수금 19:30~22:00', '온라인', false, true, false, 'Python 중급', 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (6, 3, 25, 'AI/ML 실무 적용', '2025-02-01', '2025-03-01', '2025-03-02', '2025-06-30', 0, '월수금 19:30~22:00', '온라인', false, true, false, 'Python 중급', 'APPROVED', NOW(), NOW(), NOW(), false);
 
 
 -- 취업예정자 과정 (JOB_SEEKER)
--- 7. 풀스택 개발자 부트캠프 (오프라인) - KOSTA 종로, 웹개발(1번)
+-- 7. 풀스택 개발자 부트캠프 (오프라인) - KOSTA 종로, 웹개발(8번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (7, 1, 1, '풀스택 개발자 부트캠프', '2025-01-01', '2025-01-31', '2025-02-01', '2025-07-31', 0, '월~금 09:00~18:00', '서울특별시 종로구 우정국로 2길 21 대왕빌딩 7층', true, true, true, '없음', 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (7, 1, 8, '풀스택 개발자 부트캠프', '2025-01-01', '2025-01-31', '2025-02-01', '2025-07-31', 0, '월~금 09:00~18:00', '서울특별시 종로구 우정국로 2길 21 대왕빌딩 7층', true, true, true, '없음', 'APPROVED', NOW(), NOW(), NOW(), false);
 
--- 8. 프론트엔드 개발자 양성 (오프라인) - KOSTA 가산, 웹개발(1번)
+-- 8. 프론트엔드 개발자 양성 (오프라인) - KOSTA 가산, 웹개발(8번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (8, 2, 1, '프론트엔드 개발자 양성', '2025-01-15', '2025-02-14', '2025-02-15', '2025-08-14', 0, '월~금 09:00~18:00', '서울특별시 금천구 가산디지털1로 70 호서대벤처타워 9층', true, true, true, '없음', 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (8, 2, 8, '프론트엔드 개발자 양성', '2025-01-15', '2025-02-14', '2025-02-15', '2025-08-14', 0, '월~금 09:00~18:00', '서울특별시 금천구 가산디지털1로 70 호서대벤처타워 9층', true, true, true, '없음', 'APPROVED', NOW(), NOW(), NOW(), false);
 
--- 9. 백엔드 개발자 취업 과정 (오프라인) - KOSTA 분당, 웹개발(1번)
+-- 9. 백엔드 개발자 취업 과정 (오프라인) - KOSTA 분당, 웹개발(8번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (9, 3, 1, '백엔드 개발자 취업 과정', '2025-02-01', '2025-02-28', '2025-03-01', '2025-08-31', 0, '월~금 09:00~18:00', '경기도 성남시 성남대로 34 하나플라자 6층', true, false, true, '없음', 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (9, 3, 8, '백엔드 개발자 취업 과정', '2025-02-01', '2025-02-28', '2025-03-01', '2025-08-31', 0, '월~금 09:00~18:00', '경기도 성남시 성남대로 34 하나플라자 6층', true, false, true, '없음', 'APPROVED', NOW(), NOW(), NOW(), false);
 
 -- 10. 코딩 기초 입문 과정 (온라인) - KOSTA 종로, 웹개발(1번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
@@ -120,6 +148,7 @@ VALUES (11, 2, 1, '웹 개발 종합 과정', '2025-01-20', '2025-02-19', '2025-
 -- 12. 데이터 분석가 양성 과정 (온라인) - KOSTA 분당, 데이터/AI(3번)
 INSERT INTO course (id, academy_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, is_approved, approved_at, created_at, updated_at, is_deleted)
 VALUES (12, 3, 3, '데이터 분석가 양성 과정', '2025-02-01', '2025-03-01', '2025-03-02', '2025-09-01', 0, '화목 19:00~22:00', '온라인', true, false, false, '없음', 'APPROVED', NOW(), NOW(), NOW(), false);
+
 
 
 

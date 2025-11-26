@@ -78,7 +78,7 @@ public class MockDataInitializer {
     private void printSummary() {
         log.info("📊 생성된 데이터 요약:");
         log.info("  - Academy: 3개");
-        log.info("  - CourseCategory: 24개");
+        log.info("  - CourseCategory: 48개");
         log.info("  - Account: 6개");
         log.info("  - Course: 12개");
         log.info("  - Board: 10개");
