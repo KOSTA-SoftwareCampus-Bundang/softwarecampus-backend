@@ -1,10 +1,10 @@
 package com.softwarecampus.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.softwarecampus.backend.model.dto.email.EmailVerificationCodeRequest;
-import com.softwarecampus.backend.model.dto.email.EmailVerificationRequest;
-import com.softwarecampus.backend.model.dto.email.EmailVerificationResponse;
-import com.softwarecampus.backend.service.email.EmailVerificationService;
+import com.softwarecampus.backend.dto.user.EmailVerificationCodeRequest;
+import com.softwarecampus.backend.dto.user.EmailVerificationRequest;
+import com.softwarecampus.backend.dto.user.EmailVerificationResponse;
+import com.softwarecampus.backend.service.user.email.EmailVerificationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

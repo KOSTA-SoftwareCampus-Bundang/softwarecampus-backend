@@ -1,7 +1,8 @@
 package com.softwarecampus.backend.repository;
 
-import com.softwarecampus.backend.model.entity.EmailVerification;
-import com.softwarecampus.backend.model.enums.VerificationType;
+import com.softwarecampus.backend.domain.EmailVerification;
+import com.softwarecampus.backend.domain.common.VerificationType;
+import com.softwarecampus.backend.repository.user.EmailVerificationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
