@@ -1,5 +1,10 @@
 package com.softwarecampus.backend.exception;
 
+import com.softwarecampus.backend.exception.email.EmailSendException;
+import com.softwarecampus.backend.exception.email.EmailVerificationException;
+import com.softwarecampus.backend.exception.email.EmailNotVerifiedException;
+import com.softwarecampus.backend.exception.email.VerificationCodeExpiredException;
+import com.softwarecampus.backend.exception.email.TooManyAttemptsException;
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.exception.user.InvalidCredentialsException;
@@ -17,6 +22,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.net.URI;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -267,6 +273,106 @@ public class GlobalExceptionHandler {
     // ========================================
     // 여기에 다른 도메인 예외 추가
     // ========================================
+
+    // ========================================
+    // Email 도메인 예외 처리
+    // ========================================
+    
+    /**
+     * 이메일 발송 실패 예외
+     * HTTP 500 Internal Server Error
+     */
+    @ExceptionHandler(EmailSendException.class)
+    public ProblemDetail handleEmailSendException(EmailSendException ex) {
+        log.error("이메일 발송 실패", ex);
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "이메일 발송에 실패했습니다."
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/email-send-failed"));
+        problemDetail.setTitle("Email Send Failed");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 이메일 인증 예외 (일반)
+     * HTTP 400 Bad Request
+     */
+    @ExceptionHandler(EmailVerificationException.class)
+    public ProblemDetail handleEmailVerificationException(EmailVerificationException ex) {
+        log.warn("이메일 인증 예외: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/email-verification-error"));
+        problemDetail.setTitle("Email Verification Error");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 이메일 미인증 예외
+     * HTTP 403 Forbidden
+     */
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ProblemDetail handleEmailNotVerifiedException(EmailNotVerifiedException ex) {
+        log.warn("이메일 미인증: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.FORBIDDEN,
+            ex.getMessage()
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/email-not-verified"));
+        problemDetail.setTitle("Email Not Verified");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 인증 코드 만료 예외
+     * HTTP 400 Bad Request
+     */
+    @ExceptionHandler(VerificationCodeExpiredException.class)
+    public ProblemDetail handleVerificationCodeExpiredException(VerificationCodeExpiredException ex) {
+        log.warn("인증 코드 만료: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/verification-code-expired"));
+        problemDetail.setTitle("Verification Code Expired");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 인증 시도 횟수 초과 예외
+     * HTTP 429 Too Many Requests
+     */
+    @ExceptionHandler(TooManyAttemptsException.class)
+    public ProblemDetail handleTooManyAttemptsException(TooManyAttemptsException ex) {
+        log.warn("인증 시도 횟수 초과: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.TOO_MANY_REQUESTS,
+            ex.getMessage()
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/too-many-attempts"));
+        problemDetail.setTitle("Too Many Attempts");
+        
+        // 차단 해제 시간 추가
+        if (ex.getBlockedUntil() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            problemDetail.setProperty("blockedUntil", ex.getBlockedUntil().format(formatter));
+        }
+        
+        return problemDetail;
+    }
 
     /**
      * S3 파일 업로드 실패 예외 처리
