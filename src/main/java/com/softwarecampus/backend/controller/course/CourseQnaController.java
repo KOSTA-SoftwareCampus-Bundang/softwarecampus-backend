@@ -1,103 +1,80 @@
 package com.softwarecampus.backend.controller.course;
 
+import com.softwarecampus.backend.dto.course.QnaAnswerRequest;
+import com.softwarecampus.backend.dto.course.QnaRequest;
+import com.softwarecampus.backend.dto.course.QnaResponse;
+import com.softwarecampus.backend.service.course.CourseQnaService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
+@RequestMapping("/api/employee/course")
 @RequiredArgsConstructor
-@RequestMapping("/api/{type}/course")
 public class CourseQnaController {
 
-    // --------------------------------------------------
-    // Q/A 조회 (리스트)
-    // GET /api/{type}/course/{courseId}/qna
-    // --------------------------------------------------
+    private final CourseQnaService qnaService;
+
     @GetMapping("/{courseId}/qna")
-    public ResponseEntity<?> getQnaList(
-            @PathVariable String type,
-            @PathVariable Long courseId) {
-        return ResponseEntity.ok().build();
+    public List<QnaResponse> getQnaList(@PathVariable Long courseId) {
+        return qnaService.getQnaList(courseId);
     }
 
-    // --------------------------------------------------
-    // Q/A 상세보기
-    // GET /api/{type}/course/qna/{qnaId}
-    // --------------------------------------------------
     @GetMapping("/qna/{qnaId}")
-    public ResponseEntity<?> getQnaDetail(
-            @PathVariable String type,
-            @PathVariable Long qnaId) {
-        return ResponseEntity.ok().build();
+    public QnaResponse getQnaDetail(@PathVariable Long qnaId) {
+        return qnaService.getQnaDetail(qnaId);
     }
 
-    // --------------------------------------------------
-    // Q/A 질문 등록
-    // POST /api/{type}/course/{courseId}/qna
-    // --------------------------------------------------
     @PostMapping("/{courseId}/qna")
-    public ResponseEntity<?> createQuestion(
-            @PathVariable String type,
+    public QnaResponse createQuestion(
             @PathVariable Long courseId,
-            @RequestBody Object request) {
-        return ResponseEntity.ok().build();
+            @RequestBody QnaRequest request,
+            @RequestAttribute("userId") Long writerId
+    ) {
+        return qnaService.createQuestion(courseId, writerId, request);
     }
 
-    // --------------------------------------------------
-    // Q/A 질문 수정
-    // PUT /api/{type}/course/qna/{qnaId}
-    // --------------------------------------------------
     @PutMapping("/qna/{qnaId}")
-    public ResponseEntity<?> updateQuestion(
-            @PathVariable String type,
+    public QnaResponse updateQuestion(
             @PathVariable Long qnaId,
-            @RequestBody Object request) {
-        return ResponseEntity.ok().build();
+            @RequestBody QnaRequest request,
+            @RequestAttribute("userId") Long writerId
+    ) {
+        return qnaService.updateQuestion(qnaId, writerId, request);
     }
 
-    // --------------------------------------------------
-    // Q/A 질문 삭제
-    // DELETE /api/{type}/course/qna/{qnaId}
-    // --------------------------------------------------
     @DeleteMapping("/qna/{qnaId}")
-    public ResponseEntity<?> deleteQuestion(
-            @PathVariable String type,
-            @PathVariable Long qnaId) {
-        return ResponseEntity.ok().build();
+    public void deleteQuestion(
+            @PathVariable Long qnaId,
+            @RequestAttribute("userId") Long writerId
+    ) {
+        qnaService.deleteQuestion(qnaId, writerId);
     }
 
-    // --------------------------------------------------
-    // Q/A 답변 등록
-    // POST /api/{type}/course/qna/{qnaId}/answer
-    // --------------------------------------------------
     @PostMapping("/qna/{qnaId}/answer")
-    public ResponseEntity<?> answerQuestion(
-            @PathVariable String type,
+    public QnaResponse answerQuestion(
             @PathVariable Long qnaId,
-            @RequestBody Object request) {
-        return ResponseEntity.ok().build();
+            @RequestBody QnaAnswerRequest request,
+            @RequestAttribute("userId") Long adminId
+    ) {
+        return qnaService.answerQuestion(qnaId, adminId, request);
     }
 
-    // --------------------------------------------------
-    // Q/A 답변 수정
-    // PUT /api/{type}/course/qna/{qnaId}/answer
-    // --------------------------------------------------
     @PutMapping("/qna/{qnaId}/answer")
-    public ResponseEntity<?> updateAnswer(
-            @PathVariable String type,
+    public QnaResponse updateAnswer(
             @PathVariable Long qnaId,
-            @RequestBody Object request) {
-        return ResponseEntity.ok().build();
+            @RequestBody QnaAnswerRequest request,
+            @RequestAttribute("userId") Long adminId
+    ) {
+        return qnaService.updateAnswer(qnaId, adminId, request);
     }
 
-    // --------------------------------------------------
-    // Q/A 답변 삭제
-    // DELETE /api/{type}/course/qna/{qnaId}/answer
-    // --------------------------------------------------
     @DeleteMapping("/qna/{qnaId}/answer")
-    public ResponseEntity<?> deleteAnswer(
-            @PathVariable String type,
-            @PathVariable Long qnaId) {
-        return ResponseEntity.ok().build();
+    public void deleteAnswer(
+            @PathVariable Long qnaId,
+            @RequestAttribute("userId") Long adminId
+    ) {
+        qnaService.deleteAnswer(qnaId, adminId);
     }
 }
