@@ -119,9 +119,14 @@ public class EmailVerification {
     }
     
     /**
-     * 차단 상태 확인
+     * 차단 상태 확인 및 만료 시 자동 해제
+     * 
+     * @apiNote 이 메서드는 상태를 변경할 수 있습니다 (side effect 주의):
+     *          - 차단 시간이 만료된 경우 blocked, blockedUntil, attempts 초기화
+     *          - JPA dirty checking으로 인한 자동 DB 업데이트 발생 가능
+     * @return 현재 차단 상태 (true: 차단 중, false: 차단 아님)
      */
-    public boolean isBlocked() {
+    public boolean checkAndUnblockIfExpired() {
         if (!blocked) {
             return false;
         }

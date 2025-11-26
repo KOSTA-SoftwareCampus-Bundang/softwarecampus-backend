@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.model.dto.email;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.softwarecampus.backend.model.enums.VerificationType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -22,5 +23,6 @@ public class EmailVerificationRequest {
     private String email;
     
     // 컨트롤러에서 자동 설정되므로 클라이언트는 보내지 않아도 됨
+    @JsonIgnore
     private VerificationType type;
 }
