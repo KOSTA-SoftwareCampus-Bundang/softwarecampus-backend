@@ -42,6 +42,4 @@ public interface AttachmentRepository extends JpaRepository<Attachment,Long> {
             @Param("type") AttachmentCategoryType categoryType,
             @Param("id") Long categoryId
     );
-
-    Collection<Object> findByCategoryTypeAndCategoryIdAndIsDeletedTrue(AttachmentCategoryType categoryType, Long categoryId, Boolean isDeleted);
 }

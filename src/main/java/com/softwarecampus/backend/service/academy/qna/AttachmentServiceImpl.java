@@ -72,16 +72,8 @@ public class AttachmentServiceImpl implements AttachmentService {
                     .orElseThrow(() -> new IllegalArgumentException("Attachment not found"));
 
             attachment.updateCategoryId(categoryId);
+            attachment.updateCategoryType(type);
         }
-    }
-
-    @Override
-    @Transactional
-    public List<Attachment> softDeleteAllByQAId(AttachmentCategoryType type, Long categoryId) {
-        List<Attachment> attachmentsToHardDelete =
-                attachmentRepository.findByCategoryTypeAndCategoryIdAndIsDeletedFalse(type, categoryId);
-        attachmentRepository.softDeleteAllByCategoryTypeAndCategoryId(type, categoryId);
-        return attachmentsToHardDelete;
     }
 
     /**

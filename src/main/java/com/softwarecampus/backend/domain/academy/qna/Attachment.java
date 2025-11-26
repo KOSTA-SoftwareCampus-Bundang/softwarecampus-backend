@@ -51,4 +51,8 @@ public class Attachment extends BaseSoftDeleteSupportEntity {
     public void updateCategoryId(Long categoryId) {
         this.categoryId = categoryId;
     }
+
+    public void updateCategoryType(AttachmentCategoryType categoryType) {
+        this.categoryType = categoryType;
+    }
 }

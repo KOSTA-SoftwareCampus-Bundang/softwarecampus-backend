@@ -24,8 +24,6 @@ public interface AttachmentService {
      *  특정 Q/A에 연결된 모든 파일을 soft delete 처리하고,
      *  Hard Delete를 위해 S3 URL이 포함된 엔티티 목록을 반환
      */
-    List<Attachment> softDeleteAllByQAId(AttachmentCategoryType type ,Long categoryId);
-
     List<Attachment> softDeleteAllByCategoryAndId(AttachmentCategoryType type, Long categoryId);
 
     /**

@@ -93,7 +93,7 @@ public class BannerServiceImpl implements BannerService {
         MultipartFile newAttachment = request.getNewImageFile();
         if (newAttachment != null && !newAttachment.isEmpty()) {
             List<Attachment> attachmentsToHardDelete =
-                    attachmentService.softDeleteAllByQAId(BANNER_TYPE, bannerId);
+                    attachmentService.softDeleteAllByCategoryAndId(BANNER_TYPE, bannerId);
             attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
 
             // 새 파일의 URL을 조회하여 newImageUrl 변수에 업데이트
@@ -122,7 +122,8 @@ public class BannerServiceImpl implements BannerService {
                 .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
         if (!banner.getIsActivated() || banner.getIsDeleted()) {
-            throw new BannerException(BannerErrorCode.BANNER_NOT_ACTIVE);
+            BannerErrorCode errorCode = banner.getIsDeleted() ? BannerErrorCode.BANNER_ALREADY_DELETED : BannerErrorCode.BANNER_NOT_ACTIVE;
+            throw new BannerException(errorCode);
         }
 
         List<Attachment> attachmentsToHardDelete =

@@ -2,6 +2,7 @@ package com.softwarecampus.backend.service.academy.qna;
 
 import com.softwarecampus.backend.domain.academy.Academy;
 import com.softwarecampus.backend.domain.academy.qna.AcademyQA;
+import com.softwarecampus.backend.domain.academy.qna.Attachment;
 import com.softwarecampus.backend.domain.common.AttachmentCategoryType;
 import com.softwarecampus.backend.dto.academy.qna.QACreateRequest;
 import com.softwarecampus.backend.dto.academy.qna.QAResponse;
@@ -26,6 +27,7 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     private final AcademyQARepository academyQARepository;
     private final AcademyRepository academyRepository;
     private final AttachmentRepository attachmentRepository;
+    private final AttachmentService attachmentService;
 
     private AcademyQA findQAAndValidateAcademy(Long qaId, Long academyId) {
         AcademyQA qa = academyQARepository.findById(qaId)
@@ -98,13 +100,13 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     public void deleteQuestion(Long qaId, Long academyId) {
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
 
-        // 연결된 첨푸파일 삭제
-        attachmentRepository.softDeleteAllByCategoryTypeAndCategoryId(
-                AttachmentCategoryType.QNA,
-                qaId
-        );
-
-        academyQARepository.delete(qa);
+        // 연결된 첨부파일 삭제
+        List<Attachment> attachmentsToHardDelete =
+                attachmentService.softDeleteAllByCategoryAndId(
+                        AttachmentCategoryType.QNA,
+                        qaId
+                );
+        attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
     }
 
     /**
