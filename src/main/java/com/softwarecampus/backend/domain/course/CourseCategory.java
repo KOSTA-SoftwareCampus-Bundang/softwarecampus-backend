@@ -4,7 +4,6 @@ import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "course_category")
