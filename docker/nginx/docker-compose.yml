@@ -25,7 +25,7 @@ services:
     environment:
       - DOMAIN_NAME=${DOMAIN_NAME:-softwarecampus.earlydreamer.dev}
     command: >
-      /bin/sh -c "envsubst '$DOMAIN_NAME' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
+      /bin/sh -c "sed 's/\\$${DOMAIN_NAME}/$${DOMAIN_NAME}/g' /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
 
   # --------------------------------------------------------------------------
   # Certbot (SSL Certificate Automation)
