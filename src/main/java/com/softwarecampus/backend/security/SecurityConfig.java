@@ -35,41 +35,38 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // CSRF 비활성화: JWT 사용으로 불필요
-            .csrf(csrf -> csrf.disable())
-            
-            // CORS 설정은 WebConfig에 위임
-            .cors(cors -> {})
-            
-            // 엔드포인트별 접근 권한 설정
-            .authorizeHttpRequests(auth -> auth
-                // 인증 불필요 (누구나 접근 가능)
-                .requestMatchers(
-                    "/api/auth/**",           // 회원가입, 로그인
-                    "/api/academies/**",      // 학원 목록 조회
-                    "/api/courses/**",        // 강좌 목록 조회
-                    "/error"
-                ).permitAll()
-                
-                // 나머지는 인증 필요
-                .anyRequest().authenticated()
-            )
-            
-            // 인증 실패 시 401 Unauthorized 반환
-            .exceptionHandling(exception -> 
-                exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-            )
-            
-            // Session을 사용하지 않음 (JWT 기반)
-            .sessionManagement(session -> 
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            
-            // JWT 인증 필터를 UsernamePasswordAuthenticationFilter 앞에 추가
-            .addFilterBefore(
-                jwtAuthenticationFilter, 
-                UsernamePasswordAuthenticationFilter.class
-            );
+                // CSRF 비활성화: JWT 사용으로 불필요
+                .csrf(csrf -> csrf.disable())
+
+                // CORS 설정은 WebConfig에 위임
+                .cors(cors -> {
+                })
+
+                // 엔드포인트별 접근 권한 설정
+                .authorizeHttpRequests(auth -> auth
+                        // 인증 불필요 (누구나 접근 가능)
+                        .requestMatchers(
+                                "/api/auth/**", // 회원가입, 로그인
+                                "/api/academies/**", // 학원 목록 조회
+                                "/api/courses/**", // 강좌 목록 조회
+                                "/api/home/**", // 메인페이지 데이터
+                                "/boards/**", // 커뮤니티 게시글
+                                "/error")
+                        .permitAll()
+
+                        // 나머지는 인증 필요
+                        .anyRequest().authenticated())
+
+                // 인증 실패 시 401 Unauthorized 반환
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+
+                // Session을 사용하지 않음 (JWT 기반)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // JWT 인증 필터를 UsernamePasswordAuthenticationFilter 앞에 추가
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
