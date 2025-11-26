@@ -70,6 +70,9 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     public QnaResponse updateQuestion(Long qnaId, Long writerId, QnaRequest request) {
         CourseQna qna = qnaRepository.findById(qnaId)
                 .orElseThrow(() -> new NotFoundException("Q&A를 찾을 수 없습니다."));
+        if (qna.getIsDeleted()) {
+            throw new NotFoundException("Q&A를 찾을 수 없습니다.");
+        }
         if (!qna.getWriter().getId().equals(writerId)) {
             throw new ForbiddenException("본인의 질문만 수정할 수 있습니다.");
         }
@@ -94,6 +97,13 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     public QnaResponse answerQuestion(Long qnaId, Long adminId, QnaAnswerRequest request) {
         CourseQna qna = qnaRepository.findById(qnaId)
                 .orElseThrow(() -> new NotFoundException("Q&A를 찾을 수 없습니다."));
+        if (qna.getIsDeleted()) {
+            throw new NotFoundException("Q&A를 찾을 수 없습니다.");
+        }
+        if (qna.isAnswered()) {
+            throw new ForbiddenException("이미 답변이 등록되어 있습니다.");
+        }
+
         Account admin = accountRepository.findById(adminId)
                 .orElseThrow(() -> new NotFoundException("관리자를 찾을 수 없습니다."));
         qna.writeAnswer(request.getAnswerText(), admin);
