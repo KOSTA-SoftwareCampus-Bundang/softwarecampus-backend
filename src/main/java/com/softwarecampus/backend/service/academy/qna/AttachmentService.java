@@ -26,7 +26,6 @@ public interface AttachmentService {
      */
     List<Attachment> softDeleteAllByQAId(AttachmentCategoryType type ,Long categoryId);
 
-    @Transactional
     List<Attachment> softDeleteAllByCategoryAndId(AttachmentCategoryType type, Long categoryId);
 
     /**

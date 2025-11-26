@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,9 +31,10 @@ public class AcademyQAController {
      */
     @PostMapping("/files/upload")
     public ResponseEntity<List<QAFileDetail>> uploadQnaFiles(
+            @PathVariable Long academyId,
             @RequestParam("files") List<MultipartFile> files) {
 
-        log.info("Q/A 첨부파일 {}건 임시 업도르 요청 수신.", files.size());
+        log.info("Q/A 첨부파일 {}건 임시 업도르 요청 수신. academyId ={}", files.size(), academyId);
         List<QAFileDetail> fileDetails = attachmentService.uploadFiles(files);
 
         return ResponseEntity.ok(fileDetails);

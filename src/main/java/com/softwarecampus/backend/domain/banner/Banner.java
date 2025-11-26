@@ -19,7 +19,7 @@ public class Banner extends BaseSoftDeleteSupportEntity {
     @Column(nullable = false, length = 100)
     private String title;
 
-    @Column(nullable = false)
+    @Column
     private String imageUrl;
 
     private String linkUrl;

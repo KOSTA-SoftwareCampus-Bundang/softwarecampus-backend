@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface AttachmentRepository extends JpaRepository<Attachment,Long> {
@@ -15,6 +16,13 @@ public interface AttachmentRepository extends JpaRepository<Attachment,Long> {
      *  Q/A 화면에 표시할 활성 파일 목록 조회
      */
     List<Attachment> findByCategoryTypeAndCategoryIdAndIsDeletedFalse(
+            AttachmentCategoryType categoryType, Long categoryId
+    );
+
+    /**
+     *  특정 카테고리 ID에 연결된 소프트 삭제된 파일 목록 조회
+     */
+    List<Attachment> findByCategoryTypeAndCategoryIdAndIsDeletedTrue(
             AttachmentCategoryType categoryType, Long categoryId
     );
 
@@ -34,4 +42,6 @@ public interface AttachmentRepository extends JpaRepository<Attachment,Long> {
             @Param("type") AttachmentCategoryType categoryType,
             @Param("id") Long categoryId
     );
+
+    Collection<Object> findByCategoryTypeAndCategoryIdAndIsDeletedTrue(AttachmentCategoryType categoryType, Long categoryId, Boolean isDeleted);
 }

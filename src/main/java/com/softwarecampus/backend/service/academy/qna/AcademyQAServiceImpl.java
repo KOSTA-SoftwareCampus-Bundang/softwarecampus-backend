@@ -29,7 +29,7 @@ public class AcademyQAServiceImpl implements AcademyQAService {
 
     private AcademyQA findQAAndValidateAcademy(Long qaId, Long academyId) {
         AcademyQA qa = academyQARepository.findById(qaId)
-                .orElseThrow(() -> new AcademyException(AcademyErrorCode.ACADEMY_NOT_FOUND));
+                .orElseThrow(() -> new AcademyException(AcademyErrorCode.QA_NOT_FOUND));
 
         if (qa.getAcademy() == null) {
             throw new AcademyException(AcademyErrorCode.QA_MISSING_ACADEMY_RELATION);

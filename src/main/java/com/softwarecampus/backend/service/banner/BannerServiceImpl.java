@@ -77,26 +77,25 @@ public class BannerServiceImpl implements BannerService {
      */
     @Transactional
     public BannerResponse updateBanner(Long bannerId, BannerUpdateRequest request) {
+        // 배너 조회
         Banner banner = bannerRepository.findById(bannerId)
                 .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
+        // 배너 상태 확인 : 비활성 또는 삭제된 배너는 수정 불가
         if (!banner.getIsActivated() || banner.getIsDeleted()) {
-            throw new BannerException(BannerErrorCode.BANNER_NOT_ACTIVE);
+            BannerErrorCode errorCode = banner.getIsDeleted() ? BannerErrorCode.BANNER_ALREADY_DELETED : BannerErrorCode.BANNER_NOT_ACTIVE;
+            throw new BannerException(errorCode);
         }
 
         String newImageUrl = banner.getImageUrl();
 
         // 새로운 파일이 제공된 경우
         MultipartFile newAttachment = request.getNewImageFile();
-        if (newAttachment != null) {
+        if (newAttachment != null && !newAttachment.isEmpty()) {
             List<Attachment> attachmentsToHardDelete =
                     attachmentService.softDeleteAllByQAId(BANNER_TYPE, bannerId);
             attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
 
-            // 새 파일 확정
-            attachmentService.confirmAttachments(
-                    List.of(), bannerId, BANNER_TYPE
-            );
             // 새 파일의 URL을 조회하여 newImageUrl 변수에 업데이트
             List<QAFileDetail> updatedFiles = attachmentService.getActiveFileDetailsByQAId(BANNER_TYPE, bannerId);
             newImageUrl = updatedFiles.isEmpty() ? null : updatedFiles.get(0).getFilename();

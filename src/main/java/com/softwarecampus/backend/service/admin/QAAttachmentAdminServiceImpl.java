@@ -31,7 +31,7 @@ public class QAAttachmentAdminServiceImpl implements QAAttachmentAdminService {
      */
     @Override
     public List<QAFileDetail> getSoftDeletedFilesByQaId(Long qaId) {
-        return attachmentRepository.findByCategoryTypeAndCategoryIdAndIsDeletedFalse(QNA_TYPE, qaId)
+        return attachmentRepository.findByCategoryTypeAndCategoryIdAndIsDeletedTrue(QNA_TYPE, qaId)
                 .stream()
                 .map(a -> QAFileDetail.builder()
                         .id(a.getId())
@@ -45,6 +45,7 @@ public class QAAttachmentAdminServiceImpl implements QAAttachmentAdminService {
      *  특정 첨부파일을 복구
      */
     @Override
+    @Transactional
     public QAFileDetail restoreAttachment(Long attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new AttachmentException(AttachmentErrorCode.ATTACHMENT_NOT_FOUND));
@@ -75,6 +76,7 @@ public class QAAttachmentAdminServiceImpl implements QAAttachmentAdminService {
      *  특정 첨부파일을 DB 및 S3에서 영구 삭제합니다.
      */
     @Override
+    @Transactional
     public void permanentlyDeleteAttachment(Long attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new AttachmentException(AttachmentErrorCode.ATTACHMENT_NOT_FOUND));

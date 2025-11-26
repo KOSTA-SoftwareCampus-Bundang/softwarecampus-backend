@@ -20,16 +20,17 @@ import java.util.stream.Collectors;
 public class AttachmentServiceImpl implements AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
-//    private final S3Service s3Service;
+    private final S3Service s3Service;
 
     private static final AttachmentCategoryType QNA_TYPE = AttachmentCategoryType.QNA;
-//    private static final FileType.FileTypeEnum QNA_FILE_TYPE = FileType.FileTypeEnum.BOARD_ATTACH;
-//    private static final S3Folder QNA_S3_FOLDER = S3Folder.academy;
+    private static final FileType.FileTypeEnum QNA_FILE_TYPE = FileType.FileTypeEnum.BOARD_ATTACH;
+    private static final S3Folder QNA_S3_FOLDER = S3Folder.academy;
 
     /**
      *  파일 업로드 및 임시 저장
      */
     @Override
+    @Transactional
     public List<QAFileDetail> uploadFiles(List<MultipartFile> files) {
         if (files == null || files.isEmpty()) return List.of();
 
@@ -74,6 +75,15 @@ public class AttachmentServiceImpl implements AttachmentService {
         }
     }
 
+    @Override
+    @Transactional
+    public List<Attachment> softDeleteAllByQAId(AttachmentCategoryType type, Long categoryId) {
+        List<Attachment> attachmentsToHardDelete =
+                attachmentRepository.findByCategoryTypeAndCategoryIdAndIsDeletedFalse(type, categoryId);
+        attachmentRepository.softDeleteAllByCategoryTypeAndCategoryId(type, categoryId);
+        return attachmentsToHardDelete;
+    }
+
     /**
      *  특정 Q/A에 연결된 모든 파일을 Soft Delete 처리하고, Hard Delete를 위한 목록 반환
      */
@@ -81,9 +91,9 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Override
     public List<Attachment> softDeleteAllByCategoryAndId(AttachmentCategoryType type, Long categoryId) {
         List<Attachment> attachmentsToHardDelete =
-                attachmentRepository.findByCategoryTypeAndCategoryIdAndIsDeletedFalse(QNA_TYPE, categoryId);
+                attachmentRepository.findByCategoryTypeAndCategoryIdAndIsDeletedFalse(type, categoryId);
 
-        attachmentRepository.softDeleteAllByCategoryTypeAndCategoryId(QNA_TYPE, categoryId);
+        attachmentRepository.softDeleteAllByCategoryTypeAndCategoryId(type, categoryId);
         return attachmentsToHardDelete;
     }
 
@@ -109,7 +119,7 @@ public class AttachmentServiceImpl implements AttachmentService {
      */
     @Override
     public List<QAFileDetail> getActiveFileDetailsByQAId(AttachmentCategoryType type, Long categoryId) {
-        return attachmentRepository.findByCategoryTypeAndCategoryIdAndIsDeletedFalse(QNA_TYPE, categoryId)
+        return attachmentRepository.findByCategoryTypeAndCategoryIdAndIsDeletedFalse(type, categoryId)
                 .stream()
                 .map(a -> QAFileDetail.builder()
                         .id(a.getId())
