@@ -80,7 +80,15 @@ public class LoginServiceImpl implements LoginService {
             log.warn("로그인 실패 - 미승인 ACADEMY 계정: {}, status={}", 
                 EmailUtils.maskEmail(request.email()), 
                 account.getAccountApproved());
-            throw new InvalidCredentialsException("승인 대기 중인 계정입니다");
+            
+            // 승인 상태별 메시지 구분
+            String message = switch (account.getAccountApproved()) {
+                case PENDING -> "승인 대기 중인 계정입니다";
+                case REJECTED -> "승인이 거부된 계정입니다";
+                default -> "승인되지 않은 계정입니다";
+            };
+            
+            throw new InvalidCredentialsException(message);
         }
         
         // 4. JWT 토큰 생성 (TokenService 활용)

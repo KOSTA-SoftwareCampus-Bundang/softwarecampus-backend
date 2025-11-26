@@ -307,7 +307,7 @@ class LoginServiceImplTest {
         // when & then
         assertThatThrownBy(() -> loginService.login(rejectedRequest))
             .isInstanceOf(InvalidCredentialsException.class)
-            .hasMessage("승인 대기 중인 계정입니다");
+            .hasMessage("승인이 거부된 계정입니다");
         
         verify(jwtTokenProvider, never()).generateToken(anyString(), anyString());
     }

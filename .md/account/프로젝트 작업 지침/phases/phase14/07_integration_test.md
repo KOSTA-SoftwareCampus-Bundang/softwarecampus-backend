@@ -16,7 +16,7 @@ src/test/java/com/softwarecampus/backend/
 
 ## 7.1 LoginIntegrationTest.java
 
-**경로:** `test/java/com/softwarecampus/backend/integration/LoginIntegrationTest.java`
+**경로:** `src/test/java/com/softwarecampus/backend/integration/LoginIntegrationTest.java`
 
 **설명:** 로그인 통합 테스트 (5-8개 테스트)
 
