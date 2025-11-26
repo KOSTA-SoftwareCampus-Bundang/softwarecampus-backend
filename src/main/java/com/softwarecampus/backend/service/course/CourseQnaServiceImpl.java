@@ -41,6 +41,9 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     public QnaResponse getQnaDetail(Long qnaId) {
         CourseQna qna = qnaRepository.findById(qnaId)
                 .orElseThrow(() -> new NotFoundException("Q&A를 찾을 수 없습니다."));
+        if(qna.getIsDeleted()) {
+            throw new NotFoundException("Q&A를 찾을 수 없습니다.");
+        }
         return toDto(qna);
     }
 
@@ -105,6 +108,9 @@ public class CourseQnaServiceImpl implements CourseQnaService {
         if (!qna.getAnsweredBy().getId().equals(adminId)) {
             throw new ForbiddenException("본인의 답변만 수정할 수 있습니다.");
         }
+        if (qna.getAnsweredBy() == null) {
+            throw new NotFoundException("답변이 존재하지 않습니다.");
+        }
         qna.writeAnswer(request.getAnswerText(), qna.getAnsweredBy());
         return toDto(qna);
     }
@@ -116,6 +122,9 @@ public class CourseQnaServiceImpl implements CourseQnaService {
                 .orElseThrow(() -> new NotFoundException("Q&A를 찾을 수 없습니다."));
         if (!qna.getAnsweredBy().getId().equals(adminId)) {
             throw new ForbiddenException("본인의 답변만 삭제할 수 있습니다.");
+        }
+        if (qna.getAnsweredBy() == null) {
+            throw new NotFoundException("답변이 존재하지 않습니다.");
         }
         qna.setAnswerText(null);
         qna.setAnsweredBy(null);
