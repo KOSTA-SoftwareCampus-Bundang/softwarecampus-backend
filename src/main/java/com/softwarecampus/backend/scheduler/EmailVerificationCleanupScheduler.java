@@ -22,8 +22,8 @@ public class EmailVerificationCleanupScheduler {
     
     /**
      * 만료된 인증 데이터 삭제
-     * - 인증 완료 후 24시간 지난 데이터
-     * - 미인증 상태로 24시간 지난 데이터
+     * - 인증 완료 후 24시간 지난 데이터 (verifiedAt 기준)
+     * - 미인증 상태로 24시간 지난 데이터 (createdAt 기준)
      */
     @Scheduled(cron = "0 0 2 * * ?") // 매일 새벽 2시
     @Transactional
@@ -31,13 +31,14 @@ public class EmailVerificationCleanupScheduler {
         LocalDateTime threshold = LocalDateTime.now().minusHours(24);
         
         try {
-            // 인증 완료 후 24시간 지난 데이터 삭제
-            verificationRepository.deleteByExpiresAtBeforeAndVerifiedTrue(threshold);
+            // 1. 인증 완료 후 24시간 지난 데이터 삭제 (verifiedAt 기준)
+            int verifiedDeleted = verificationRepository.deleteOldVerified(threshold);
             
-            // 미인증 상태로 24시간 지난 데이터 삭제
+            // 2. 미인증 상태로 24시간 지난 데이터 삭제 (createdAt 기준)
             verificationRepository.deleteByCreatedAtBeforeAndVerifiedFalse(threshold);
             
-            log.info("만료된 이메일 인증 데이터 정리 완료 - threshold: {}", threshold);
+            log.info("만료된 이메일 인증 데이터 정리 완료 - 인증 완료 삭제: {}, threshold: {}", 
+                    verifiedDeleted, threshold);
         } catch (Exception e) {
             log.error("이메일 인증 데이터 정리 실패", e);
         }
