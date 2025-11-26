@@ -15,6 +15,7 @@ import com.softwarecampus.backend.service.common.FileType;
 import com.softwarecampus.backend.service.common.S3Folder;
 import com.softwarecampus.backend.service.common.S3Service;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CourseImageServiceImpl implements CourseImageService {
@@ -101,7 +103,8 @@ public class CourseImageServiceImpl implements CourseImageService {
     public void hardDeleteCourseImage(CategoryType type, Long imageId) {
         // 1. 현재 로그인한 사용자 가져오기
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof UserDetails)) {
             throw new ForbiddenException("권한이 없습니다.");
         }
 
@@ -128,6 +131,8 @@ public class CourseImageServiceImpl implements CourseImageService {
                 s3Service.deleteFile(image.getImageUrl());
             } catch (Exception e) {
                 // 로깅만 하고 DB 삭제 진행
+                log.warn("S3 파일 삭제 실패 (imageId: {}, url: {}): {}",
+                        imageId, image.getImageUrl(), e.getMessage());
             }
         }
 
