@@ -30,7 +30,7 @@ public class EmailVerificationController {
     public ResponseEntity<EmailVerificationResponse> sendSignupVerification(
             @Valid @RequestBody EmailVerificationRequest request
     ) {
-        log.info("회원가입 인증 코드 발송 요청");
+        log.info("회원가입 인증 코드 발송 요청 - type: {}", VerificationType.SIGNUP);
         
         // 강제로 SIGNUP 타입 설정
         request.setType(VerificationType.SIGNUP);
@@ -47,7 +47,7 @@ public class EmailVerificationController {
     public ResponseEntity<EmailVerificationResponse> verifySignupCode(
             @Valid @RequestBody EmailVerificationCodeRequest request
     ) {
-        log.info("회원가입 인증 코드 검증 요청");
+        log.info("회원가입 인증 코드 검증 요청 - type: {}", VerificationType.SIGNUP);
         
         EmailVerificationResponse response = verificationService.verifyCode(request);
         return ResponseEntity.ok(response);
@@ -61,7 +61,7 @@ public class EmailVerificationController {
     public ResponseEntity<EmailVerificationResponse> sendPasswordResetCode(
         @Valid @RequestBody EmailVerificationRequest request
     ) {
-        log.info("비밀번호 재설정 인증 코드 발송 요청");
+        log.info("비밀번호 재설정 인증 코드 발송 요청 - type: {}", VerificationType.PASSWORD_RESET);
         
         // 강제로 PASSWORD_RESET 타입 설정
         request.setType(VerificationType.PASSWORD_RESET);
@@ -78,7 +78,7 @@ public class EmailVerificationController {
     public ResponseEntity<EmailVerificationResponse> verifyPasswordResetCode(
             @Valid @RequestBody EmailVerificationCodeRequest request
     ) {
-        log.info("비밀번호 재설정 인증 코드 검증 요청");
+        log.info("비밀번호 재설정 인증 코드 검증 요청 - type: {}", VerificationType.PASSWORD_RESET);
         
         EmailVerificationResponse response = verificationService.verifyResetCode(request);
         return ResponseEntity.ok(response);
