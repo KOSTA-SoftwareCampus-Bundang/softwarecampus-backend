@@ -74,14 +74,4 @@ public interface EmailVerificationRepository extends JpaRepository<EmailVerifica
     @Modifying
     @Query("DELETE FROM EmailVerification ev WHERE ev.verified = true AND ev.verifiedAt < :cutoff")
     int deleteOldVerified(@Param("cutoff") LocalDateTime cutoff);
-    
-    /**
-     * 만료된 데이터 카운트 (로깅용)
-     */
-    long countByExpiresAtBefore(LocalDateTime now);
-    
-    /**
-     * 인증 완료 데이터 카운트
-     */
-    long countByVerifiedTrueAndVerifiedAtBefore(LocalDateTime cutoff);
 }
