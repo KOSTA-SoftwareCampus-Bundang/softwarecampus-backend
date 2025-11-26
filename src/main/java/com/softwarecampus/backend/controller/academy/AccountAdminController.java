@@ -2,7 +2,7 @@ package com.softwarecampus.backend.controller.academy;
 
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.AccountUpdateRequest;
-import com.softwarecampus.backend.service.academy.AccountAdminService;
+import com.softwarecampus.backend.service.admin.AccountAdminService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;

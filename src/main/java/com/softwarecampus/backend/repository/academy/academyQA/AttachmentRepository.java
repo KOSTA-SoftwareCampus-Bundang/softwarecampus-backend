@@ -26,11 +26,11 @@ public interface AttachmentRepository extends JpaRepository<Attachment,Long> {
     int softDeleteByIds(@Param("ids") List<Long> attachmentIds);
 
     /**
-     *  Q/A 게시글 삭제 시 연결된 모든 파일을 처리
+     * Q/A 게시글 삭제 시 연결된 모든 파일을 처리
      */
     @Modifying
     @Query("UPDATE Attachment a SET a.isDeleted = TRUE, a.deletedAt = CURRENT_TIMESTAMP WHERE a.categoryType = :type AND a.categoryId = :id AND a.isDeleted = FALSE")
-    int softDeleteAllByCategoryTypeAndCategoryId(
+    void softDeleteAllByCategoryTypeAndCategoryId(
             @Param("type") AttachmentCategoryType categoryType,
             @Param("id") Long categoryId
     );
