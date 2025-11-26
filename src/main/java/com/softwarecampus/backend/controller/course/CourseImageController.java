@@ -52,10 +52,9 @@ public class CourseImageController {
     @DeleteMapping("/images/{imageId}/hard")
     public ResponseEntity<Void> hardDeleteCourseImage(
             @PathVariable("type") CategoryType type,
-            @PathVariable Long imageId,
-            @RequestAttribute("userId") Long adminId // 관리자만 접근
+            @PathVariable Long imageId
     ) {
-        courseImageService.hardDeleteCourseImage(type, imageId, adminId);
+        courseImageService.hardDeleteCourseImage(type, imageId);
         return ResponseEntity.noContent().build();
     }
 

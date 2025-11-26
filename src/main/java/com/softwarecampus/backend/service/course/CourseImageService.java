@@ -15,5 +15,5 @@ public interface CourseImageService {
 
     List<CourseImageResponse> getCourseImages(CategoryType type, Long courseId);
 
-    void hardDeleteCourseImage(CategoryType type, Long imageId, Long adminId);
+    void hardDeleteCourseImage(CategoryType type, Long imageId);
 }
