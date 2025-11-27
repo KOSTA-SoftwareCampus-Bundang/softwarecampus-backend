@@ -1,0 +1,258 @@
+# ==============================================================================
+# [GitHub Actions - Backend CI/CD 워크플로우]
+#
+# 목적: Spring Boot 백엔드 애플리케이션의 빌드, Docker 이미지 생성, EC2 배포 자동화
+# 트리거: main 브랜치에 푸시 또는 PR 발생 시
+# 주요 기능:
+#   - Java 17 & Maven 빌드
+#   - GHCR(GitHub Container Registry) 이미지 푸시
+#   - EC2 서버로 설정 파일 전송 및 Docker Compose 배포
+# ==============================================================================
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# --------------------------------------------------------------------------
+# 전역 환경 변수 설정
+# --------------------------------------------------------------------------
+env:
+  # 배포 관련 경로
+  DEPLOY_PATH: "/home/${{ secrets.EC2_USERNAME }}/deploy"
+  TEMP_PATH: "/home/${{ secrets.EC2_USERNAME }}/deploy_temp"
+  # Docker 네트워크 및 컨테이너 설정
+  NETWORK_NAME: "softcampus-network"
+  # 리소스 경로 (Repository 내)
+  COMPOSE_FILE_PATH: "docker/backend/docker-compose.yml"
+  NGINX_CONFIG_PATH: "docker/nginx/*"
+  # 도메인 및 인증서 설정 (Secrets 필수)
+  DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+  CERT_EMAIL: ${{ secrets.CERT_EMAIL }}
+
+# --------------------------------------------------------------------------
+# 권한 설정
+# GHCR 패키지 쓰기 권한(packages: write) 필수
+# --------------------------------------------------------------------------
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # ==========================================================================
+  # [Job 1] Build
+  # 애플리케이션을 컴파일하고 테스트하여 JAR 파일을 생성합니다.
+  # ==========================================================================
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. 소스 코드 체크아웃
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    # 2. JDK 17 설정 (Temurin 배포판)
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'maven'
+        cache-dependency-path: 'pom.xml'
+
+    # 3. Maven Wrapper 실행 권한 부여
+    - name: Grant execute permission for mvnw
+      run: chmod +x mvnw
+
+    # 4. Maven 빌드 (테스트 제외 - 속도 최적화)
+    # 실제 운영 시에는 테스트를 포함하는 것이 좋습니다.
+    - name: Build with Maven
+      run: ./mvnw clean package -DskipTests
+
+    # 5. 빌드된 JAR 파일 업로드 (다음 Job으로 전달)
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-jar
+        path: target/*.jar
+        retention-days: 1
+
+  # ==========================================================================
+  # [Job 2] Push
+  # 빌드된 아티팩트로 Docker 이미지를 생성하고 GHCR에 푸시합니다.
+  # ==========================================================================
+  push:
+    needs: build
+    # main 브랜치 푸시 이벤트일 때만 실행 (PR 제외)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 1. 소스 코드 체크아웃 (Dockerfile 참조용)
+    - uses: actions/checkout@v4
+
+    # 2. 빌드 아티팩트(JAR) 다운로드
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-jar
+        path: target
+
+    # 3. GHCR 로그인
+    - name: Log in to the Container registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # 4. Docker 메타데이터 추출 (태그 생성)
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}/backend
+        tags: |
+          type=raw,value=latest
+          type=sha,format=short
+
+    # 5. Docker 이미지 빌드 및 푸시
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/backend/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+  # ==========================================================================
+  # [Job 3] Deploy
+  # EC2 서버에 접속하여 최신 이미지를 배포하고 서비스를 재시작합니다.
+  # ==========================================================================
+  deploy:
+    needs: push
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 소스 코드 체크아웃 (docker-compose 파일 전송용)
+      - uses: actions/checkout@v4
+
+      # 2. EC2로 설정 파일 전송 (SCP)
+      # docker-compose.yml 및 nginx 설정 파일을 임시 폴더로 전송
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "${{ env.COMPOSE_FILE_PATH }},${{ env.NGINX_CONFIG_PATH }}"
+          target: "${{ env.TEMP_PATH }}"
+          strip_components: 1
+
+      # 3. EC2에서 배포 실행 (SSH)
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DEPLOY_PATH,TEMP_PATH,NETWORK_NAME,DOMAIN_NAME,CERT_EMAIL
+          script: |
+            # Bash strict mode: 에러 발생 시 즉시 중단
+            set -e
+
+            # ------------------------------------------------------------------
+            # Step 1: 디렉토리 정리 및 파일 이동
+            # 임시 폴더로 전송된 파일들을 실제 배포 위치로 이동합니다.
+            # ------------------------------------------------------------------
+            echo "Moving configuration files..."
+            mkdir -p $DEPLOY_PATH/backend
+            mkdir -p $DEPLOY_PATH/nginx
+            
+            # Backend 설정 이동
+            if [ -d "$TEMP_PATH/backend" ]; then
+              mv $TEMP_PATH/backend/docker-compose.yml $DEPLOY_PATH/backend/
+            fi
+            # Nginx 설정 이동
+            if [ -d "$TEMP_PATH/nginx" ]; then
+              mv $TEMP_PATH/nginx/* $DEPLOY_PATH/nginx/
+            fi
+            # 임시 폴더 삭제
+            rm -rf $TEMP_PATH
+
+            # ------------------------------------------------------------------
+            # Step 2: .env 파일 생성 (Secrets 주입)
+            # GitHub Secrets에 저장된 환경변수를 .env 파일로 생성합니다.
+            # ------------------------------------------------------------------
+            echo "Creating .env file..."
+            echo "${{ secrets.BACKEND_ENV }}" > $DEPLOY_PATH/backend/.env
+            
+            # 네트워크 이름 추가
+            echo "NETWORK_NAME=$NETWORK_NAME" >> $DEPLOY_PATH/backend/.env
+
+            # 도메인 및 이메일 추가 (Nginx용)
+            # 주의: Nginx는 별도의 .env를 사용하지 않고 docker-compose.yml에서 직접 환경변수를 참조하거나
+            #       여기서 생성한 .env를 공유해서 써야 함.
+            #       현재 구조상 backend/.env만 생성하고 있으므로, nginx/.env도 생성해주거나
+            #       nginx docker-compose 실행 시 환경변수를 주입해야 함.
+            
+            # Nginx용 .env 생성 (필요 시)
+            # 현재는 하드코딩된 nginx.conf를 사용하므로 환경변수가 필요 없지만,
+            # 추후 확장을 위해 NETWORK_NAME 정도는 남겨둘 수 있음.
+            # 하지만 롤백 요청에 따라 최대한 단순하게 유지.
+            echo "Creating Nginx .env file..."
+            echo "NETWORK_NAME=$NETWORK_NAME" > $DEPLOY_PATH/nginx/.env
+
+            # Repository 이름을 소문자로 변환하여 이미지 태그 생성
+            REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="ghcr.io/$REPO_NAME/backend:latest"
+            echo "DOCKER_IMAGE_NAME=$IMAGE_NAME" >> $DEPLOY_PATH/backend/.env
+
+            # ------------------------------------------------------------------
+            # Step 3: Docker 네트워크 확인
+            # 컨테이너 간 통신을 위한 네트워크가 없으면 생성합니다.
+            # ------------------------------------------------------------------
+            echo "Checking Docker network..."
+            docker network create $NETWORK_NAME || true
+
+            # ------------------------------------------------------------------
+            # Step 4: GHCR 로그인
+            # Private 패키지를 Pull하기 위해 로그인이 필요합니다.
+            # ------------------------------------------------------------------
+            echo "Logging into GHCR..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # ------------------------------------------------------------------
+            # Step 5: Backend 서비스 배포
+            # 최신 이미지를 Pull하고 컨테이너를 재시작합니다.
+            # ------------------------------------------------------------------
+            echo "Deploying Backend..."
+            cd $DEPLOY_PATH/backend
+            docker compose pull || true
+            docker compose up -d
+
+            # ------------------------------------------------------------------
+            # Step 6: 보안 설정 (.env 권한 제한)
+            # .env 파일을 삭제하면 추후 관리(재시작/로그확인)가 불가능하므로,
+            # 소유자만 읽을 수 있도록 권한을 600으로 제한합니다.
+            # ------------------------------------------------------------------
+            echo "Securing .env file..."
+            chmod 600 $DEPLOY_PATH/backend/.env
+
+            # ------------------------------------------------------------------
+            # Step 5: Nginx 서비스 배포
+            # 설정 변경 사항 반영을 위해 강제로 재생성합니다.
+            # ------------------------------------------------------------------
+            echo "Deploying Nginx..."
+            cd $DEPLOY_PATH/nginx
+            # .env 파일을 사용하여 실행
+            docker compose --env-file .env up -d --force-recreate
+
+            # ------------------------------------------------------------------
+            # Step 6: 정리
+            # 사용하지 않는 구버전 이미지(dangling images)를 삭제하여 디스크 공간 확보
+            # ------------------------------------------------------------------
+            docker image prune -f

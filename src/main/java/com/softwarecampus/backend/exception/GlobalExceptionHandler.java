@@ -1,17 +1,28 @@
 package com.softwarecampus.backend.exception;
 
+import com.softwarecampus.backend.exception.email.EmailSendException;
+import com.softwarecampus.backend.exception.email.EmailVerificationException;
+import com.softwarecampus.backend.exception.email.EmailNotVerifiedException;
+import com.softwarecampus.backend.exception.email.VerificationCodeExpiredException;
+import com.softwarecampus.backend.exception.email.TooManyAttemptsException;
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
+import com.softwarecampus.backend.exception.user.InvalidCredentialsException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
+import com.softwarecampus.backend.exception.user.PhoneNumberAlreadyExistsException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.net.URI;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -36,6 +47,9 @@ import java.util.NoSuchElementException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @Value("${problem.base-uri}")
+    private String problemBaseUri;
+
     /**
      * Bean Validation 실패 처리 (@Valid)
      */
@@ -53,7 +67,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             "요청 본문에 유효하지 않은 필드가 있습니다."
         );
-        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/validation-error"));
+        problemDetail.setType(URI.create(problemBaseUri + "/validation-error"));
         problemDetail.setTitle("Validation Failed");
         
         // 필드별 오류 수집
@@ -62,6 +76,40 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage())
         );
         problemDetail.setProperty("errors", errors);
+        
+        return problemDetail;
+    }
+
+    /**
+     * 필수 요청 파라미터 누락 처리 (@RequestParam required=true)
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ProblemDetail handleMissingParameter(MissingServletRequestParameterException ex) {
+        log.warn("Missing required request parameter: {}", ex.getParameterName());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            String.format("필수 파라미터 '%s'가 누락되었습니다.", ex.getParameterName())
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/missing-parameter"));
+        problemDetail.setTitle("Missing Required Parameter");
+        
+        return problemDetail;
+    }
+
+    /**
+     * 필수 멀티파트 파일 누락 처리 (multipart/form-data의 file part)
+     */
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ProblemDetail handleMissingFilePart(MissingServletRequestPartException ex) {
+        log.warn("Missing required file part: {}", ex.getRequestPartName());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            String.format("필수 파일 '%s'가 누락되었습니다.", ex.getRequestPartName())
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/missing-file"));
+        problemDetail.setTitle("Missing Required File");
         
         return problemDetail;
     }
@@ -76,22 +124,28 @@ public class GlobalExceptionHandler {
             log.debug("Constraint violation detected for request parameters");
         }
         
-        // 첫 번째 위반 메시지 추출
-        String detail = ex.getConstraintViolations().stream()
-            .findFirst()
-            .map(violation -> violation.getMessage())
-            .orElse("요청 파라미터가 유효하지 않습니다.");
+        // 파라미터별 오류 수집
+        Map<String, String> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(violation -> {
+            String parameterName = violation.getPropertyPath().toString();
+            errors.put(parameterName, violation.getMessage());
+        });
+        
+        // 단일 오류인 경우 해당 메시지를 detail에 직접 표시
+        String detailMessage = errors.size() == 1 
+            ? errors.values().iterator().next()
+            : "요청 파라미터가 유효하지 않습니다.";
         
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
-            detail
+            detailMessage
         );
-        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/validation-error"));
+        problemDetail.setType(URI.create(problemBaseUri + "/validation-error"));
         problemDetail.setTitle("Validation Failed");
+        problemDetail.setProperty("errors", errors);
         
         return problemDetail;
     }
-
     /**
      * 일반 예외 처리 (fallback)
      */
@@ -128,7 +182,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             ex.getMessage()  // 이미 일반화된 메시지 사용
         );
-        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-input"));
+        problemDetail.setType(URI.create(problemBaseUri + "/invalid-input"));
         problemDetail.setTitle("Invalid Input");
         
         return problemDetail;
@@ -149,8 +203,29 @@ public class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             "이메일이 이미 등록되었습니다."
         );
-        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-email"));
+        problemDetail.setType(URI.create(problemBaseUri + "/duplicate-email"));
         problemDetail.setTitle("Duplicate Email");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 전화번호 중복 예외 처리
+     * HTTP 409 Conflict
+     */
+    @ExceptionHandler(PhoneNumberAlreadyExistsException.class)
+    public ProblemDetail handlePhoneNumberAlreadyExistsException(PhoneNumberAlreadyExistsException ex) {
+        log.warn("Phone number duplicate detected for a request");
+        if (log.isDebugEnabled()) {
+            log.debug("PhoneNumberAlreadyExistsException details", ex);
+        }
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            "이미 사용 중인 전화번호입니다."
+        );
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-phone-number"));
+        problemDetail.setTitle("Duplicate Phone Number");
         
         return problemDetail;
     }
@@ -170,8 +245,27 @@ public class GlobalExceptionHandler {
             HttpStatus.NOT_FOUND,
             "요청한 계정을 찾을 수 없습니다."
         );
-        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/account-not-found"));
+        problemDetail.setType(URI.create(problemBaseUri + "/account-not-found"));
         problemDetail.setTitle("Account Not Found");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 로그인 인증 실패 예외 처리
+     * HTTP 401 Unauthorized
+     */
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
+        log.warn("인증 실패: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNAUTHORIZED,
+            ex.getMessage()
+        );
+        
+        problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-credentials"));
+        problemDetail.setTitle("Unauthorized");
         
         return problemDetail;
     }
@@ -179,6 +273,194 @@ public class GlobalExceptionHandler {
     // ========================================
     // 여기에 다른 도메인 예외 추가
     // ========================================
+
+    // ========================================
+    // Email 도메인 예외 처리
+    // ========================================
+    
+    /**
+     * 이메일 발송 실패 예외
+     * HTTP 500 Internal Server Error
+     */
+    @ExceptionHandler(EmailSendException.class)
+    public ProblemDetail handleEmailSendException(EmailSendException ex) {
+        log.error("이메일 발송 실패", ex);
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "이메일 발송에 실패했습니다."
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/email-send-failed"));
+        problemDetail.setTitle("Email Send Failed");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 이메일 인증 예외 (일반)
+     * HTTP 400 Bad Request
+     */
+    @ExceptionHandler(EmailVerificationException.class)
+    public ProblemDetail handleEmailVerificationException(EmailVerificationException ex) {
+        log.warn("이메일 인증 예외: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/email-verification-error"));
+        problemDetail.setTitle("Email Verification Error");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 이메일 미인증 예외
+     * HTTP 403 Forbidden
+     */
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ProblemDetail handleEmailNotVerifiedException(EmailNotVerifiedException ex) {
+        log.warn("이메일 미인증: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.FORBIDDEN,
+            ex.getMessage()
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/email-not-verified"));
+        problemDetail.setTitle("Email Not Verified");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 인증 코드 만료 예외
+     * HTTP 400 Bad Request
+     */
+    @ExceptionHandler(VerificationCodeExpiredException.class)
+    public ProblemDetail handleVerificationCodeExpiredException(VerificationCodeExpiredException ex) {
+        log.warn("인증 코드 만료: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/verification-code-expired"));
+        problemDetail.setTitle("Verification Code Expired");
+        
+        return problemDetail;
+    }
+    
+    /**
+     * 인증 시도 횟수 초과 예외
+     * HTTP 429 Too Many Requests
+     */
+    @ExceptionHandler(TooManyAttemptsException.class)
+    public ProblemDetail handleTooManyAttemptsException(TooManyAttemptsException ex) {
+        log.warn("인증 시도 횟수 초과: {}", ex.getMessage());
+        
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.TOO_MANY_REQUESTS,
+            ex.getMessage()
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/too-many-attempts"));
+        problemDetail.setTitle("Too Many Attempts");
+        
+        // 차단 해제 시간 추가 (ISO-8601 형식으로 통일)
+        if (ex.getBlockedUntil() != null) {
+            problemDetail.setProperty("blockedUntil", 
+                ex.getBlockedUntil().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        }
+        
+        return problemDetail;
+    }
+
+    /**
+     * S3 파일 업로드 실패 예외 처리
+     * FailureReason에 따라 적절한 HTTP 상태 코드 및 로깅 레벨 매핑
+     */
+    @ExceptionHandler(S3UploadException.class)
+    public ProblemDetail handleS3UploadException(S3UploadException ex) {
+        S3UploadException.FailureReason reason = ex.getReason();
+        HttpStatus status;
+        String message;
+        String type;
+        String title;
+
+        // FailureReason에 따른 HTTP 상태 코드 및 메시지 매핑
+        switch (reason) {
+            case FILE_TOO_LARGE:
+                status = HttpStatus.PAYLOAD_TOO_LARGE; // 413
+                message = ex.getMessage(); // 원본 메시지에 구체적인 크기 정보 포함
+                type = problemBaseUri + "/file-too-large";
+                title = "File Too Large";
+                log.warn("S3 upload failed - File too large: {}", ex.getMessage());
+                break;
+
+            case INVALID_FILE_TYPE:
+                status = HttpStatus.UNSUPPORTED_MEDIA_TYPE; // 415
+                message = ex.getMessage(); // 원본 메시지에 허용된 형식 정보 포함
+                type = problemBaseUri + "/invalid-file-type";
+                title = "Invalid File Type";
+                log.warn("S3 upload failed - Invalid file type: {}", ex.getMessage());
+                break;
+
+            case VALIDATION_ERROR:
+                status = HttpStatus.BAD_REQUEST; // 400
+                message = ex.getMessage(); // 원본 메시지에 구체적인 검증 실패 이유 포함
+                type = problemBaseUri + "/file-validation-error";
+                title = "File Validation Error";
+                log.warn("S3 upload failed - Validation error: {}", ex.getMessage());
+                break;
+
+            case AUTHENTICATION_ERROR:
+                status = HttpStatus.FORBIDDEN; // 403
+                message = "파일 저장소 접근 권한이 없습니다.";
+                type = problemBaseUri + "/s3-access-denied";
+                title = "Access Denied";
+                log.error("S3 upload failed - Authentication/Permission error: {}", ex.getMessage(), ex);
+                break;
+
+            case RESOURCE_NOT_FOUND:
+                status = HttpStatus.NOT_FOUND; // 404
+                message = "파일 저장소를 찾을 수 없습니다.";
+                type = problemBaseUri + "/s3-resource-not-found";
+                title = "Resource Not Found";
+                log.error("S3 upload failed - Resource not found: {}", ex.getMessage(), ex);
+                break;
+
+            case NETWORK_ERROR:
+                status = HttpStatus.BAD_GATEWAY; // 502
+                message = "파일 저장소와의 연결에 실패했습니다. 잠시 후 다시 시도해주세요.";
+                type = problemBaseUri + "/s3-network-error";
+                title = "Network Error";
+                log.error("S3 upload failed - Network error: {}", ex.getMessage(), ex);
+                break;
+
+            case AWS_SDK_ERROR:
+                status = HttpStatus.SERVICE_UNAVAILABLE; // 503
+                message = "파일 저장 서비스를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.";
+                type = problemBaseUri + "/s3-service-unavailable";
+                title = "Service Unavailable";
+                log.error("S3 upload failed - AWS SDK error: {}", ex.getMessage(), ex);
+                break;
+
+            case INTERNAL_ERROR:
+            default:
+                status = HttpStatus.INTERNAL_SERVER_ERROR; // 500
+                message = "파일 업로드 중 서버 오류가 발생했습니다.";
+                type = problemBaseUri + "/s3-internal-error";
+                title = "Internal Server Error";
+                log.error("S3 upload failed - Internal error: {}", ex.getMessage(), ex);
+                break;
+        }
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, message);
+        problemDetail.setType(URI.create(type));
+        problemDetail.setTitle(title);
+        problemDetail.setProperty("reason", reason.name());
+
+        return problemDetail;
+    }
 
     /**
      *  리소스 찾기 실패 처리
@@ -191,7 +473,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND,
                 "요청한 리소스를 찾을 수 없습니다." // 구체적인 메시지는 보안상 일반화
         );
-        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/resource-not-found"));
+        problemDetail.setType(URI.create(problemBaseUri + "/resource-not-found"));
         problemDetail.setTitle("Resource Not Found");
 
         // 디버깅을 위해 에러 메시지를 detail에 남길 수도 있지만, 여기서는 일반화합니다.
@@ -211,7 +493,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 ex.getMessage() // 비즈니스 로직 위반 메시지를 그대로 전달
         );
-        problemDetail.setType(URI.create("https://api.프로젝트주소/problems/invalid-argument"));
+        problemDetail.setType(URI.create(problemBaseUri + "/invalid-argument"));
         problemDetail.setTitle("Invalid Request Argument");
 
         return problemDetail;

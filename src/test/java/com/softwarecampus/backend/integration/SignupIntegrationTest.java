@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false) // Security 필터 비활성화
+@ActiveProfiles("test")
 @Transactional // 각 테스트 후 롤백
 @DisplayName("회원가입 통합 테스트 (E2E + Repository)")
 class SignupIntegrationTest {
@@ -78,7 +80,7 @@ class SignupIntegrationTest {
         );
         
         // when & then - HTTP 요청/응답 검증
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
@@ -118,7 +120,7 @@ class SignupIntegrationTest {
         );
         
         // when & then - HTTP 요청/응답 검증
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
@@ -169,7 +171,7 @@ class SignupIntegrationTest {
             null
         );
         
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(duplicateRequest)))
             .andExpect(status().isConflict()) // 409 Conflict
@@ -208,7 +210,7 @@ class SignupIntegrationTest {
             null
         );
         
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(duplicateRequest)))
             .andExpect(status().isBadRequest()) // 400 Bad Request
@@ -232,13 +234,13 @@ class SignupIntegrationTest {
         accountRepository.save(existingAccount);
         
         // when & then - 중복 이메일 확인
-        mockMvc.perform(get("/api/v1/auth/check-email")
+        mockMvc.perform(get("/api/auth/check-email")
                 .param("email", "existing@test.com"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("이미 사용 중인 이메일입니다."));
         
         // when & then - 사용 가능한 이메일 확인
-        mockMvc.perform(get("/api/v1/auth/check-email")
+        mockMvc.perform(get("/api/auth/check-email")
                 .param("email", "available@test.com"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("사용 가능한 이메일입니다."));
@@ -292,7 +294,7 @@ class SignupIntegrationTest {
         );
         
         // when & then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidRequest)))
             .andExpect(status().isBadRequest())
@@ -317,7 +319,7 @@ class SignupIntegrationTest {
         );
         
         // when & then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(adminRequest)))
             .andExpect(status().isBadRequest())
@@ -342,7 +344,7 @@ class SignupIntegrationTest {
         );
         
         // when & then
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(academyRequest)))
             .andExpect(status().isBadRequest())
@@ -366,7 +368,7 @@ class SignupIntegrationTest {
             null
         );
         
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated());
@@ -378,13 +380,13 @@ class SignupIntegrationTest {
         assertThat(savedAccount.getUserName()).isEqualTo("플로우테스트");
         
         // Step 3: 이메일 중복 확인 API
-        mockMvc.perform(get("/api/v1/auth/check-email")
+        mockMvc.perform(get("/api/auth/check-email")
                 .param("email", "fullflow@test.com"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("이미 사용 중인 이메일입니다."));
         
-        // Step 4: 동일 이메일로 재가입 시도
-        mockMvc.perform(post("/api/v1/auth/signup")
+        // Step 4: 동일 이메일로 재시도
+        mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isConflict());

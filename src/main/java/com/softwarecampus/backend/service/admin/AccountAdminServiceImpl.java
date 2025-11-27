@@ -1,4 +1,4 @@
-package com.softwarecampus.backend.service.academy;
+package com.softwarecampus.backend.service.admin;
 
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
@@ -7,14 +7,11 @@ import com.softwarecampus.backend.repository.user.AccountRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

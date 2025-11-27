@@ -20,7 +20,7 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
-.mvn/wrapper/maven-wrapper.properties
+
 
 # ---------------------------------------------
 # 🧠 IDE / Editor stuff
@@ -92,6 +92,7 @@ spring.log
 # ---------------------------------------------
 .env
 .env.*
+*.pem
 application-*.yml
 application-*.yaml
 application-*.properties

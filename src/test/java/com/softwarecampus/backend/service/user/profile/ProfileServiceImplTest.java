@@ -115,6 +115,8 @@ class ProfileServiceImplTest {
         assertThatThrownBy(() -> profileService.getAccountByEmail("notfound@example.com"))
             .isInstanceOf(AccountNotFoundException.class)
             .hasMessage("계정을 찾을 수 없습니다.");
+        
+        verify(accountRepository).findByEmail("notfound@example.com");
     }
     
     @Test

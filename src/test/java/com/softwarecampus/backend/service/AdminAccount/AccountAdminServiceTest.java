@@ -6,7 +6,7 @@ import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.AccountUpdateRequest;
 import com.softwarecampus.backend.repository.user.AccountRepository;
-import com.softwarecampus.backend.service.academy.AccountAdminServiceImpl;
+import com.softwarecampus.backend.service.admin.AccountAdminServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -2,8 +2,10 @@ package com.softwarecampus.backend.service.user.profile;
 
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
+import com.softwarecampus.backend.exception.user.PhoneNumberAlreadyExistsException;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import com.softwarecampus.backend.util.EmailUtils;
 import lombok.RequiredArgsConstructor;
@@ -12,9 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 계정 조회 Service 구현체
+ * 계정 조회 및 프로필 관리 Service 구현체
  * - Phase 5: 기본 조회 기능
- * - Phase 18: 수정/삭제 기능 추가 예정
+ * - Phase 15-1: 프로필 수정/삭제 기능 추가
  */
 @Slf4j
 @Service
@@ -80,6 +82,79 @@ public class ProfileServiceImpl implements ProfileService {
     }
     
     /**
+     * 프로필 수정
+     */
+    @Override
+    @Transactional
+    public AccountResponse updateProfile(String email, UpdateProfileRequest request) {
+        // 1. 입력 검증
+        validateEmailInput(email);
+        
+        // 2. Account 조회
+        log.info("프로필 수정 시도: email={}", EmailUtils.maskEmail(email));
+        Account account = accountRepository.findByEmail(email)
+            .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
+        
+        // 3. 전화번호 중복 검증 (변경하는 경우에만)
+        if (request.getPhoneNumber() != null && 
+            !request.getPhoneNumber().equals(account.getPhoneNumber())) {
+            
+            if (accountRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+                log.warn("전화번호 중복: phoneNumber={}", request.getPhoneNumber());
+                throw new PhoneNumberAlreadyExistsException(request.getPhoneNumber());
+            }
+        }
+        
+        // 4. Account 필드 업데이트
+        updateAccountFields(account, request);
+        
+        // 5. 저장 및 응답 (JPA dirty checking으로 자동 저장)
+        log.info("프로필 수정 완료: email={}, accountId={}", EmailUtils.maskEmail(email), account.getId());
+        return toAccountResponse(account);
+    }
+    
+    /**
+     * 계정 삭제 (소프트 삭제)
+     */
+    @Override
+    @Transactional
+    public void deleteAccount(String email) {
+        // 1. 입력 검증
+        validateEmailInput(email);
+        
+        // 2. Account 조회
+        log.info("계정 삭제 시도: email={}", EmailUtils.maskEmail(email));
+        Account account = accountRepository.findByEmail(email)
+            .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
+        
+        // 3. 소프트 삭제
+        account.markDeleted();
+        
+        log.info("계정 삭제 완료 (소프트): email={}, accountId={}", EmailUtils.maskEmail(email), account.getId());
+    }
+    
+    /**
+     * Account 필드 업데이트 (null이 아닌 필드만)
+     */
+    private void updateAccountFields(Account account, UpdateProfileRequest request) {
+        if (request.getUserName() != null) {
+            account.setUserName(request.getUserName());
+        }
+        if (request.getPhoneNumber() != null) {
+            account.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getAddress() != null) {
+            account.setAddress(request.getAddress());
+        }
+        if (request.getAffiliation() != null) {
+            account.setAffiliation(request.getAffiliation());
+        }
+        if (request.getPosition() != null) {
+            account.setPosition(request.getPosition());
+        }
+    }
+    
+    /**
      * Entity → DTO 변환
      */
     private AccountResponse toAccountResponse(Account account) {
@@ -95,8 +170,4 @@ public class ProfileServiceImpl implements ProfileService {
             account.getPosition()
         );
     }
-    
-    // Phase 18에서 추가 예정:
-    // - updateProfile(Long id, UpdateRequest request)
-    // - deleteAccount(Long id)
 }

@@ -37,12 +37,21 @@ public class AcademyController {
     }
 
     /**
-     * 전체 조회
+     * 전체 조회 (훈련기관 이름만)
      */
     @GetMapping
     public ResponseEntity<List<AcademyResponse>> getAllAcademies() {
-        List<AcademyResponse> academyResponse = academyService.getAllAcademies();
+        List<AcademyResponse> academyResponse = academyService.getAllAcademyNames();
         return ResponseEntity.ok(academyResponse);
+    }
+
+    /**
+     *  훈련기관 상세 정보 조회
+     */
+    @GetMapping("/{academyId}")
+    public ResponseEntity<AcademyResponse> getAcademyDetails(@PathVariable Long academyId) {
+        AcademyResponse academyDetails = academyService.getAcademyDetails(academyId);
+        return ResponseEntity.ok(academyDetails);
     }
 
     /**

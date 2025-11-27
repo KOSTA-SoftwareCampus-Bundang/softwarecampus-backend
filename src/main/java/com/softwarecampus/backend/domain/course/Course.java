@@ -137,4 +137,11 @@ public class Course extends BaseSoftDeleteSupportEntity {
         this.isApproved = ApprovalStatus.REJECTED;
         this.approvedAt = null;
     }
+
+    public CategoryType getCategoryType() {
+        if (this.category == null) {
+            return null;
+        }
+        return this.category.getCategoryType();
+    }
 }
