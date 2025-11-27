@@ -1,7 +1,11 @@
 package com.softwarecampus.backend.dto.board;
 
+import com.softwarecampus.backend.domain.board.Board;
+import com.softwarecampus.backend.domain.board.BoardCategory;
+import com.softwarecampus.backend.domain.board.BoardRecommend;
 import lombok.*;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,19 +18,22 @@ public class BoardResponseDTO {
 
     private Long id;
 
-    private String category;
+    private BoardCategory category;
 
     private String title;
 
     private String text;
 
-    private boolean isSecret;
+    private boolean secret;
 
-    private int hits;
+    private long hits;
 
-    private int likes;
+    //>필드명만 likes 에서 likeCount로변경
+    private long likeCount;
 
     private String createdAt;
+
+    private Long accountId;
 
     private String userNickName;
 
@@ -38,5 +45,15 @@ public class BoardResponseDTO {
     @Builder.Default
     private List<CommentResponseDTO> boardComments = new ArrayList<>();
 
+    public static BoardResponseDTO from(Board board) {
+        BoardResponseDTO boardResponseDTO = BoardResponseDTO.builder().id(board.getId()).category(board.getCategory()).title(board.getTitle())
+                .text(board.getText()).secret(board.isSecret()).hits(board.getHits()).likeCount(board.getBoardRecommends().size()).
+                createdAt(board.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).
+                userNickName(board.getAccount().getUserName()).accountId(board.getAccount().getId()).build();
+        boardResponseDTO.setBoardAttachs(board.getBoardAttaches().stream().map(BoardAttachResponseDTO::from).toList());
+        boardResponseDTO.setBoardComments(board.getComments().stream().filter(comment -> comment.isActive()).map(CommentResponseDTO::from).toList());
+
+        return boardResponseDTO;
+    }
 
 }

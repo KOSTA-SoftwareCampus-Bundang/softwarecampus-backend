@@ -14,11 +14,14 @@ public enum BoardErrorCode {
     CANNOT_DELETE_BOARD(HttpStatus.FORBIDDEN,1003,"게시글 삭제 권힌이 없습니다"),
     ALREADY_RECOMMEND_BOARD(HttpStatus.BAD_REQUEST,1004,"게시글을 이미 추천하였습니다"),
     NOT_RECOMMEND_BOARD(HttpStatus.BAD_REQUEST,1005,"게시글을 추천한 기록이 없습니다"),
+    SEARCHTYPE_MISSMATCH(HttpStatus.BAD_REQUEST,1006,"검색 타입이 잘못됐습니다"),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND,1101,"해당 댓글을 찾지 못했습니다"),
     CANNOT_MODIFY_COMMENT(HttpStatus.FORBIDDEN,1102,"댓글 수정 권한이 없습니다"),
     CANNOT_DELETE_COMMENT(HttpStatus.FORBIDDEN,1103,"댓글 삭제 권한이 없습니다"),
     ALREADY_RECOMMEND_COMMENT(HttpStatus.BAD_REQUEST,1104,"댓글을 이미 추천하였습니다"),
-    NOT_RECOMMEND_COMMENT(HttpStatus.BAD_REQUEST,1105,"댓글을 추천한 기록이 없습니다");
+    NOT_RECOMMEND_COMMENT(HttpStatus.BAD_REQUEST,1105,"댓글을 추천한 기록이 없습니다"),
+    FILE_UPLOAD_ERROR(HttpStatus.BAD_REQUEST,2001,"게시판 파일 업로드시 에러가 발생하였습니다" ),
+    FILE_DELETE_ERROR(HttpStatus.BAD_REQUEST,2002,"게시판 파일 삭제시 에러가 발생하였습니다");
 
     private final HttpStatus httpStatus;
     private final int errorCode;

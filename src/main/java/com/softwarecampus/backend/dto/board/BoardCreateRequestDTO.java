@@ -13,8 +13,8 @@ import lombok.*;
 @Builder
 public class BoardCreateRequestDTO {
 
-    @Pattern(regexp = "NOTICE|QUESTION|COURSE_STORY|CODING_STORY", message = "게시판 카테고리는 NOTICE,QUESTION,COURSE_STORY,CODING_STORY 중 하나여야 합니다")
-    private String category;
+
+    private BoardCategory category;
 
     @NotBlank
     private String title;
@@ -25,7 +25,7 @@ public class BoardCreateRequestDTO {
     private boolean secret;
 
     public Board toEntity() {
-        return Board.builder().category(BoardCategory.from(this.category)).title(this.title).text(this.text).secret(this.secret).build();
+        return Board.builder().category(this.category).title(this.title).text(this.text).secret(this.secret).build();
     }
 
 
