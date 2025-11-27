@@ -9,7 +9,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -28,9 +28,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
-    
+
     private final AccountRepository accountRepository;
-    
+
     /**
      * 이메일로 사용자 정보 로드
      * Spring Security의 인증 과정에서 호출됨
@@ -48,14 +48,14 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         AccountCacheDto accountDto = getAccountByEmail(email);
-        
-        return User.builder()
-                .username(accountDto.getEmail())
-                .password(accountDto.getPassword())
-                .authorities(getAuthorities(accountDto))
-                .build();
+
+        return new CustomUserDetails(
+                accountDto.getId(),
+                accountDto.getEmail(),
+                accountDto.getPassword(),
+                getAuthorities(accountDto));
     }
-    
+
     /**
      * 이메일로 Account 조회 (캐싱 적용)
      * Redis에 AccountCacheDto를 캐싱하여 DB 조회 최소화
@@ -73,15 +73,15 @@ public class CustomUserDetailsService implements UserDetailsService {
     public AccountCacheDto getAccountByEmail(String email) throws UsernameNotFoundException {
         Account account = accountRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
-        
+
         // 삭제되었거나 미승인 상태인 계정은 인증 거부
         if (!account.isActive() || !ApprovalStatus.APPROVED.equals(account.getAccountApproved())) {
             throw new UsernameNotFoundException("인증할 수 없는 계정입니다: " + email);
         }
-        
+
         return AccountCacheDto.from(account);
     }
-    
+
     /**
      * 계정의 권한 목록 생성
      * AccountType을 Spring Security의 GrantedAuthority로 변환
@@ -94,7 +94,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         String role = "ROLE_" + accountDto.getAccountType().name();
         return Collections.singletonList(new SimpleGrantedAuthority(role));
     }
-    
+
     /**
      * 사용자 상세 정보 캐시 삭제
      * 사용자 정보 변경 시 호출하여 캐시 무효화
