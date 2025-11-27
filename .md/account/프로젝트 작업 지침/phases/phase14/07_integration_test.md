@@ -110,7 +110,7 @@ class LoginIntegrationTest {
             .andExpect(jsonPath("$.accessToken").exists())
             .andExpect(jsonPath("$.refreshToken").exists())
             .andExpect(jsonPath("$.tokenType").value("Bearer"))
-            .andExpect(jsonPath("$.expiresIn").value(900))
+            .andExpect(jsonPath("$.expiresIn").value(180))
             .andExpect(jsonPath("$.account.email").value("integrationuser@example.com"))
             .andExpect(jsonPath("$.account.userName").value("통합테스트"))
             .andExpect(jsonPath("$.account.accountType").value("USER"))

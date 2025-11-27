@@ -91,7 +91,7 @@ class AcademyQAServiceImplTest {
     @Test
     @DisplayName("질문 등록 성공")
     void createQuestion_success() {
-        QACreateRequest request = new  QACreateRequest();
+        QACreateRequest request = new QACreateRequest();
         request.setTitle("새 질문");
         request.setQuestionText("새 질문 내용");
         request.setAcademyId(academyId);

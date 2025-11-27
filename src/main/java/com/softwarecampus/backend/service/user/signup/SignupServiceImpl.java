@@ -5,9 +5,12 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
+import com.softwarecampus.backend.exception.email.EmailNotVerifiedException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
+import com.softwarecampus.backend.domain.common.VerificationType;
 import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.service.user.email.EmailVerificationService;
 import com.softwarecampus.backend.util.EmailUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,7 @@ public class SignupServiceImpl implements SignupService {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailVerificationService emailVerificationService;
 
     /**
      * 회원가입 처리
@@ -48,26 +52,32 @@ public class SignupServiceImpl implements SignupService {
         
         log.info("회원가입 시도 시작: accountType={}", request.accountType());
 
-        // 1. 이메일 형식 검증
+        // 1. 이메일 인증 확인
+        if (!emailVerificationService.isEmailVerified(request.email(), VerificationType.SIGNUP)) {
+            log.warn("회원가입 실패: 이메일 인증되지 않음");
+            throw new EmailNotVerifiedException("이메일 인증이 완료되지 않았습니다.");
+        }
+
+        // 2. 이메일 형식 검증
         validateEmailFormat(request.email());
 
-        // 2. 계정 타입별 추가 검증
+        // 3. 계정 타입별 추가 검증
         validateAccountTypeRequirements(request);
 
-        // 3. 비밀번호 암호화
+        // 4. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.password());
 
-        // 4. Account 엔티티 생성
+        // 5. Account 엔티티 생성
         Account account = createAccount(request, encodedPassword);
 
-        // 5. 저장 (DB UNIQUE 제약으로 동시성 안전)
+        // 6. 저장 (DB UNIQUE 제약으로 동시성 안전)
         try {
             Account savedAccount = accountRepository.save(account);
             log.info("회원가입 완료: accountId={}, accountType={}",
                     savedAccount.getId(),
                     savedAccount.getAccountType());
 
-            // 6. DTO 변환
+            // 7. DTO 변환
             return toAccountResponse(savedAccount);
         } catch (DataIntegrityViolationException ex) {
             // DB 제약 조건 위반 - 어떤 제약인지 확인

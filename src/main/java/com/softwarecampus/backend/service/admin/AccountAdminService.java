@@ -1,4 +1,4 @@
-package com.softwarecampus.backend.service.academy;
+package com.softwarecampus.backend.service.admin;
 
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.AccountUpdateRequest;

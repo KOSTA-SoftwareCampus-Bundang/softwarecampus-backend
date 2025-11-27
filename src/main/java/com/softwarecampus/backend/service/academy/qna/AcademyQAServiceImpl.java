@@ -2,17 +2,21 @@ package com.softwarecampus.backend.service.academy.qna;
 
 import com.softwarecampus.backend.domain.academy.Academy;
 import com.softwarecampus.backend.domain.academy.qna.AcademyQA;
+import com.softwarecampus.backend.domain.academy.qna.Attachment;
+import com.softwarecampus.backend.domain.common.AttachmentCategoryType;
 import com.softwarecampus.backend.dto.academy.qna.QACreateRequest;
 import com.softwarecampus.backend.dto.academy.qna.QAResponse;
 import com.softwarecampus.backend.dto.academy.qna.QAUpdateRequest;
+import com.softwarecampus.backend.exception.academy.AcademyErrorCode;
+import com.softwarecampus.backend.exception.academy.AcademyException;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.repository.academy.academyQA.AcademyQARepository;
+import com.softwarecampus.backend.repository.academy.academyQA.AttachmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,17 +26,19 @@ public class AcademyQAServiceImpl implements AcademyQAService {
 
     private final AcademyQARepository academyQARepository;
     private final AcademyRepository academyRepository;
+    private final AttachmentRepository attachmentRepository;
+    private final AttachmentService attachmentService;
 
     private AcademyQA findQAAndValidateAcademy(Long qaId, Long academyId) {
         AcademyQA qa = academyQARepository.findById(qaId)
-                .orElseThrow(() -> new NoSuchElementException("Academy QA Not Found"));
+                .orElseThrow(() -> new AcademyException(AcademyErrorCode.QA_NOT_FOUND));
 
         if (qa.getAcademy() == null) {
-            throw new IllegalStateException("Academy relationship is required for QA");
+            throw new AcademyException(AcademyErrorCode.QA_MISSING_ACADEMY_RELATION);
         }
 
         if (!qa.getAcademy().getId().equals(academyId)) {
-            throw new IllegalArgumentException("Question Id and Academy Id do not match");
+            throw new AcademyException(AcademyErrorCode.QA_MISMATCH_ACADEMY);
         }
         return qa;
     }
@@ -63,7 +69,7 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     @Transactional
     public QAResponse createQuestion(Long academyId, QACreateRequest request) {
         Academy academy = academyRepository.findById(academyId)
-                .orElseThrow(() -> new NoSuchElementException("Academy Not Found"));
+                .orElseThrow(() -> new AcademyException(AcademyErrorCode.ACADEMY_NOT_FOUND));
 
         AcademyQA qa = AcademyQA.builder()
                 .title(request.getTitle())
@@ -71,7 +77,17 @@ public class AcademyQAServiceImpl implements AcademyQAService {
                 .academy(academy)
                 .build();
 
-        return QAResponse.from(academyQARepository.save(qa));
+        AcademyQA save = academyQARepository.save(qa);
+
+        // 첨부파일 확정 로직 : 파일 상세 정보가 있다면 확정
+        if (request.getFileDetails() != null && !request.getFileDetails().isEmpty()) {
+            attachmentService.confirmAttachments(
+                    request.getFileDetails(),
+                    save.getId(),
+                    AttachmentCategoryType.QNA
+            );
+        }
+        return QAResponse.from(save);
     }
 
     /**
@@ -83,6 +99,30 @@ public class AcademyQAServiceImpl implements AcademyQAService {
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
         qa.updateQuestion(request.getTitle(), request.getQuestionText());
 
+        // 삭제 파일 처리
+        if (request.getDeletedFileIds() != null && !request.getDeletedFileIds().isEmpty()) {
+            List<Attachment> attachmentsToProcess = attachmentRepository.findAllById(request.getDeletedFileIds());
+
+            // 요청된 첨부파일이 현재 Q&A에 속하는지 검증
+            for (Attachment attachment : attachmentsToProcess) {
+                if (!AttachmentCategoryType.QNA.equals(attachment.getCategoryType())
+                || !qaId.equals(attachment.getCategoryId())) {
+                    throw new AcademyException(AcademyErrorCode.ATTACHMENT_NOT_BELONG_TO_QA);
+                }
+            }
+
+            attachmentsToProcess.forEach(Attachment::softDelete);
+            attachmentService.hardDeleteS3Files(attachmentsToProcess);
+        }
+
+        // 새로운 파일 확정 처리
+        if (request.getNewFileDetails() != null && !request.getNewFileDetails().isEmpty()) {
+            attachmentService.confirmAttachments(
+                    request.getNewFileDetails(),
+                    qaId,
+                    AttachmentCategoryType.QNA
+            );
+        }
         return QAResponse.from(qa);
     }
 
@@ -93,6 +133,14 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     @Transactional
     public void deleteQuestion(Long qaId, Long academyId) {
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
+
+        // 연결된 첨부파일 삭제
+        List<Attachment> attachmentsToHardDelete =
+                attachmentService.softDeleteAllByCategoryAndId(
+                        AttachmentCategoryType.QNA,
+                        qaId
+                );
+        attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
         academyQARepository.delete(qa);
     }
 
@@ -103,7 +151,7 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     @Transactional
     public QAResponse updateAnswer(Long academyId, Long qaId,  QAUpdateRequest request) {
         if (request.getAnswerText() == null) {
-            throw new IllegalArgumentException("Answer Text Not Found");
+            throw new AcademyException(AcademyErrorCode.ANSWER_TEXT_REQUIRED);
         }
 
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
@@ -121,7 +169,7 @@ public class AcademyQAServiceImpl implements AcademyQAService {
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
 
         if (qa.getAnswerText() == null) {
-            throw new IllegalStateException("No answer exists to delete");
+            throw new AcademyException(AcademyErrorCode.ANSWER_NOT_EXIST);
         }
 
         qa.deleteAnswer();

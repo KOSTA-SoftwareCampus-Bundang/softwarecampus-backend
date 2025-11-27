@@ -13,8 +13,11 @@ public interface AcademyService {
     // 훈련기관 이름으로 조회
     List<AcademyResponse> searchAcademiesByName(String name);
 
-    // 전체 목록 조회
-    List<AcademyResponse> getAllAcademies();
+    // 전체 목록 조회 (이름만 보내줌)
+    List<AcademyResponse> getAllAcademyNames();
+
+    // 훈련기관 상세 정보 조회
+    AcademyResponse getAcademyDetails(Long id);
 
     // 정보 수정
     AcademyResponse updateAcademy(Long id, AcademyUpdateRequest request);
