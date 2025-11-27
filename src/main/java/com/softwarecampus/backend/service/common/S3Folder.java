@@ -22,7 +22,8 @@ public enum S3Folder {
     COURSE("course"),
     PROFILE("profile"),
     TEMP("temp"),
-    ROOT("");
+    ROOT(""),
+    REVIEW("review/");
 
     private final String path;
 }

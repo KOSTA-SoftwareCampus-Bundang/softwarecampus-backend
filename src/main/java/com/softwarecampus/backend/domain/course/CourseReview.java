@@ -64,4 +64,22 @@ public class CourseReview extends BaseSoftDeleteSupportEntity {
                 .average()
                 .orElse(0.0);
     }
+
+    /**
+     * 리뷰 삭제 요청 상태로 변경
+     */
+    public void requestDelete() {
+        this.approvalStatus = ApprovalStatus.PENDING;
+    }
+
+    /**
+     * 소프트 삭제
+     */
+    public void markDeleted() {
+        super.markDeleted();
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CategoryType type;
 }
