@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,6 +32,15 @@ public class HomeController {
     @GetMapping("/courses")
     public ResponseEntity<HomeResponseDTO> getHomeCourses() {
         HomeResponseDTO data = homeService.getHomePageData();
+        return ResponseEntity.ok(data);
+    }
+
+    /**
+     * 커뮤니티 하이라이트 조회
+     */
+    @GetMapping("/community")
+    public ResponseEntity<List<com.softwarecampus.backend.dto.home.HomeCommunityDTO>> getCommunityHighlights() {
+        List<com.softwarecampus.backend.dto.home.HomeCommunityDTO> data = homeService.getCommunityHighlights(6);
         return ResponseEntity.ok(data);
     }
 

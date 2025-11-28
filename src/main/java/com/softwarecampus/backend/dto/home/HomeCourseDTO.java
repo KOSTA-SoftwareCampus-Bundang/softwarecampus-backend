@@ -35,6 +35,8 @@ public class HomeCourseDTO {
     private boolean isNailbaeum;
     private boolean isOffline;
 
+    private String imageUrl;
+
     /**
      * Entity → DTO 변환
      */
@@ -54,6 +56,11 @@ public class HomeCourseDTO {
                 .isKdt(course.isKdt())
                 .isNailbaeum(course.isNailbaeum())
                 .isOffline(course.isOffline())
+                .imageUrl(course.getImages().stream()
+                        .filter(img -> img.isThumbnail())
+                        .findFirst()
+                        .map(img -> img.getImageUrl())
+                        .orElse(null))
                 .build();
     }
 }

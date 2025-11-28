@@ -17,4 +17,10 @@ public interface HomeService {
      * @return 메인페이지 전체 데이터
      */
     HomeResponseDTO getHomePageData();
+
+    /**
+     * 커뮤니티 하이라이트 조회
+     * - 최신 게시글 n개
+     */
+    java.util.List<com.softwarecampus.backend.dto.home.HomeCommunityDTO> getCommunityHighlights(int limit);
 }

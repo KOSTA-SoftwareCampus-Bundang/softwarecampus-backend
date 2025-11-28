@@ -171,3 +171,7 @@ API 규칙은 `.md/API_GUIDELINES.md`를 따르며, 오류 응답은 RFC 9457 Pr
 
 - 기본 패키지 `com.softwarecampus.backend`를 변경하지 않습니다.
 - 변경 시 테스트를 함께 갱신하고, 모든 명령은 Maven wrapper로 실행합니다.
+
+## 🔗 프론트엔드와의 동기화
+- 백엔드 변경 사항(엔티티 필드명, DTO 구조 등)이 발생하면 반드시 프론트엔드 팀(또는 에이전트)에 알리고 `types` 정의가 업데이트되도록 해야 합니다.
+- 프론트엔드에서 요청된 `BACKEND_MISSING_FEATURES.md`의 항목들을 주기적으로 검토하고 구현 계획에 반영합니다.

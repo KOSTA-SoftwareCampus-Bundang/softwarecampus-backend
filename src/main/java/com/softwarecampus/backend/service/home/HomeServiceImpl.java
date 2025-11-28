@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 public class HomeServiceImpl implements HomeService {
 
         private final CourseRepository courseRepository;
+        private final com.softwarecampus.backend.repository.board.BoardRepository boardRepository;
 
         /**
          * 메인페이지 데이터 조회
@@ -110,6 +111,20 @@ public class HomeServiceImpl implements HomeService {
                                 .sorted(Comparator.comparing(Course::getRecruitEnd))
                                 .limit(limit)
                                 .map(HomeCourseDTO::fromEntity)
+                                .toList();
+        }
+
+        /**
+         * 커뮤니티 하이라이트 조회
+         * - 최신 게시글 n개
+         */
+        @Override
+        public List<com.softwarecampus.backend.dto.home.HomeCommunityDTO> getCommunityHighlights(int limit) {
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0,
+                                limit, org.springframework.data.domain.Sort.by("createdAt").descending());
+                return boardRepository.findByIsDeletedFalse(pageable)
+                                .stream()
+                                .map(com.softwarecampus.backend.dto.home.HomeCommunityDTO::fromEntity)
                                 .toList();
         }
 }
