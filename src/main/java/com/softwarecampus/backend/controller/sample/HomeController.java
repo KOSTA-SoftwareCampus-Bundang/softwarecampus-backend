@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.controller.sample;
 
+import com.softwarecampus.backend.dto.home.HomeCommunityDTO;
 import com.softwarecampus.backend.dto.home.HomeResponseDTO;
 import com.softwarecampus.backend.service.home.HomeService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,6 +21,8 @@ import java.util.Map;
 @RequestMapping("/api/home")
 @RequiredArgsConstructor
 public class HomeController {
+
+    private static final int COMMUNITY_HIGHLIGHTS_LIMIT = 6;
 
     private final HomeService homeService;
 
@@ -31,6 +35,16 @@ public class HomeController {
     @GetMapping("/courses")
     public ResponseEntity<HomeResponseDTO> getHomeCourses() {
         HomeResponseDTO data = homeService.getHomePageData();
+        return ResponseEntity.ok(data);
+    }
+
+    /**
+     * 커뮤니티 하이라이트 조회
+     */
+
+    @GetMapping("/community")
+    public ResponseEntity<List<HomeCommunityDTO>> getCommunityHighlights() {
+        List<HomeCommunityDTO> data = homeService.getCommunityHighlights(COMMUNITY_HIGHLIGHTS_LIMIT);
         return ResponseEntity.ok(data);
     }
 

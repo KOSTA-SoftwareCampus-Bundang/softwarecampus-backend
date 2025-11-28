@@ -17,6 +17,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     /**
      * 카테고리 타입별 과정 전체 조회 (재직자/취업예정자)
      */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
     List<Course> findByCategory_CategoryTypeAndDeletedAtIsNull(CategoryType type);
 
     /**
@@ -27,14 +28,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             "JOIN course_category cc ON c.category_id = cc.id " +
             "WHERE cc.category_type = :type " +
             "AND c.deleted_at IS NULL " +
-            "AND LOWER(c.name) LIKE CONCAT('%', LOWER(:keyword), '%')",
-            nativeQuery = true)
+            "AND LOWER(c.name) LIKE CONCAT('%', LOWER(:keyword), '%')", nativeQuery = true)
     List<Course> searchByName(@Param("type") String type, @Param("keyword") String keyword);
-
-
-
-
-
 
     // 등록 요청 목록 (승인 대기 중)
     List<Course> findByIsApproved(ApprovalStatus status);
@@ -43,6 +38,5 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findByIdAndCategory(Long id, CategoryType category);
 
     Optional<Course> findByIdAndCategory_CategoryType(Long id, CategoryType type);
-
 
 }

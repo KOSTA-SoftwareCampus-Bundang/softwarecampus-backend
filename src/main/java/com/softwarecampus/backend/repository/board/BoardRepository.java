@@ -37,4 +37,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
                         "WHERE b.category=:category and (b.title like :searchText OR b.text like :searchText) and b.isDeleted=false GROUP BY b.id", countQuery = "select count(b) from Board b WHERE b.category=:category and (b.title like :searchText OR b.text like :searchText) and b.isDeleted=false")
         Page<BoardListResponseDTO> findBoardsByTitleAndText(@Param("category") BoardCategory category,
                         @Param("searchText") String searchText, Pageable pageable);
+
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "account", "boardRecommends",
+                        "comments" })
+        Page<Board> findByIsDeletedFalse(Pageable pageable);
 }
