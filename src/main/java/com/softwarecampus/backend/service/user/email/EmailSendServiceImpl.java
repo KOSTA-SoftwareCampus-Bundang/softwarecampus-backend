@@ -78,4 +78,114 @@ public class EmailSendServiceImpl implements EmailSendService {
         
         return templateLoader.loadAndReplace(templateName, variables);
     }
+    
+    /**
+     * 기관 승인 완료 이메일 발송
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-11-28
+     */
+    @Override
+    public void sendAcademyApprovalEmail(String toEmail, String academyName) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(EmailConstants.SENDER_EMAIL, EmailConstants.SENDER_NAME);
+            helper.setTo(toEmail);
+            helper.setSubject("[코스타] 기관 등록이 승인되었습니다");
+            
+            String htmlContent = String.format("""
+                <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+                    <h2>기관 등록 승인 완료</h2>
+                    <p>안녕하세요,</p>
+                    <p><strong>%s</strong> 기관 등록이 승인되었습니다.</p>
+                    <p>이제 회원가입을 진행하실 수 있습니다.</p>
+                    <p>감사합니다.</p>
+                </body>
+                </html>
+                """, academyName);
+            
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            log.info("기관 승인 이메일 발송 성공 - academyName: {}", academyName);
+        } catch (MessagingException e) {
+            log.error("기관 승인 이메일 발송 실패 - academyName: {}, error: {}", academyName, e.getMessage());
+            throw new EmailSendException("기관 승인 이메일 발송에 실패했습니다", e);
+        }
+    }
+    
+    /**
+     * 기관 거절 이메일 발송
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-11-28
+     */
+    @Override
+    public void sendAcademyRejectionEmail(String toEmail, String academyName, String reason) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(EmailConstants.SENDER_EMAIL, EmailConstants.SENDER_NAME);
+            helper.setTo(toEmail);
+            helper.setSubject("[코스타] 기관 등록이 거절되었습니다");
+            
+            String htmlContent = String.format("""
+                <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+                    <h2>기관 등록 거절</h2>
+                    <p>안녕하세요,</p>
+                    <p><strong>%s</strong> 기관 등록이 거절되었습니다.</p>
+                    <h3>거절 사유:</h3>
+                    <p style="background-color: #f5f5f5; padding: 10px; border-left: 3px solid #d32f2f;">%s</p>
+                    <p>수정 후 다시 신청해주시기 바랍니다.</p>
+                    <p>감사합니다.</p>
+                </body>
+                </html>
+                """, academyName, reason);
+            
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            log.info("기관 거절 이메일 발송 성공 - academyName: {}", academyName);
+        } catch (MessagingException e) {
+            log.error("기관 거절 이메일 발송 실패 - academyName: {}, error: {}", academyName, e.getMessage());
+            throw new EmailSendException("기관 거절 이메일 발송에 실패했습니다", e);
+        }
+    }
+    
+    /**
+     * 회원 승인 완료 이메일 발송
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-11-28
+     */
+    @Override
+    public void sendAccountApprovalEmail(String toEmail, String userName) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(EmailConstants.SENDER_EMAIL, EmailConstants.SENDER_NAME);
+            helper.setTo(toEmail);
+            helper.setSubject("[코스타] 회원가입이 승인되었습니다");
+            
+            String htmlContent = String.format("""
+                <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+                    <h2>회원가입 승인 완료</h2>
+                    <p>안녕하세요, <strong>%s</strong>님</p>
+                    <p>코스타 소프트웨어 아카데미 회원가입이 승인되었습니다.</p>
+                    <p>이제 로그인하여 서비스를 이용하실 수 있습니다.</p>
+                    <p>감사합니다.</p>
+                </body>
+                </html>
+                """, userName);
+            
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+            log.info("회원 승인 이메일 발송 성공 - userName: {}", userName);
+        } catch (MessagingException e) {
+            log.error("회원 승인 이메일 발송 실패 - userName: {}, error: {}", userName, e.getMessage());
+            throw new EmailSendException("회원 승인 이메일 발송에 실패했습니다", e);
+        }
+    }
 }

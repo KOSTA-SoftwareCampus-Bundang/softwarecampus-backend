@@ -22,6 +22,10 @@ import java.util.stream.Collectors;
 public class AcademyServiceImpl implements AcademyService {
 
     private final AcademyRepository academyRepository;
+    // 파일 업로드 서비스 (작성자: GitHub Copilot, 작성일: 2025-11-28)
+    private final AcademyFileService academyFileService;
+    // 이메일 발송 서비스 (작성자: GitHub Copilot, 작성일: 2025-11-28)
+    private final EmailSendService emailSendService;
 
     private Academy findAcademyOrThrow(Long id) {
         return academyRepository.findById(id)
@@ -30,10 +34,14 @@ public class AcademyServiceImpl implements AcademyService {
 
     /**
      *  훈련기관 등록
+     *  수정자: GitHub Copilot
+     *  수정일: 2025-11-28
+     *  수정 내용: 파일 업로드 기능 추가 (재직증명서)
      */
     @Override
     @Transactional
     public AcademyResponse createAcademy(AcademyCreateRequest request) {
+        // 1. Academy 엔티티 생성 및 저장
         Academy academy = Academy.builder()
                 .name(request.getName())
                 .address(request.getAddress())
@@ -43,6 +51,14 @@ public class AcademyServiceImpl implements AcademyService {
                 .build();
 
         Academy savedAcademy = academyRepository.save(academy);
+        
+        // 2. 파일 업로드 (S3) - 작성자: GitHub Copilot, 작성일: 2025-11-28
+        if (request.getFiles() != null && !request.getFiles().isEmpty()) {
+            for (var file : request.getFiles()) {
+                academyFileService.uploadFile(file, savedAcademy.getId());
+            }
+        }
+        
         return AcademyResponse.from(savedAcademy);
     }
 
@@ -113,12 +129,43 @@ public class AcademyServiceImpl implements AcademyService {
 
     /**
      * 학원 승인 처리
+     * 수정자: GitHub Copilot
+     * 수정일: 2025-11-28
+     * 수정 내용: 승인 완료 이메일 발송 기능 추가
      */
     @Override
     @Transactional
     public AcademyResponse approveAcademy(Long id) {
         Academy academy = findAcademyOrThrow(id);
         academy.approve();
+        
+        // 승인 완료 이메일 발송 (작성자: GitHub Copilot, 작성일: 2025-11-28)
+        emailSendService.sendAcademyApprovalEmail(
+            academy.getEmail(),
+            academy.getName()
+        );
+        
+        return AcademyResponse.from(academy);
+    }
+    
+    /**
+     * 기관 거절 처리
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-11-28
+     */
+    @Override
+    @Transactional
+    public AcademyResponse rejectAcademy(Long id, String reason) {
+        Academy academy = findAcademyOrThrow(id);
+        academy.reject(reason);
+        
+        // 거절 이메일 발송 (작성자: GitHub Copilot, 작성일: 2025-11-28)
+        emailSendService.sendAcademyRejectionEmail(
+            academy.getEmail(),
+            academy.getName(),
+            reason
+        );
+        
         return AcademyResponse.from(academy);
     }
 

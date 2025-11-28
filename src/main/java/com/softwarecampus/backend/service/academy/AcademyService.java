@@ -27,4 +27,15 @@ public interface AcademyService {
 
     // 승인 처리
     AcademyResponse approveAcademy(Long id);
+    
+    /**
+     * 기관 거절 처리
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-11-28
+     * 
+     * @param id 기관 ID
+     * @param reason 거절 사유
+     * @return 거절 처리된 기관 정보
+     */
+    AcademyResponse rejectAcademy(Long id, String reason);
 }

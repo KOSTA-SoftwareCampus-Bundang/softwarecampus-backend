@@ -3,9 +3,12 @@ package com.softwarecampus.backend.controller.academy;
 import com.softwarecampus.backend.dto.academy.AcademyCreateRequest;
 import com.softwarecampus.backend.dto.academy.AcademyResponse;
 import com.softwarecampus.backend.dto.academy.AcademyUpdateRequest;
+import com.softwarecampus.backend.service.academy.AcademyFileService;
 import com.softwarecampus.backend.service.academy.AcademyService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,12 +20,18 @@ import java.util.List;
 public class AcademyController {
 
     private final AcademyService academyService;
+    // 파일 서비스 (작성자: GitHub Copilot, 작성일: 2025-11-28)
+    private final AcademyFileService academyFileService;
 
     /**
-     * 훈련기관 등록
+     * 훈련기관 등록 (파일 업로드 포함)
+     * 수정자: GitHub Copilot
+     * 수정일: 2025-11-28
+     * 수정 내용: Multipart/form-data 지원, 재직증명서 파일 업로드 기능 추가
      */
-    @PostMapping
-    public ResponseEntity<AcademyResponse> createAcademy(@RequestBody AcademyCreateRequest request) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AcademyResponse> createAcademy(
+            @Valid @ModelAttribute AcademyCreateRequest request) {
         AcademyResponse academyResponse = academyService.createAcademy(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(academyResponse);
     }
@@ -70,15 +79,6 @@ public class AcademyController {
     public ResponseEntity<Void> deleteAcademy(@PathVariable Long id) {
         academyService.deleteAcademy(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-    /**
-     * 훈련기관 등록 승인
-     */
-    @PatchMapping("/{id}/approve")
-    public ResponseEntity<AcademyResponse> approveAcademy(@PathVariable Long id) {
-        AcademyResponse academyResponse = academyService.approveAcademy(id);
-        return ResponseEntity.ok(academyResponse);
     }
 
 }

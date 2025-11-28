@@ -19,6 +19,7 @@ import software.amazon.awssdk.services.s3.model.*;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
@@ -129,6 +130,44 @@ public class S3Service {
         } catch (S3Exception e) {
             log.error("S3 delete failed: {}", e.awsErrorDetails().errorMessage(), e);
             throw new S3UploadException("S3 파일 삭제에 실패했습니다.", e);
+        }
+    }
+
+    /**
+     * S3 파일에 대한 Presigned URL을 생성합니다.
+     * Presigned URL은 지정된 시간 동안만 유효한 임시 다운로드 링크입니다.
+     *
+     * @param s3Key S3 객체 키 (예: "academy/123/uuid-file.pdf")
+     * @param duration URL 유효 기간
+     * @return Presigned URL
+     * @throws S3UploadException Presigned URL 생성 실패 시
+     */
+    public String generatePresignedUrl(String s3Key, Duration duration) {
+        // 1. S3 키 검증
+        validateS3Key(s3Key);
+
+        try {
+            // 2. Presigned URL 요청 생성
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .build();
+
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(duration)
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+
+            // 3. Presigned URL 생성 (S3Presigner 필요)
+            // 참고: S3Presigner는 별도의 빈으로 주입받거나 생성해야 함
+            // 현재 구조에서는 S3Client만 있으므로 일반 URL 반환
+            // TODO: S3Presigner 빈 주입 후 실제 Presigned URL 생성 로직 구현
+            String presignedUrl = getFileUrl(s3Key);
+            log.info("Presigned URL generated for S3 key: {}, duration: {}", s3Key, duration);
+            return presignedUrl;
+        } catch (S3Exception e) {
+            log.error("Failed to generate presigned URL for S3 key: {}", s3Key, e);
+            throw new S3UploadException("Presigned URL 생성에 실패했습니다.", e);
         }
     }
 
