@@ -41,17 +41,7 @@ public class HomeController {
     /**
      * 커뮤니티 하이라이트 조회
      */
-import com.softwarecampus.backend.dto.home.HomeCommunityDTO;
 
-// ... (existing imports)
-
-    private static final int COMMUNITY_HIGHLIGHTS_LIMIT = 6;
-
-    // ... (existing code)
-
-    /**
-     * 커뮤니티 하이라이트 조회
-     */
     @GetMapping("/community")
     public ResponseEntity<List<HomeCommunityDTO>> getCommunityHighlights() {
         List<HomeCommunityDTO> data = homeService.getCommunityHighlights(COMMUNITY_HIGHLIGHTS_LIMIT);

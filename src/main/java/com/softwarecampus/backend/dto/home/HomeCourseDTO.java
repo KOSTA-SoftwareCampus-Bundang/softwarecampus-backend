@@ -57,7 +57,7 @@ public class HomeCourseDTO {
                 .isNailbaeum(course.isNailbaeum())
                 .isOffline(course.isOffline())
                 .imageUrl(course.getImages().stream()
-                        .filter(img -> img.isThumbnail())
+                        .filter(img -> img.isActive() && img.isThumbnail())
                         .findFirst()
                         .map(img -> img.getImageUrl())
                         .orElse(null))
