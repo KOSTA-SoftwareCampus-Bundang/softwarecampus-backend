@@ -7,6 +7,8 @@ import com.softwarecampus.backend.dto.board.*;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
+
 
 public interface BoardService {
 
@@ -29,12 +31,15 @@ public interface BoardService {
     //게시글 삭제
     public void deleteBoardById(Long id);
 
+    //게시글 파일 다운로드
+    public Map<String,byte[]> downloadBoardAttach(Long boardId, Long boardAttachId);
+
     //게시글 추천
     public void recommendBoard(Long boardId, Long userId);
 
     //게시글 추천취소
     public void unRecommendBoard(Long boardId, Long userId);
-    
+
     //댓글 생성
     public Long createComment(CommentCreateRequestDTO commentCreateRequestDTO, Long userId);
 

@@ -20,8 +20,11 @@ public enum BoardErrorCode {
     CANNOT_DELETE_COMMENT(HttpStatus.FORBIDDEN,1103,"댓글 삭제 권한이 없습니다"),
     ALREADY_RECOMMEND_COMMENT(HttpStatus.BAD_REQUEST,1104,"댓글을 이미 추천하였습니다"),
     NOT_RECOMMEND_COMMENT(HttpStatus.BAD_REQUEST,1105,"댓글을 추천한 기록이 없습니다"),
-    FILE_UPLOAD_ERROR(HttpStatus.BAD_REQUEST,2001,"게시판 파일 업로드시 에러가 발생하였습니다" ),
-    FILE_DELETE_ERROR(HttpStatus.BAD_REQUEST,2002,"게시판 파일 삭제시 에러가 발생하였습니다");
+    FILE_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,2001,"게시판 첨부파일 업로드시 에러가 발생하였습니다" ),
+    FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,2002,"게시판 첨부파일 삭제시 에러가 발생하였습니다"),
+    FILE_DOWNLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,2003,"게시판 첨부파일 다운로드시 에러가 발생하였습니다"),
+    FILE_NOT_FOUND(HttpStatus.NOT_FOUND,2004,"게시판 첨부파일이 존재하지 않습니다");
+
 
     private final HttpStatus httpStatus;
     private final int errorCode;

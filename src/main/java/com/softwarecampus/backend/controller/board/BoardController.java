@@ -4,23 +4,26 @@ package com.softwarecampus.backend.controller.board;
 import com.softwarecampus.backend.domain.board.BoardCategory;
 import com.softwarecampus.backend.dto.board.*;
 import com.softwarecampus.backend.exception.board.BoardException;
+import com.softwarecampus.backend.security.CustomUserDetails;
 import com.softwarecampus.backend.service.board.BoardService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ProblemDetail;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/boards")
+@RequestMapping("/api/boards")
 public class BoardController {
 
     private final BoardService boardService;
@@ -35,26 +38,26 @@ public class BoardController {
 
     //게시글 하나 조회 with 댓글
     @GetMapping("/{boardId:\\d+}")
-    public ResponseEntity<?> getBoard(@PathVariable Long boardId) {
+    public ResponseEntity<?> getBoard(@PathVariable Long boardId, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         //게시글 하나 조회 service 메서드 호출
-        BoardResponseDTO board = boardService.getBoardById(boardId, 1L);
+        BoardResponseDTO board = boardService.getBoardById(boardId, userDetails != null ? userDetails.getId() : null);
         return ResponseEntity.ok(board);
     }
 
     //게시글 생성 with 첨부파일
-    @PreAuthorize("isAuthenticated()")
+
     @PostMapping
-    public ResponseEntity<?> createBoard(@Valid BoardCreateRequestDTO boardCreateRequestDTO, @RequestParam(required = false) MultipartFile[] files) {
+    public ResponseEntity<?> createBoard(@Valid BoardCreateRequestDTO boardCreateRequestDTO, @RequestParam(required = false) MultipartFile[] files, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         //게시글 생성 service 메서드 호출
-        Long boardId = boardService.createBoard(boardCreateRequestDTO, files, 1L);
+        Long boardId = boardService.createBoard(boardCreateRequestDTO, files, userDetails.getId());
         return ResponseEntity.created(URI.create("/boards/" + boardId)).build();
 
     }
 
     //게시글 수정 with 첨부파일
-    //@PreAuthorize("isAuthenticated() and @boardAuthorizeService.canManipulateBoard()")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or @boardAuthorizeService.canManipulateBoard(#boardId,principal.id)")
     @PatchMapping("/{boardId:\\d+}")
     public ResponseEntity<?> updateBoard(@PathVariable Long boardId, @Valid BoardUpdateRequestDTO boardUpdateRequestDTO, @RequestParam(required = false) MultipartFile[] files) {
         //게시글 수정 service 메서드 호출
@@ -63,6 +66,7 @@ public class BoardController {
     }
 
     //게시글 하나 삭제
+    @PreAuthorize("hasRole('ROLE_ADMIN') or @boardAuthorizeService.canManipulateBoard(#boardId,principal.id)")
     @DeleteMapping("/{boardId:\\d+}")
     public ResponseEntity<?> deleteBoard(@PathVariable Long boardId) {
 
@@ -71,19 +75,35 @@ public class BoardController {
         return ResponseEntity.noContent().build();
     }
 
+    //게시글 첨부파일 다운로드
+    @GetMapping("/{boardId:\\d+}/boardAttachs/{boardAttachId:\\d+}/download")
+    public ResponseEntity<?> downloadBoardAttach(@PathVariable Long boardId, @PathVariable Long boardAttachId) {
+
+        Map<String, byte[]> file = boardService.downloadBoardAttach(boardId, boardAttachId);
+
+        String fileName = file.keySet().iterator().next();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""+fileName+"\"");
+        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE);
+
+        return new ResponseEntity<>(file.get(fileName), headers, HttpStatus.OK);
+    }
+
+
     //댓글 하나 생성
-    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{boardId:\\d+}/comments")
-    public ResponseEntity<?> createComment(@PathVariable Long boardId, @Valid @RequestBody CommentCreateRequestDTO commentCreateRequestDTO) {
+    public ResponseEntity<?> createComment(@PathVariable Long boardId, @Valid @RequestBody CommentCreateRequestDTO commentCreateRequestDTO, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         commentCreateRequestDTO.setBoardId(boardId);
         //1L자리에 사용자 id 전달
-        Long commentId = boardService.createComment(commentCreateRequestDTO, 1L);
+        Long commentId = boardService.createComment(commentCreateRequestDTO, userDetails.getId());
         return ResponseEntity.created(URI.create("/boards/" + boardId + "/comments/" + commentId)).build();
     }
 
     //댓글 수정
     @PatchMapping("/{boardId:\\d+}/comments/{commentId:\\d+}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or  @boardAuthorizeService.canManipulateComment(#commentId,principal.id)")
     public ResponseEntity<?> updateComment(@PathVariable Long commentId, @Valid @RequestBody CommentUpdateRequestDTO commentUpdateRequestDTO) {
 
         commentUpdateRequestDTO.setId(commentId);
@@ -93,6 +113,7 @@ public class BoardController {
 
     //댓글 삭제
     @DeleteMapping("/{boardId:\\d+}/comments/{commentId:\\d+}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or  @boardAuthorizeService.canManipulateComment(#commentId,principal.id)")
     public ResponseEntity<?> deleteComment(@PathVariable Long boardId, @PathVariable Long commentId) {
 
         boardService.deleteComment(commentId);
@@ -101,41 +122,41 @@ public class BoardController {
     }
 
     //게시글 추천
-    @PreAuthorize("isAuthenticated()")
+
     @PostMapping("/{boardId:\\d+}/recommends")
-    public ResponseEntity<?> recommendBoard(@PathVariable Long boardId) {
+    public ResponseEntity<?> recommendBoard(@PathVariable Long boardId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         //실제로 사용자 ID를 인자로 넘겨야 함
-        boardService.recommendBoard(boardId, 1L);
+        boardService.recommendBoard(boardId, userDetails.getId());
         return ResponseEntity.created(URI.create("/boards/" + boardId)).build();
     }
 
     //게시글 추천취소
-    @PreAuthorize("isAuthenticated()")
-    @DeleteMapping("/{boardId:\\d+}/recommends")
-    public ResponseEntity<?> recommendBoardCancel(@PathVariable Long boardId) {
 
-        boardService.unRecommendBoard(boardId, 1L);
+    @DeleteMapping("/{boardId:\\d+}/recommends")
+    public ResponseEntity<?> recommendBoardCancel(@PathVariable Long boardId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        boardService.unRecommendBoard(boardId, userDetails.getId());
         return ResponseEntity.noContent().build();
     }
 
     //댓글 추천
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isFullyAuthenticated()")
     @PostMapping("/{boardId:\\d+}/comments/{commentId:\\d+}/recommends")
-    public ResponseEntity<?> recommendComment(@PathVariable Long boardId, @PathVariable Long commentId) {
+    public ResponseEntity<?> recommendComment(@PathVariable Long boardId, @PathVariable Long commentId, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         //실제론 사용자 ID를 인자로 넘겨야 함
-        boardService.recommendComment(commentId, 1L);
+        boardService.recommendComment(commentId, userDetails.getId());
         return ResponseEntity.created(URI.create("/boards/" + boardId + "/comments/" + commentId)).build();
     }
 
 
     //댓글 추천취소
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isFullyAuthenticated()")
     @DeleteMapping("/{boardId:\\d+}/comments/{commentId:\\d+}/recommends")
-    public ResponseEntity<?> recommendCommentCancel(@PathVariable Long boardId, @PathVariable Long commentId) {
+    public ResponseEntity<?> recommendCommentCancel(@PathVariable Long boardId, @PathVariable Long commentId, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         //실제론 사용자 ID를 인자로 넘겨야 함
-        boardService.unRecommendComment(commentId, 1L);
+        boardService.unRecommendComment(commentId, userDetails.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -145,7 +166,7 @@ public class BoardController {
 
         problemDetail.setTitle(e.getErrorCode().toString());
         problemDetail.setDetail(e.getErrorCode().getDetails());
-        problemDetail.setProperty("timestamp", LocalDateTime.now());
+        problemDetail.setProperty("timestamp", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         return problemDetail;
     }

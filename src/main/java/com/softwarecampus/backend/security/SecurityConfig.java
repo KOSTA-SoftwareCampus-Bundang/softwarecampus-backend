@@ -3,6 +3,7 @@ package com.softwarecampus.backend.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -11,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 /**
  * Spring Security 설정
@@ -47,13 +49,20 @@ public class SecurityConfig {
 
                 // 엔드포인트별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST,"/api/boards").authenticated()
+                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+","PATCH")).authenticated()
+                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+","DELETE")).authenticated()
+                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+/comments","POST")).authenticated()
+                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+/comments/\\d+",null)).authenticated()
+                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+/recommends",null)).authenticated()
+                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+/comments/\\d+/recommends",null)).authenticated()
                         // 인증 불필요 (누구나 접근 가능)
                         .requestMatchers(
                                 "/api/auth/**", // 회원가입, 로그인
                                 "/api/academies/**", // 학원 목록 조회
                                 "/api/courses/**", // 강좌 목록 조회
                                 "/api/home/**", // 메인페이지 데이터
-                                "/boards/**", // 커뮤니티 게시글
+                                "/api/boards/**", // 커뮤니티 게시글
                                 "/swagger-ui/**", // Swagger UI
                                 "/swagger-ui.html", // Swagger UI 진입점
                                 "/v3/api-docs/**", // OpenAPI 문서

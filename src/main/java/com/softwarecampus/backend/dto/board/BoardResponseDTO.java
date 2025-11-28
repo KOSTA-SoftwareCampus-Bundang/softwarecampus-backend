@@ -39,6 +39,8 @@ public class BoardResponseDTO {
 
     private boolean like;
 
+    private boolean owner;
+
     @Builder.Default
     private List<BoardAttachResponseDTO> boardAttachs = new ArrayList<>();
 
