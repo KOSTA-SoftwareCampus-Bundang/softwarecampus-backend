@@ -24,7 +24,6 @@ public class Comment extends BaseSoftDeleteSupportEntity {
     @Column(nullable = false,columnDefinition = "text")
     private String text;
 
-
     @Column(name="is_secret",nullable = false)
     private boolean secret;
 

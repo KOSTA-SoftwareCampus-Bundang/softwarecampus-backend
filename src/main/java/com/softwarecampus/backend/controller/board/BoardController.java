@@ -13,10 +13,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -52,7 +55,7 @@ public class BoardController {
 
         //게시글 생성 service 메서드 호출
         Long boardId = boardService.createBoard(boardCreateRequestDTO, files, userDetails.getId());
-        return ResponseEntity.created(URI.create("/boards/" + boardId)).build();
+        return ResponseEntity.created(URI.create("/api/boards/" + boardId)).build();
 
     }
 
@@ -77,15 +80,19 @@ public class BoardController {
 
     //게시글 첨부파일 다운로드
     @GetMapping("/{boardId:\\d+}/boardAttachs/{boardAttachId:\\d+}/download")
-    public ResponseEntity<?> downloadBoardAttach(@PathVariable Long boardId, @PathVariable Long boardAttachId) {
+    public ResponseEntity<?> downloadBoardAttach(@PathVariable Long boardId, @PathVariable Long boardAttachId, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Map<String, byte[]> file = boardService.downloadBoardAttach(boardId, boardAttachId);
+        Map<String, byte[]> file = boardService.downloadBoardAttach(boardId, boardAttachId, userDetails != null ? userDetails.getId() : null);
 
         String fileName = file.keySet().iterator().next();
 
+        String encodedFilename = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                .replaceAll("\\+", "%20");
+
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""+fileName+"\"");
-        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.set("Content-Disposition",
+                "attachment; filename=\"" + encodedFilename + "\"; filename*=UTF-8''" + encodedFilename);
 
         return new ResponseEntity<>(file.get(fileName), headers, HttpStatus.OK);
     }
@@ -98,7 +105,7 @@ public class BoardController {
         commentCreateRequestDTO.setBoardId(boardId);
         //1L자리에 사용자 id 전달
         Long commentId = boardService.createComment(commentCreateRequestDTO, userDetails.getId());
-        return ResponseEntity.created(URI.create("/boards/" + boardId + "/comments/" + commentId)).build();
+        return ResponseEntity.created(URI.create("/api/boards/" + boardId + "/comments/" + commentId)).build();
     }
 
     //댓글 수정
@@ -127,7 +134,7 @@ public class BoardController {
     public ResponseEntity<?> recommendBoard(@PathVariable Long boardId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         //실제로 사용자 ID를 인자로 넘겨야 함
         boardService.recommendBoard(boardId, userDetails.getId());
-        return ResponseEntity.created(URI.create("/boards/" + boardId)).build();
+        return ResponseEntity.created(URI.create("/api/boards/" + boardId)).build();
     }
 
     //게시글 추천취소
@@ -140,18 +147,18 @@ public class BoardController {
     }
 
     //댓글 추천
-    @PreAuthorize("isFullyAuthenticated()")
+
     @PostMapping("/{boardId:\\d+}/comments/{commentId:\\d+}/recommends")
     public ResponseEntity<?> recommendComment(@PathVariable Long boardId, @PathVariable Long commentId, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         //실제론 사용자 ID를 인자로 넘겨야 함
         boardService.recommendComment(commentId, userDetails.getId());
-        return ResponseEntity.created(URI.create("/boards/" + boardId + "/comments/" + commentId)).build();
+        return ResponseEntity.created(URI.create("/api/boards/" + boardId + "/comments/" + commentId)).build();
     }
 
 
     //댓글 추천취소
-    @PreAuthorize("isFullyAuthenticated()")
+
     @DeleteMapping("/{boardId:\\d+}/comments/{commentId:\\d+}/recommends")
     public ResponseEntity<?> recommendCommentCancel(@PathVariable Long boardId, @PathVariable Long commentId, @AuthenticationPrincipal CustomUserDetails userDetails) {
 

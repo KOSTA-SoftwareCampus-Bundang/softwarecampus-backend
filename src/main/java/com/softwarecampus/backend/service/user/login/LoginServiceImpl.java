@@ -99,14 +99,14 @@ public class LoginServiceImpl implements LoginService {
         
         // 5. Refresh Token 생성 및 Redis 저장
         String refreshToken = UUID.randomUUID().toString();
-//        String refreshKey = "refresh:" + account.getEmail();
-//        redisTemplate.opsForValue().set(
-//            refreshKey,
-//            refreshToken,
-//            7 * 24 * 60 * 60 * 1000L,  // 7일
-//            TimeUnit.MILLISECONDS
-//        );
-//
+        String refreshKey = "refresh:" + account.getEmail();
+        redisTemplate.opsForValue().set(
+            refreshKey,
+            refreshToken,
+            7 * 24 * 60 * 60 * 1000L,  // 7일
+            TimeUnit.MILLISECONDS
+        );
+
         // 6. LoginResponse 생성
         AccountResponse accountResponse = new AccountResponse(
             account.getId(),

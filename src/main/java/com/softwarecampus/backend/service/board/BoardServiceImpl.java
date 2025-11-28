@@ -62,6 +62,9 @@ public class BoardServiceImpl implements BoardService {
         if (!board.isActive()) {
             throw new BoardException(BoardErrorCode.BOARD_NOT_FOUND);
         }
+        if (board.isSecret() && (userId == null || !userId.equals(board.getAccount().getId()))) {
+            throw new BoardException(BoardErrorCode.CANNOT_READ_BOARD);
+        }
         board.setHits(board.getHits() + 1);
         BoardResponseDTO boardResponseDTO = BoardResponseDTO.from(board);
         if (userId != null) {
@@ -135,13 +138,17 @@ public class BoardServiceImpl implements BoardService {
         board.markDeleted();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
-    public Map<String, byte[]> downloadBoardAttach(Long boardId, Long boardAttachId) {
+    public Map<String, byte[]> downloadBoardAttach(Long boardId, Long boardAttachId, Long userId) {
         BoardAttach boardAttach = boardAttachRepository.findById(boardAttachId).orElseThrow(() -> new BoardException(BoardErrorCode.FILE_NOT_FOUND));
-        if (!boardId.equals(boardAttach.getBoard().getId())) {
+        if (!boardId.equals(boardAttach.getBoard().getId()) || !boardAttach.isActive()) {
             throw new BoardException(BoardErrorCode.FILE_NOT_FOUND);
         }
+        if (boardAttach.getBoard().isSecret() && (userId == null || !userId.equals(boardAttach.getBoard().getAccount().getId()))) {
+            throw new BoardException(BoardErrorCode.FILE_ACCESS_FORBIDDEN);
+        }
+
         byte[] fileBytes = s3Service.downloadFile(boardAttach.getRealFilename());
         return Map.of(boardAttach.getOriginalFilename(), fileBytes);
     }

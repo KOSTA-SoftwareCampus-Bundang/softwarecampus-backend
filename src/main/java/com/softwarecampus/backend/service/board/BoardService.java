@@ -32,7 +32,7 @@ public interface BoardService {
     public void deleteBoardById(Long id);
 
     //게시글 파일 다운로드
-    public Map<String,byte[]> downloadBoardAttach(Long boardId, Long boardAttachId);
+    public Map<String,byte[]> downloadBoardAttach(Long boardId, Long boardAttachId,Long userId);
 
     //게시글 추천
     public void recommendBoard(Long boardId, Long userId);
