@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 메인페이지 - 커뮤니티 하이라이트 DTO
  */
 @Getter
-@Setter
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -26,13 +26,14 @@ public class HomeCommunityDTO {
     private LocalDateTime createdAt;
 
     public static HomeCommunityDTO fromEntity(Board board) {
+        String category = board.getCategory() != null ? board.getCategory().name() : "UNCATEGORIZED";
         return HomeCommunityDTO.builder()
                 .id(board.getId())
                 .title(board.getTitle())
-                .category(board.getCategory().name())
-                .categoryName(getCategoryName(board.getCategory().name()))
+                .category(category)
+                .categoryName(getCategoryName(category))
                 .writerName(board.getAccount() != null ? board.getAccount().getUserName() : "익명")
-                .viewCount((int) board.getHits())
+                .viewCount((int) Math.min(board.getHits(), Integer.MAX_VALUE))
                 .likeCount(board.getBoardRecommends().size())
                 .commentCount(board.getComments().size())
                 .createdAt(board.getCreatedAt())

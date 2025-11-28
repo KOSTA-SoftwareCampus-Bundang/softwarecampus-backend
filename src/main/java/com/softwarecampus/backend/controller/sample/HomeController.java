@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.controller.sample;
 
+import com.softwarecampus.backend.dto.home.HomeCommunityDTO;
 import com.softwarecampus.backend.dto.home.HomeResponseDTO;
 import com.softwarecampus.backend.service.home.HomeService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class HomeController {
 
+    private static final int COMMUNITY_HIGHLIGHTS_LIMIT = 6;
+
     private final HomeService homeService;
 
     /**
@@ -38,9 +41,20 @@ public class HomeController {
     /**
      * 커뮤니티 하이라이트 조회
      */
+import com.softwarecampus.backend.dto.home.HomeCommunityDTO;
+
+// ... (existing imports)
+
+    private static final int COMMUNITY_HIGHLIGHTS_LIMIT = 6;
+
+    // ... (existing code)
+
+    /**
+     * 커뮤니티 하이라이트 조회
+     */
     @GetMapping("/community")
-    public ResponseEntity<List<com.softwarecampus.backend.dto.home.HomeCommunityDTO>> getCommunityHighlights() {
-        List<com.softwarecampus.backend.dto.home.HomeCommunityDTO> data = homeService.getCommunityHighlights(6);
+    public ResponseEntity<List<HomeCommunityDTO>> getCommunityHighlights() {
+        List<HomeCommunityDTO> data = homeService.getCommunityHighlights(COMMUNITY_HIGHLIGHTS_LIMIT);
         return ResponseEntity.ok(data);
     }
 

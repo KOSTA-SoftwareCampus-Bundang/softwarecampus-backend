@@ -38,5 +38,7 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
         Page<BoardListResponseDTO> findBoardsByTitleAndText(@Param("category") BoardCategory category,
                         @Param("searchText") String searchText, Pageable pageable);
 
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "account", "boardRecommends",
+                        "comments" })
         Page<Board> findByIsDeletedFalse(Pageable pageable);
 }

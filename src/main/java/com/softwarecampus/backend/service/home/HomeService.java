@@ -1,6 +1,9 @@
 package com.softwarecampus.backend.service.home;
 
+import com.softwarecampus.backend.dto.home.HomeCommunityDTO;
 import com.softwarecampus.backend.dto.home.HomeResponseDTO;
+
+import java.util.List;
 
 /**
  * 메인페이지 전용 서비스 인터페이스
@@ -22,5 +25,5 @@ public interface HomeService {
      * 커뮤니티 하이라이트 조회
      * - 최신 게시글 n개
      */
-    java.util.List<com.softwarecampus.backend.dto.home.HomeCommunityDTO> getCommunityHighlights(int limit);
+    List<HomeCommunityDTO> getCommunityHighlights(int limit);
 }
