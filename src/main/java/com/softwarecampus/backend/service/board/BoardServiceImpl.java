@@ -66,7 +66,7 @@ public class BoardServiceImpl implements BoardService {
             throw new BoardException(BoardErrorCode.CANNOT_READ_BOARD);
         }
         board.setHits(board.getHits() + 1);
-        BoardResponseDTO boardResponseDTO = BoardResponseDTO.from(board);
+        BoardResponseDTO boardResponseDTO = BoardResponseDTO.from(board,userId);
         if (userId != null) {
             boardResponseDTO.setLike(board.getBoardRecommends().stream().anyMatch(br -> br.getAccount().getId().equals(userId)));
             boardResponseDTO.setOwner(userId.equals(board.getAccount().getId()));

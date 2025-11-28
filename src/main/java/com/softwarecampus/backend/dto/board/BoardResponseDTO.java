@@ -47,13 +47,13 @@ public class BoardResponseDTO {
     @Builder.Default
     private List<CommentResponseDTO> boardComments = new ArrayList<>();
 
-    public static BoardResponseDTO from(Board board) {
+    public static BoardResponseDTO from(Board board,Long userId) {
         BoardResponseDTO boardResponseDTO = BoardResponseDTO.builder().id(board.getId()).category(board.getCategory()).title(board.getTitle())
                 .text(board.getText()).secret(board.isSecret()).hits(board.getHits()).likeCount(board.getBoardRecommends().size()).
                 createdAt(board.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).
                 userNickName(board.getAccount().getUserName()).accountId(board.getAccount().getId()).build();
         boardResponseDTO.setBoardAttachs(board.getBoardAttaches().stream().map(BoardAttachResponseDTO::from).toList());
-        boardResponseDTO.setBoardComments(board.getComments().stream().filter(comment -> comment.isActive()).map(CommentResponseDTO::from).toList());
+        boardResponseDTO.setBoardComments(board.getComments().stream().filter(comment -> comment.isActive()).map((c)->CommentResponseDTO.from(c,userId)).toList());
 
         return boardResponseDTO;
     }
