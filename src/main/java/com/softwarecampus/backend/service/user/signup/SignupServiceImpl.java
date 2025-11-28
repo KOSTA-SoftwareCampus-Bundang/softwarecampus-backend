@@ -168,6 +168,8 @@ public class SignupServiceImpl implements SignupService {
             );
         };
 
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
         return Account.builder()
                 .email(request.email())
                 .password(encodedPassword)
@@ -179,6 +181,13 @@ public class SignupServiceImpl implements SignupService {
                 .accountType(request.accountType())
                 .academyId(request.academyId())
                 .accountApproved(approvalStatus)
+                // 약관 동의 설정
+                .termsAgreed(request.termsAgreed())
+                .termsAgreedAt(request.termsAgreed() ? now : null)
+                .privacyAgreed(request.privacyAgreed())
+                .privacyAgreedAt(request.privacyAgreed() ? now : null)
+                .marketingAgreed(request.marketingAgreed() != null && request.marketingAgreed())
+                .marketingAgreedAt((request.marketingAgreed() != null && request.marketingAgreed()) ? now : null)
                 .build();
     }
 
