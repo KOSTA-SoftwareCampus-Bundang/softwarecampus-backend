@@ -7,6 +7,8 @@ import com.softwarecampus.backend.dto.academy.qna.QAResponse;
 import com.softwarecampus.backend.dto.academy.qna.QAUpdateRequest;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.repository.academy.academyQA.AcademyQARepository;
+import com.softwarecampus.backend.domain.common.AttachmentCategoryType;
+import com.softwarecampus.backend.service.academy.qna.AttachmentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,9 @@ class AcademyQAServiceImplTest {
 
     @Mock
     private AcademyRepository academyRepository;
+
+    @Mock
+    private AttachmentService attachmentService;
 
     private Academy testAcademy;
     private AcademyQA testQA;
@@ -85,7 +90,8 @@ class AcademyQAServiceImplTest {
         Long wrongAcademyId = 99L;
         when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
 
-        assertThrows(IllegalArgumentException.class, () -> qaService.getAcademyQADetail(qaId, wrongAcademyId));
+        assertThrows(com.softwarecampus.backend.exception.academy.AcademyException.class,
+                () -> qaService.getAcademyQADetail(qaId, wrongAcademyId));
     }
 
     @Test
@@ -127,9 +133,12 @@ class AcademyQAServiceImplTest {
     void deleteQA_success() {
         when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
 
+        when(attachmentService.softDeleteAllByCategoryAndId(any(), any())).thenReturn(List.of());
+
         qaService.deleteQuestion(qaId, academyId);
 
         verify(qaRepository, times(1)).delete(testQA);
+        verify(attachmentService, times(1)).softDeleteAllByCategoryAndId(eq(AttachmentCategoryType.QNA), eq(qaId));
     }
 
     @Test
@@ -153,8 +162,9 @@ class AcademyQAServiceImplTest {
         testQA.setAnswerText(null);
         when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
 
-        assertThrows(IllegalStateException.class, () -> qaService.deleteAnswer(qaId, academyId),
-                "삭제할 답변이 없을 경우 IllegalStateException이 발생해야 합니다.");
+        assertThrows(com.softwarecampus.backend.exception.academy.AcademyException.class,
+                () -> qaService.deleteAnswer(qaId, academyId),
+                "삭제할 답변이 없을 경우 AcademyException이 발생해야 합니다.");
 
         verify(qaRepository, never()).delete(testQA);
     }
