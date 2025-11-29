@@ -21,7 +21,7 @@ public interface AcademyQAService {
     /**
      * 질문 등록
      */
-    QAResponse createQuestion(Long academyId, QACreateRequest request);
+    QAResponse createQuestion(Long academyId, QACreateRequest request, Long userId);
 
     /**
      * 질문 수정
@@ -34,12 +34,12 @@ public interface AcademyQAService {
     void deleteQuestion(Long qaId, Long academyId);
 
     /**
-     *  답변 등록 / 수정
+     * 답변 등록 / 수정
      */
-    QAResponse updateAnswer(Long qaId, Long academyId, QAUpdateRequest request);
+    QAResponse updateAnswer(Long qaId, Long academyId, QAUpdateRequest request, Long userId);
 
     /**
-     *  답변 삭제
+     * 답변 삭제
      */
     QAResponse deleteAnswer(Long qaId, Long academyId);
 }

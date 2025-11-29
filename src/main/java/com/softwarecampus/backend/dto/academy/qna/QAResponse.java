@@ -21,6 +21,13 @@ public class QAResponse {
     private LocalDateTime updatedAt;
     private Long academyId;
 
+    private Long accountId;
+    private String writerName;
+
+    private Long answeredById;
+    private String answeredByName;
+    private boolean isAnswered;
+
     public static QAResponse from(AcademyQA qa) {
 
         if (qa.getAcademy() == null) {
@@ -35,6 +42,11 @@ public class QAResponse {
                 .createdAt(qa.getCreatedAt())
                 .updatedAt(qa.getUpdatedAt())
                 .academyId(qa.getAcademy().getId())
+                .accountId(qa.getAccount() != null ? qa.getAccount().getId() : null)
+                .writerName(qa.getAccount() != null ? qa.getAccount().getUserName() : "익명")
+                .answeredById(qa.getAnsweredBy() != null ? qa.getAnsweredBy().getId() : null)
+                .answeredByName(qa.getAnsweredBy() != null ? qa.getAnsweredBy().getUserName() : null)
+                .isAnswered(qa.getAnswerText() != null && !qa.getAnswerText().isEmpty())
                 .build();
     }
 }

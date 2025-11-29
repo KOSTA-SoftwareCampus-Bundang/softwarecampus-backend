@@ -3,6 +3,7 @@ package com.softwarecampus.backend.domain.academy.qna;
 import com.softwarecampus.backend.domain.academy.Academy;
 import com.softwarecampus.backend.domain.academy.ApprovalStatus;
 import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
+import com.softwarecampus.backend.domain.user.Account;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,7 +31,7 @@ public class AcademyQA extends BaseSoftDeleteSupportEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "is_approved", nullable = false)
-    private ApprovalStatus isApproved =  ApprovalStatus.PENDING;
+    private ApprovalStatus isApproved = ApprovalStatus.PENDING;
 
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
@@ -40,14 +41,24 @@ public class AcademyQA extends BaseSoftDeleteSupportEntity {
     @JoinColumn(name = "academy_id", nullable = false)
     private Academy academy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")
+    private Account account;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "answered_by_id")
+    private Account answeredBy;
+
     // 답변 등록/수정
-    public void updateAnswer(String answerText) {
+    public void updateAnswer(String answerText, Account answeredBy) {
         this.answerText = answerText;
+        this.answeredBy = answeredBy;
     }
 
     // 답변 삭제
     public void deleteAnswer() {
         this.answerText = null;
+        this.answeredBy = null;
     }
 
     // ✅ 승인 처리
