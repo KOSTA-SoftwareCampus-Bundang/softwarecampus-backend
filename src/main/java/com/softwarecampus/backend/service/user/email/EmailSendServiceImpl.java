@@ -163,7 +163,7 @@ public class EmailSendServiceImpl implements EmailSendService {
             
             helper.setFrom(EmailConstants.SENDER_EMAIL, EmailConstants.SENDER_NAME);
             helper.setTo(toEmail);
-            helper.setSubject("[코스타] 회원가입이 승인되었습니다");
+            helper.setSubject("[소프트웨어캠퍼스] 회원가입이 승인되었습니다");
             
             String htmlContent = String.format("""
                 <html>
