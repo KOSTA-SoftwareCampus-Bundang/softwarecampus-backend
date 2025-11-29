@@ -1,15 +1,21 @@
 package com.softwarecampus.backend.service.user.profile;
 
+import com.softwarecampus.backend.domain.common.VerificationType;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.EmailVerificationCodeRequest;
+import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
 import com.softwarecampus.backend.exception.user.PhoneNumberAlreadyExistsException;
 import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.repository.user.EmailVerificationRepository;
+import com.softwarecampus.backend.service.user.email.EmailVerificationService;
 import com.softwarecampus.backend.util.EmailUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 계정 조회 및 프로필 관리 Service 구현체
  * - Phase 5: 기본 조회 기능
  * - Phase 15-1: 프로필 수정/삭제 기능 추가
+ * - Phase 15-2: 비밀번호 재설정 기능 추가
  */
 @Slf4j
 @Service
@@ -25,6 +32,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfileServiceImpl implements ProfileService {
     
     private final AccountRepository accountRepository;
+    private final EmailVerificationRepository emailVerificationRepository;
+    private final EmailVerificationService emailVerificationService;
+    private final PasswordEncoder passwordEncoder;
     
     /**
      * ID로 계정 조회
@@ -131,6 +141,38 @@ public class ProfileServiceImpl implements ProfileService {
         account.markDeleted();
         
         log.info("계정 삭제 완료 (소프트): email={}, accountId={}", EmailUtils.maskEmail(email), account.getId());
+    }
+    
+    /**
+     * 비밀번호 재설정 (이메일 인증 코드 검증)
+     * - EmailVerificationService.verifyResetCode() 재사용
+     */
+    @Override
+    @Transactional
+    public void resetPassword(String email, ResetPasswordRequest request) {
+        // 1. 입력 검증
+        validateEmailInput(email);
+        
+        log.info("비밀번호 재설정 시도: email={}", EmailUtils.maskEmail(email));
+        
+        // 2. 계정 조회
+        Account account = accountRepository.findByEmail(email)
+            .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
+        
+        // 3. 이메일 인증 코드 검증 (EmailVerificationService 재사용)
+        // - 차단 상태 확인, 코드 만료 확인, 코드 일치 검증, 시도 횟수 관리 등 모두 포함
+        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email, request.getCode());
+        emailVerificationService.verifyResetCode(codeRequest);
+        
+        // 4. 비밀번호 변경
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        account.setPassword(encodedPassword);
+        
+        // 5. 인증 레코드 삭제 (일회용 보장)
+        emailVerificationRepository.deleteByEmailAndType(email, VerificationType.PASSWORD_RESET);
+        
+        log.info("비밀번호 재설정 완료: email={}, accountId={}", 
+            EmailUtils.maskEmail(email), account.getId());
     }
     
     /**

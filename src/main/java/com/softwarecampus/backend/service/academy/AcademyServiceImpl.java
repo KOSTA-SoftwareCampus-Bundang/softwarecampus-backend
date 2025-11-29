@@ -8,6 +8,7 @@ import com.softwarecampus.backend.dto.academy.AcademyUpdateRequest;
 import com.softwarecampus.backend.exception.academy.AcademyErrorCode;
 import com.softwarecampus.backend.exception.academy.AcademyException;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
+import com.softwarecampus.backend.service.user.email.EmailSendService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

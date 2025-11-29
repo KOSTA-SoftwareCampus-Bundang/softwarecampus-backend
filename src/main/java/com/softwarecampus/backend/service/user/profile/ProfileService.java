@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.service.user.profile;
 
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 
 /**
@@ -44,4 +45,16 @@ public interface ProfileService {
      * @throws com.softwarecampus.backend.exception.user.AccountNotFoundException 계정이 존재하지 않는 경우
      */
     void deleteAccount(String email);
+    
+    /**
+     * 비밀번호 재설정 (이메일 인증 코드 검증)
+     * 
+     * @param email 이메일
+     * @param request 인증 코드 및 새 비밀번호
+     * @throws com.softwarecampus.backend.exception.user.AccountNotFoundException 계정이 존재하지 않는 경우
+     * @throws com.softwarecampus.backend.exception.email.EmailVerificationException 인증 코드가 존재하지 않는 경우
+     * @throws com.softwarecampus.backend.exception.email.VerificationCodeExpiredException 인증 코드가 만료된 경우
+     * @throws com.softwarecampus.backend.exception.email.TooManyAttemptsException 인증 시도 횟수 초과
+     */
+    void resetPassword(String email, ResetPasswordRequest request);
 }
