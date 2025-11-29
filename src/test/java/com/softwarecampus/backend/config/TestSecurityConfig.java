@@ -14,18 +14,18 @@ import org.springframework.security.web.SecurityFilterChain;
  * - Form Login 비활성화
  * - HTTP Basic 비활성화
  */
-@TestConfiguration
-@EnableWebSecurity
+// @TestConfiguration
+// @EnableWebSecurity
 public class TestSecurityConfig {
-    
+
     @Bean
     public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .formLogin(AbstractHttpConfigurer::disable)
-            .httpBasic(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-        
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+
         return http.build();
     }
 }

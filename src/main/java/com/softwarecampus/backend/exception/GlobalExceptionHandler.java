@@ -36,13 +36,13 @@ import java.util.NoSuchElementException;
  * - 도메인별 예외는 각 담당자가 추가
  *
  * @author 태윤 (Account 도메인)
- * <p>
- * * 📌 체크리스트:
- * - [ ] 예외 클래스 생성 (exception/{domain}/ 패키지)
- * - [ ] 적절한 HTTP 상태 코드 선택 (400/404/409/422/500 등)
- * - [ ] type URI 정의 (problems/{problem-type})
- * - [ ] 로깅 레벨 결정 (ERROR/WARN/DEBUG)
- * - [ ] 민감정보 포함 여부 확인
+ *         <p>
+ *         * 📌 체크리스트:
+ *         - [ ] 예외 클래스 생성 (exception/{domain}/ 패키지)
+ *         - [ ] 적절한 HTTP 상태 코드 선택 (400/404/409/422/500 등)
+ *         - [ ] type URI 정의 (problems/{problem-type})
+ *         - [ ] 로깅 레벨 결정 (ERROR/WARN/DEBUG)
+ *         - [ ] 민감정보 포함 여부 확인
  */
 @Slf4j
 @RestControllerAdvice
@@ -66,16 +66,14 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                "요청 본문에 유효하지 않은 필드가 있습니다."
-        );
+                "요청 본문에 유효하지 않은 필드가 있습니다.");
         problemDetail.setType(URI.create(problemBaseUri + "/validation-error"));
         problemDetail.setTitle("Validation Failed");
 
         // 필드별 오류 수집
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage())
-        );
+        ex.getBindingResult().getFieldErrors()
+                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
         problemDetail.setProperty("errors", errors);
 
         return problemDetail;
@@ -90,8 +88,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                String.format("필수 파라미터 '%s'가 누락되었습니다.", ex.getParameterName())
-        );
+                String.format("필수 파라미터 '%s'가 누락되었습니다.", ex.getParameterName()));
         problemDetail.setType(URI.create(problemBaseUri + "/missing-parameter"));
         problemDetail.setTitle("Missing Required Parameter");
 
@@ -107,8 +104,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                String.format("필수 파일 '%s'가 누락되었습니다.", ex.getRequestPartName())
-        );
+                String.format("필수 파일 '%s'가 누락되었습니다.", ex.getRequestPartName()));
         problemDetail.setType(URI.create(problemBaseUri + "/missing-file"));
         problemDetail.setTitle("Missing Required File");
 
@@ -153,8 +149,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                detailMessage
-        );
+                detailMessage);
         problemDetail.setType(URI.create(problemBaseUri + "/validation-error"));
         problemDetail.setTitle("Validation Failed");
         problemDetail.setProperty("errors", errors);
@@ -171,8 +166,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "서버 내부 오류가 발생했습니다."
-        );
+                "서버 내부 오류가 발생했습니다.");
         problemDetail.setType(URI.create("about:blank"));
         problemDetail.setTitle("Internal Server Error");
 
@@ -196,7 +190,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                ex.getMessage()  // 이미 일반화된 메시지 사용
+                ex.getMessage() // 이미 일반화된 메시지 사용
         );
         problemDetail.setType(URI.create(problemBaseUri + "/invalid-input"));
         problemDetail.setTitle("Invalid Input");
@@ -217,8 +211,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.CONFLICT,
-                "이메일이 이미 등록되었습니다."
-        );
+                "이메일이 이미 등록되었습니다.");
         problemDetail.setType(URI.create(problemBaseUri + "/duplicate-email"));
         problemDetail.setTitle("Duplicate Email");
 
@@ -238,8 +231,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.CONFLICT,
-                "이미 사용 중인 전화번호입니다."
-        );
+                "이미 사용 중인 전화번호입니다.");
         problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/duplicate-phone-number"));
         problemDetail.setTitle("Duplicate Phone Number");
 
@@ -259,8 +251,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.NOT_FOUND,
-                "요청한 계정을 찾을 수 없습니다."
-        );
+                "요청한 계정을 찾을 수 없습니다.");
         problemDetail.setType(URI.create(problemBaseUri + "/account-not-found"));
         problemDetail.setTitle("Account Not Found");
 
@@ -277,11 +268,27 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.UNAUTHORIZED,
-                ex.getMessage()
-        );
+                ex.getMessage());
 
         problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-credentials"));
         problemDetail.setTitle("Unauthorized");
+
+        return problemDetail;
+    }
+
+    /**
+     * 권한 부족 예외 처리
+     * HTTP 403 Forbidden
+     */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ProblemDetail handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex) {
+        log.warn("접근 권한 부족: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                "접근 권한이 없습니다.");
+        problemDetail.setType(URI.create(problemBaseUri + "/access-denied"));
+        problemDetail.setTitle("Access Denied");
 
         return problemDetail;
     }
@@ -304,8 +311,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "이메일 발송에 실패했습니다."
-        );
+                "이메일 발송에 실패했습니다.");
         problemDetail.setType(URI.create(problemBaseUri + "/email-send-failed"));
         problemDetail.setTitle("Email Send Failed");
 
@@ -322,8 +328,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                ex.getMessage()
-        );
+                ex.getMessage());
         problemDetail.setType(URI.create(problemBaseUri + "/email-verification-error"));
         problemDetail.setTitle("Email Verification Error");
 
@@ -340,8 +345,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.FORBIDDEN,
-                ex.getMessage()
-        );
+                ex.getMessage());
         problemDetail.setType(URI.create(problemBaseUri + "/email-not-verified"));
         problemDetail.setTitle("Email Not Verified");
 
@@ -358,8 +362,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                ex.getMessage()
-        );
+                ex.getMessage());
         problemDetail.setType(URI.create(problemBaseUri + "/verification-code-expired"));
         problemDetail.setTitle("Verification Code Expired");
 
@@ -376,8 +379,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.TOO_MANY_REQUESTS,
-                ex.getMessage()
-        );
+                ex.getMessage());
         problemDetail.setType(URI.create(problemBaseUri + "/too-many-attempts"));
         problemDetail.setTitle("Too Many Attempts");
 
