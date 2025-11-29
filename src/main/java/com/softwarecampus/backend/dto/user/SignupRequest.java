@@ -2,6 +2,7 @@ package com.softwarecampus.backend.dto.user;
 
 import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.validation.ValidAccountType;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -57,9 +58,11 @@ public record SignupRequest(
     Long academyId,
 
     @NotNull(message = "이용약관 동의는 필수입니다")
+    @AssertTrue(message = "이용약관에 동의해야 합니다")
     Boolean termsAgreed,
 
     @NotNull(message = "개인정보 처리방침 동의는 필수입니다")
+    @AssertTrue(message = "개인정보 처리방침에 동의해야 합니다")
     Boolean privacyAgreed,
 
     Boolean marketingAgreed
