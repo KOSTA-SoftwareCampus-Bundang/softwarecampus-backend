@@ -186,7 +186,7 @@ public class EmailSendServiceImpl implements EmailSendService {
             helper.setText(htmlContent, true);
             mailSender.send(message);
             log.info("회원 승인 이메일 발송 성공 - userName: {}", userName);
-        } catch (MessagingException e) {
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
             log.error("회원 승인 이메일 발송 실패 - userName: {}, error: {}", userName, e.getMessage());
             throw new EmailSendException("회원 승인 이메일 발송에 실패했습니다", e);
         }
