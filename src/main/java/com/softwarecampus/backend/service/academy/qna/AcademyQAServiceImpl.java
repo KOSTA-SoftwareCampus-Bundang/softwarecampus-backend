@@ -10,6 +10,7 @@ import com.softwarecampus.backend.dto.academy.qna.QAResponse;
 import com.softwarecampus.backend.dto.academy.qna.QAUpdateRequest;
 import com.softwarecampus.backend.exception.academy.AcademyErrorCode;
 import com.softwarecampus.backend.exception.academy.AcademyException;
+import com.softwarecampus.backend.exception.course.ForbiddenException;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.repository.academy.academyQA.AcademyQARepository;
 import com.softwarecampus.backend.repository.academy.academyQA.AttachmentRepository;
@@ -110,6 +111,10 @@ public class AcademyQAServiceImpl implements AcademyQAService {
         Objects.requireNonNull(userId, "User ID must not be null");
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
 
+        if (request.getAnswerText() == null || request.getAnswerText().trim().isEmpty()) {
+            throw new AcademyException(AcademyErrorCode.ANSWER_TEXT_REQUIRED);
+        }
+
         Account answeredBy = accountRepository.findById(userId)
                 .orElseThrow(() -> new AcademyException(AcademyErrorCode.USER_NOT_FOUND));
 
@@ -157,14 +162,20 @@ public class AcademyQAServiceImpl implements AcademyQAService {
      */
     @Override
     @Transactional
-    public void deleteQuestion(Long qaId, Long academyId) {
+    public void deleteQuestion(Long qaId, Long academyId, Long userId) {
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
+
+        if (!qa.getAccount().getId().equals(userId)) {
+            throw new ForbiddenException("본인의 질문만 삭제할 수 있습니다.");
+        }
 
         // 연결된 첨부파일 삭제
         List<Attachment> attachmentsToHardDelete = attachmentService.softDeleteAllByCategoryAndId(
                 AttachmentCategoryType.QNA,
                 qaId);
-        attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
+        if (attachmentsToHardDelete != null) {
+            attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
+        }
         academyQARepository.delete(qa);
     }
 

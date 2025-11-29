@@ -17,7 +17,7 @@ public enum AcademyErrorCode {
     ANSWER_TEXT_REQUIRED(HttpStatus.BAD_REQUEST, 2008, "답변 내용을 입력해야 합니다."),
     ANSWER_NOT_EXIST(HttpStatus.BAD_REQUEST, 2009, "삭제할 답변이 존재하지 않습니다."),
 
-    ATTACHMENT_NOT_BELONG_TO_QA(HttpStatus.BAD_REQUEST, 2010, "첨부파일이 Q&A에 속하지 않습니다.."),
+    ATTACHMENT_NOT_BELONG_TO_QA(HttpStatus.BAD_REQUEST, 2010, "첨부파일이 Q&A에 속하지 않습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, 2011, "사용자를 찾을 수 없습니다.");
 
     private final HttpStatus status;

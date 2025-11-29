@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -98,7 +101,7 @@ public class AcademyQAServiceFileUploadImplTest {
                 // then
                 verify(academyQARepository, times(1)).save(any(AcademyQA.class));
                 verify(attachmentService, times(1)).confirmAttachments(
-                                any(List.class),
+                                anyList(),
                                 eq(qaId),
                                 eq(AttachmentCategoryType.QNA));
         }
@@ -142,7 +145,7 @@ public class AcademyQAServiceFileUploadImplTest {
 
                 // then
                 verify(attachmentService, times(1)).confirmAttachments(
-                                any(List.class),
+                                anyList(),
                                 eq(qaId),
                                 eq(AttachmentCategoryType.QNA));
 
@@ -213,6 +216,10 @@ public class AcademyQAServiceFileUploadImplTest {
         @DisplayName("Q/A 질문 삭제 시, 연결된 모든 파일에 대해 Soft Delete 및 Hard Delete가 호출되어야 한다")
         void deleteQuestion_shouldSoftDeleteAndHardDeleteAllAttachments() {
                 // given
+                Account mockAccount = mock(Account.class);
+                when(mockAccount.getId()).thenReturn(userId);
+                when(academyQA.getAccount()).thenReturn(mockAccount);
+
                 when(academyQARepository.findById(qaId)).thenReturn(Optional.of(academyQA));
 
                 List<Attachment> attachments = List.of(
@@ -223,7 +230,7 @@ public class AcademyQAServiceFileUploadImplTest {
                                 eq(qaId))).thenReturn(attachments);
 
                 // when
-                academyQAService.deleteQuestion(qaId, academyId);
+                academyQAService.deleteQuestion(qaId, academyId, userId);
 
                 // then
                 verify(attachmentService, times(1)).softDeleteAllByCategoryAndId(

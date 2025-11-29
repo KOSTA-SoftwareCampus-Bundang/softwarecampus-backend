@@ -31,7 +31,7 @@ public interface AcademyQAService {
     /**
      * Q/A (질문과 답변 전체) 삭제
      */
-    void deleteQuestion(Long qaId, Long academyId);
+    void deleteQuestion(Long qaId, Long academyId, Long userId);
 
     /**
      * 답변 등록 / 수정

@@ -74,8 +74,11 @@ public class AcademyQAController {
      * 훈련기관 질문 삭제
      */
     @DeleteMapping("/{qaId}")
-    public ResponseEntity<Void> deleteQuestion(@PathVariable Long qaId, @PathVariable Long academyId) {
-        academyQAService.deleteQuestion(qaId, academyId);
+    public ResponseEntity<Void> deleteQuestion(
+            @PathVariable Long qaId,
+            @PathVariable Long academyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        academyQAService.deleteQuestion(qaId, academyId, userDetails.getId());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

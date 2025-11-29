@@ -159,12 +159,18 @@ class AcademyQAServiceImplTest {
     @DisplayName("Q/A 전체 삭제 성공 (소속 검증 통과)")
     void deleteQA_success() {
         // given
+        Long userId = 100L;
+        com.softwarecampus.backend.domain.user.Account mockAccount = mock(
+                com.softwarecampus.backend.domain.user.Account.class);
+        when(mockAccount.getId()).thenReturn(userId);
+        testQA.setAccount(mockAccount);
+
         when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
 
         when(attachmentService.softDeleteAllByCategoryAndId(any(), any())).thenReturn(List.of());
 
         // when
-        qaService.deleteQuestion(qaId, academyId);
+        qaService.deleteQuestion(qaId, academyId, userId);
 
         // then
         verify(qaRepository, times(1)).delete(testQA);

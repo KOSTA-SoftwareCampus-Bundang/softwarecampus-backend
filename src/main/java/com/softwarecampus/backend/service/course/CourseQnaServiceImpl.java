@@ -7,6 +7,7 @@ import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.course.QnaAnswerRequest;
 import com.softwarecampus.backend.dto.course.QnaRequest;
 import com.softwarecampus.backend.dto.course.QnaResponse;
+import com.softwarecampus.backend.exception.course.BadRequestException;
 import com.softwarecampus.backend.exception.course.ForbiddenException;
 import com.softwarecampus.backend.exception.course.NotFoundException;
 import com.softwarecampus.backend.repository.course.CourseQnaRepository;
@@ -88,6 +89,11 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     @Transactional
     public QnaResponse answerQuestion(CategoryType type, Long qnaId, Long adminId, QnaAnswerRequest request) {
         CourseQna qna = validateQna(type, qnaId);
+
+        if (qna.isAnswered()) {
+            throw new ForbiddenException("이미 답변이 완료된 질문입니다.");
+        }
+
         Account admin = accountRepository.findById(adminId)
                 .orElseThrow(() -> new NotFoundException("관리자를 찾을 수 없습니다."));
 
@@ -101,13 +107,22 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     public QnaResponse updateAnswer(CategoryType type, Long qnaId, Long adminId, QnaAnswerRequest request) {
         CourseQna qna = validateQna(type, qnaId);
 
-        if (qna.isAnswered() && qna.getAnsweredBy() != null) {
-            if (!qna.getAnsweredBy().getId().equals(adminId)) {
-                throw new ForbiddenException("본인의 답변만 수정할 수 있습니다.");
-            }
+        if (request.getAnswerText() == null || request.getAnswerText().trim().isEmpty()) {
+            throw new BadRequestException("답변 내용을 입력해야 합니다.");
         }
 
-        qna.setAnswerText(request.getAnswerText());
+        if (!qna.isAnswered()) {
+            throw new NotFoundException("수정할 답변이 존재하지 않습니다.");
+        }
+
+        Account admin = accountRepository.findById(adminId)
+                .orElseThrow(() -> new NotFoundException("관리자를 찾을 수 없습니다."));
+
+        if (qna.getAnsweredBy() != null && !qna.getAnsweredBy().getId().equals(adminId)) {
+            throw new ForbiddenException("본인의 답변만 수정할 수 있습니다.");
+        }
+
+        qna.writeAnswer(request.getAnswerText(), admin);
         return toDto(qna);
     }
 
@@ -116,10 +131,12 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     public void deleteAnswer(CategoryType type, Long qnaId, Long adminId) {
         CourseQna qna = validateQna(type, qnaId);
 
-        if (qna.isAnswered() && qna.getAnsweredBy() != null) {
-            if (!qna.getAnsweredBy().getId().equals(adminId)) {
-                throw new ForbiddenException("본인의 답변만 삭제할 수 있습니다.");
-            }
+        if (!qna.isAnswered()) {
+            throw new NotFoundException("삭제할 답변이 존재하지 않습니다.");
+        }
+
+        if (qna.getAnsweredBy() != null && !qna.getAnsweredBy().getId().equals(adminId)) {
+            throw new ForbiddenException("본인의 답변만 삭제할 수 있습니다.");
         }
 
         qna.setAnswerText(null);
