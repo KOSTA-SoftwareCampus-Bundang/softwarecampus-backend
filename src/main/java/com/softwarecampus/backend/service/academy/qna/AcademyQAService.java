@@ -21,25 +21,30 @@ public interface AcademyQAService {
     /**
      * 질문 등록
      */
-    QAResponse createQuestion(Long academyId, QACreateRequest request);
+    QAResponse createQuestion(Long academyId, QACreateRequest request, Long userId);
 
     /**
      * 질문 수정
      */
-    QAResponse updateQuestion(Long academyId, Long qaId, QAUpdateRequest request);
+    QAResponse updateQuestion(Long academyId, Long qaId, QAUpdateRequest request, Long userId);
 
     /**
      * Q/A (질문과 답변 전체) 삭제
      */
-    void deleteQuestion(Long qaId, Long academyId);
+    void deleteQuestion(Long qaId, Long academyId, Long userId);
 
     /**
-     *  답변 등록 / 수정
+     * 답변 등록 (신규)
      */
-    QAResponse updateAnswer(Long qaId, Long academyId, QAUpdateRequest request);
+    QAResponse answerQuestion(Long academyId, Long qaId, QAUpdateRequest request, Long userId);
 
     /**
-     *  답변 삭제
+     * 답변 수정 (기존 답변만)
      */
-    QAResponse deleteAnswer(Long qaId, Long academyId);
+    QAResponse updateAnswer(Long academyId, Long qaId, QAUpdateRequest request, Long userId);
+
+    /**
+     * 답변 삭제
+     */
+    QAResponse deleteAnswer(Long qaId, Long academyId, Long userId);
 }

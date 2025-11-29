@@ -42,8 +42,8 @@ public class CourseQna extends BaseSoftDeleteSupportEntity {
 
     /** 질문 작성자 (일반 사용자) */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "writer_id", nullable = false)
-    private Account writer;
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
     /** 답변 작성자 (관리자 또는 강사) */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -52,6 +52,7 @@ public class CourseQna extends BaseSoftDeleteSupportEntity {
 
     /** 답변 완료 여부 */
     @Column(name = "is_answered", nullable = false)
+    @Builder.Default
     private boolean isAnswered = false;
 
     /** 답변 등록 메서드 */

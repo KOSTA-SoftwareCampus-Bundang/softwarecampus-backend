@@ -21,11 +21,20 @@ public class QAResponse {
     private LocalDateTime updatedAt;
     private Long academyId;
 
+    private Long accountId;
+    private String writerName;
+
+    private Long answeredById;
+    private String answeredByName;
+    private boolean isAnswered;
+
     public static QAResponse from(AcademyQA qa) {
 
         if (qa.getAcademy() == null) {
             throw new IllegalStateException("Academy relationship is required for QA");
         }
+
+        var answeredBy = qa.getAnsweredBy();
 
         return QAResponse.builder()
                 .id(qa.getId())
@@ -35,6 +44,11 @@ public class QAResponse {
                 .createdAt(qa.getCreatedAt())
                 .updatedAt(qa.getUpdatedAt())
                 .academyId(qa.getAcademy().getId())
+                .accountId(qa.getAccount().getId())
+                .writerName(qa.getAccount().getUserName())
+                .answeredById(answeredBy != null ? answeredBy.getId() : null)
+                .answeredByName(answeredBy != null ? answeredBy.getUserName() : null)
+                .isAnswered(qa.getAnswerText() != null && !qa.getAnswerText().isEmpty())
                 .build();
     }
 }
