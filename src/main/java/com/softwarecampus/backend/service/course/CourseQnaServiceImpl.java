@@ -76,7 +76,7 @@ public class CourseQnaServiceImpl implements CourseQnaService {
 
         CourseQna qna = CourseQna.builder()
                 .course(course)
-                .writer(writer)
+                .account(writer)
                 .title(request.getTitle())
                 .questionText(request.getQuestionText())
                 .build();
@@ -88,7 +88,7 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     @Transactional
     public QnaResponse updateQuestion(CategoryType type, Long qnaId, Long writerId, QnaRequest request) {
         CourseQna qna = validateQna(type, qnaId);
-        if (!qna.getWriter().getId().equals(writerId)) {
+        if (!qna.getAccount().getId().equals(writerId)) {
             throw new ForbiddenException("본인의 질문만 수정할 수 있습니다.");
         }
         qna.setTitle(request.getTitle());
@@ -100,7 +100,7 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     @Transactional
     public void deleteQuestion(CategoryType type, Long qnaId, Long writerId) {
         CourseQna qna = validateQna(type, qnaId);
-        if (!qna.getWriter().getId().equals(writerId)) {
+        if (!qna.getAccount().getId().equals(writerId)) {
             throw new ForbiddenException("본인의 질문만 삭제할 수 있습니다.");
         }
         qna.markDeleted();
@@ -154,13 +154,12 @@ public class CourseQnaServiceImpl implements CourseQnaService {
                 qna.getTitle(),
                 qna.getQuestionText(),
                 qna.getAnswerText(),
-                qna.getWriter().getId(),
-                qna.getWriter().getUserName(),
+                qna.getAccount().getId(),
+                qna.getAccount().getUserName(),
                 qna.getAnsweredBy() != null ? qna.getAnsweredBy().getId() : null,
                 qna.getAnsweredBy() != null ? qna.getAnsweredBy().getUserName() : null,
                 qna.isAnswered(),
                 qna.getCreatedAt(),
-                qna.getUpdatedAt()
-        );
+                qna.getUpdatedAt());
     }
 }
