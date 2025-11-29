@@ -12,7 +12,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 /**
  * Spring Security 설정
@@ -22,7 +21,7 @@ import org.springframework.security.web.util.matcher.RegexRequestMatcher;
  */
 @Configuration
 @EnableWebSecurity
-//@PreAuthorize 사용하기 위해 추가
+// @PreAuthorize 사용하기 위해 추가
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -49,29 +48,26 @@ public class SecurityConfig {
 
                 // 엔드포인트별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST,"/api/boards").authenticated()
-                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+","PATCH")).authenticated()
-                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+","DELETE")).authenticated()
-                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+/comments","POST")).authenticated()
-                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+/comments/\\d+",null)).authenticated()
-                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+/recommends",null)).authenticated()
-                        .requestMatchers(new RegexRequestMatcher("/api/boards/\\d+/comments/\\d+/recommends",null)).authenticated()
-                        // 인증 불필요 (누구나 접근 가능)
-                        .requestMatchers(
-                                "/api/auth/**", // 회원가입, 로그인
+                        // 공개 리소스 (GET 요청만 허용)
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/boards/**", // 게시글/댓글 조회
                                 "/api/academies/**", // 학원 목록 조회
                                 "/api/courses/**", // 강좌 목록 조회
-                                "/api/home/**", // 메인페이지 데이터
-                                "/api/boards/**", // 커뮤니티 게시글
+                                "/api/home/**" // 메인페이지 데이터
+                        ).permitAll()
+
+                        // 인증 불필요 (모든 메서드 허용)
+                        .requestMatchers(
+                                "/api/auth/**", // 회원가입, 로그인
                                 "/swagger-ui/**", // Swagger UI
                                 "/swagger-ui.html", // Swagger UI 진입점
                                 "/v3/api-docs/**", // OpenAPI 문서
                                 "/api-docs/**", // API 문서
                                 "/webjars/**", // Swagger 리소스
-                                "/error")
-                        .permitAll()
+                                "/error" // 에러 페이지
+                        ).permitAll()
 
-                        // 나머지는 인증 필요
+                        // 그 외 모든 요청은 인증 필요 (POST, PUT, PATCH, DELETE 등)
                         .anyRequest().authenticated())
 
                 // 인증 실패 시 401 Unauthorized 반환
