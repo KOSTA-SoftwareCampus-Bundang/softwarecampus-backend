@@ -128,20 +128,46 @@ public class AcademyFileServiceImpl implements AcademyFileService {
 
         // 2. 각 파일을 S3에서 삭제 후 DB에서 삭제
         for (AcademyFile file : files) {
-            try {
-                // S3 파일 삭제
-                s3Service.deleteFile(file.getFileUrl());
-                log.debug("S3 file deleted: {}", file.getS3Key());
-            } catch (S3UploadException e) {
-                // S3 삭제 실패 시에도 DB 메타데이터는 삭제 (일관성 유지)
-                log.warn("Failed to delete S3 file: {}, but proceeding with DB deletion", file.getS3Key(), e);
-            }
+            // S3 파일 삭제 (최대 3회 재시도)
+            deleteS3FileWithRetry(file.getFileUrl(), file.getS3Key(), 3);
 
             // DB 메타데이터 삭제
             academyFileRepository.delete(file);
         }
 
         log.info("Deleted {} files for academy ID: {}", files.size(), academyId);
+    }
+
+    /**
+     * S3 파일 삭제 (재시도 로직 포함)
+     * 
+     * @param fileUrl S3 파일 URL
+     * @param s3Key S3 키 (로깅용)
+     * @param maxRetries 최대 재시도 횟수
+     */
+    private void deleteS3FileWithRetry(String fileUrl, String s3Key, int maxRetries) {
+        int attempt = 0;
+        while (attempt < maxRetries) {
+            try {
+                s3Service.deleteFile(fileUrl);
+                log.debug("S3 file deleted: {}", s3Key);
+                return; // 성공 시 종료
+            } catch (S3UploadException e) {
+                attempt++;
+                if (attempt < maxRetries) {
+                    log.warn("S3 삭제 실패 (시도 {}/{}): {}, 재시도 중...", attempt, maxRetries, s3Key);
+                    try {
+                        Thread.sleep(500 * attempt); // 백오프: 500ms, 1000ms, ...
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                } else {
+                    // 최대 재시도 후에도 실패 - 로그 남기고 DB 삭제는 진행
+                    log.error("S3 삭제 최종 실패 ({}회 시도): {} - 고아 파일 발생 가능", maxRetries, s3Key, e);
+                }
+            }
+        }
     }
 
     /**
