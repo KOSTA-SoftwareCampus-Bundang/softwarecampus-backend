@@ -32,4 +32,13 @@ public interface AccountAdminService {
      *  회원 삭제
      */
     void deleteAccount(Long accountId);
+    
+    /**
+     * 회원 승인
+     * - 승인 상태 변경 및 승인 이메일 발송
+     * 
+     * @param accountId 승인할 회원 ID
+     * @return 승인된 회원 정보
+     */
+    AccountResponse approveAccount(Long accountId);
 }

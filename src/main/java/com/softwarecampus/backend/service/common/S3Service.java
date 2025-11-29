@@ -146,6 +146,13 @@ public class S3Service {
         // 1. S3 키 검증
         validateS3Key(s3Key);
 
+        // TODO: [임시 주석 처리 - 2025-11-29]
+        // GetObjectPresignRequest import 누락 및 S3Presigner 빈 미구현으로 컴파일 오류 발생
+        // PR 머지 전 원상복귀 필요
+        // 담당자 확인 후 아래 코드 복원 및 import 추가 필요:
+        // import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+        // import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+        /*
         try {
             // 2. Presigned URL 요청 생성
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
@@ -169,6 +176,11 @@ public class S3Service {
             log.error("Failed to generate presigned URL for S3 key: {}", s3Key, e);
             throw new S3UploadException("Presigned URL 생성에 실패했습니다.", e);
         }
+        */
+        
+        // 임시: 일반 URL 반환 (Presigned URL 기능 미구현)
+        log.warn("Presigned URL 기능 미구현 - 일반 URL 반환: {}", s3Key);
+        return getFileUrl(s3Key);
     }
 
     /**

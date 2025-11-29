@@ -1,9 +1,11 @@
 package com.softwarecampus.backend.service.admin;
 
+import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.AccountUpdateRequest;
 import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.service.user.email.EmailSendService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -19,6 +21,7 @@ import java.util.NoSuchElementException;
 public class AccountAdminServiceImpl implements AccountAdminService {
 
     private final AccountRepository accountRepository;
+    private final EmailSendService emailSendService;
 
     private Account findAccount(Long accountId) {
         return accountRepository.findById(accountId)
@@ -115,5 +118,29 @@ public class AccountAdminServiceImpl implements AccountAdminService {
     public void deleteAccount(Long accountId) {
         Account account = findAccount(accountId);
         accountRepository.delete(account);
+    }
+    
+    /**
+     * 회원 승인
+     * - 승인 상태 변경 및 승인 이메일 발송
+     */
+    @Override
+    @Transactional
+    public AccountResponse approveAccount(Long accountId) {
+        Account account = findAccount(accountId);
+        
+        if (account.getIsDeleted()) {
+            throw new NoSuchElementException("Account with id: " + accountId + " not found");
+        }
+        
+        account.setAccountApproved(ApprovalStatus.APPROVED);
+        
+        // 승인 완료 이메일 발송
+        emailSendService.sendAccountApprovalEmail(
+            account.getEmail(),
+            account.getUserName()
+        );
+        
+        return toResponse(account);
     }
 }
