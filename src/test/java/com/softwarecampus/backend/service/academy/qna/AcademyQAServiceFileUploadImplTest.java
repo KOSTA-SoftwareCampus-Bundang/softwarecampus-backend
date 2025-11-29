@@ -141,7 +141,7 @@ public class AcademyQAServiceFileUploadImplTest {
                 when(academyQARepository.findById(qaId)).thenReturn(Optional.of(academyQA));
 
                 // when
-                academyQAService.updateQuestion(academyId, qaId, request);
+                academyQAService.updateQuestion(academyId, qaId, request, userId);
 
                 // then
                 verify(attachmentService, times(1)).confirmAttachments(
@@ -180,7 +180,7 @@ public class AcademyQAServiceFileUploadImplTest {
                 when(attachmentRepository.findAllById(deletedFileIds)).thenReturn(attachmentsToProcess);
 
                 // when
-                academyQAService.updateQuestion(academyId, qaId, request);
+                academyQAService.updateQuestion(academyId, qaId, request, userId);
 
                 // then
                 verify(attachmentRepository, times(1)).findAllById(eq(deletedFileIds));
@@ -204,7 +204,7 @@ public class AcademyQAServiceFileUploadImplTest {
                 when(academyQARepository.findById(qaId)).thenReturn(Optional.of(academyQA));
 
                 // when
-                academyQAService.updateQuestion(academyId, qaId, request);
+                academyQAService.updateQuestion(academyId, qaId, request, userId);
 
                 // then
                 verify(attachmentService, never()).confirmAttachments(any(), any(), any());
