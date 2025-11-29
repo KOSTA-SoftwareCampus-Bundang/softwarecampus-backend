@@ -103,7 +103,32 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     }
 
     /**
-     * 훈련기관 답변 수정
+     * 답변 등록 (신규)
+     */
+    @Override
+    @Transactional
+    public QAResponse answerQuestion(Long academyId, Long qaId, QAUpdateRequest request, Long userId) {
+        Objects.requireNonNull(userId, "User ID must not be null");
+        AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
+
+        if (request.getAnswerText() == null || request.getAnswerText().trim().isEmpty()) {
+            throw new AcademyException(AcademyErrorCode.ANSWER_TEXT_REQUIRED);
+        }
+
+        // 이미 답변이 있으면 에러
+        if (qa.getAnswerText() != null) {
+            throw new AcademyException(AcademyErrorCode.ANSWER_ALREADY_EXISTS);
+        }
+
+        Account answeredBy = accountRepository.findById(userId)
+                .orElseThrow(() -> new AcademyException(AcademyErrorCode.USER_NOT_FOUND));
+
+        qa.updateAnswer(request.getAnswerText(), answeredBy);
+        return QAResponse.from(qa);
+    }
+
+    /**
+     * 답변 수정 (기존 답변만)
      */
     @Override
     @Transactional
@@ -113,6 +138,16 @@ public class AcademyQAServiceImpl implements AcademyQAService {
 
         if (request.getAnswerText() == null || request.getAnswerText().trim().isEmpty()) {
             throw new AcademyException(AcademyErrorCode.ANSWER_TEXT_REQUIRED);
+        }
+
+        // 답변이 없으면 에러 (수정만 가능)
+        if (qa.getAnswerText() == null) {
+            throw new AcademyException(AcademyErrorCode.ANSWER_NOT_EXIST);
+        }
+
+        // 작성자 검증
+        if (qa.getAnsweredBy() != null && !qa.getAnsweredBy().getId().equals(userId)) {
+            throw new AcademyException(AcademyErrorCode.ANSWER_NOT_OWNER);
         }
 
         Account answeredBy = accountRepository.findById(userId)

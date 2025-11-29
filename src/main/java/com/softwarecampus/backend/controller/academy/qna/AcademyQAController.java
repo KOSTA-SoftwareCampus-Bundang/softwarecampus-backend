@@ -83,6 +83,32 @@ public class AcademyQAController {
     }
 
     /**
+     * 훈련기관 답변 등록 (신규)
+     */
+    @PostMapping("/{qaId}/answer")
+    public ResponseEntity<QAResponse> answerQuestion(
+            @PathVariable Long qaId,
+            @PathVariable Long academyId,
+            @RequestBody QAUpdateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        QAResponse response = academyQAService.answerQuestion(academyId, qaId, request, userDetails.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * 훈련기관 답변 수정 (기존 답변)
+     */
+    @PatchMapping("/{qaId}/answer")
+    public ResponseEntity<QAResponse> updateAnswer(
+            @PathVariable Long qaId,
+            @PathVariable Long academyId,
+            @RequestBody QAUpdateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        QAResponse response = academyQAService.updateAnswer(academyId, qaId, request, userDetails.getId());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * 훈련기관 답변 삭제
      */
     @DeleteMapping("/{qaId}/answer")

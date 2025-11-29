@@ -9,7 +9,6 @@ import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.repository.academy.academyQA.AcademyQARepository;
 import com.softwarecampus.backend.domain.common.AttachmentCategoryType;
 import com.softwarecampus.backend.repository.user.AccountRepository;
-import com.softwarecampus.backend.service.academy.qna.AttachmentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,8 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import static org.junit.jupiter.api.Assertions.*; // Assertions 클래스의 모든 정적 메서드 import
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
@@ -54,12 +54,19 @@ class AcademyQAServiceImplTest {
                 .id(academyId)
                 .name("테스트 훈련기관")
                 .build();
+
+        // account는 이제 필수 필드
+        var mockAccount = mock(com.softwarecampus.backend.domain.user.Account.class);
+        lenient().when(mockAccount.getId()).thenReturn(1L);
+        lenient().when(mockAccount.getUserName()).thenReturn("테스트사용자");
+
         testQA = AcademyQA.builder()
                 .id(qaId)
                 .title("테스트 질문이요")
                 .questionText("테스트 질문 : 잘 돌아가나요")
                 .answerText(null)
                 .academy(testAcademy)
+                .account(mockAccount)
                 .build();
     }
 
@@ -177,10 +184,10 @@ class AcademyQAServiceImplTest {
         verify(attachmentService, times(1)).softDeleteAllByCategoryAndId(eq(AttachmentCategoryType.QNA), eq(qaId));
     }
 
-    // 답변 등록/수정 성공
+    // 답변 등록 성공 (신규)
     @Test
-    @DisplayName("답변 등록/수정 성공")
-    void updateAnswer_success() {
+    @DisplayName("답변 등록 성공 (신규)")
+    void answerQuestion_success() {
         // given
         QAUpdateRequest request = new QAUpdateRequest();
         String newAnswer = "새로 작성된 답변입니다.";
@@ -192,11 +199,39 @@ class AcademyQAServiceImplTest {
                 .thenReturn(Optional.of(mock(com.softwarecampus.backend.domain.user.Account.class)));
 
         // when
-        QAResponse response = qaService.updateAnswer(academyId, qaId, request, userId);
+        QAResponse response = qaService.answerQuestion(academyId, qaId, request, userId);
 
         // then
         assertEquals(newAnswer, response.getAnswerText(), "응답 DTO의 답변 필드가 새로 작성된 답변과 일치해야 합니다.");
         assertEquals(newAnswer, testQA.getAnswerText(), "엔티티의 답변 필드가 새로 작성된 답변으로 업데이트되어야 합니다.");
+    }
+
+    // 답변 수정 성공 (기존 답변)
+    @Test
+    @DisplayName("답변 수정 성공 (기존 답변)")
+    void updateAnswer_success() {
+        // given
+        QAUpdateRequest request = new QAUpdateRequest();
+        String modifiedAnswer = "수정된 답변입니다.";
+        request.setAnswerText(modifiedAnswer);
+        Long userId = 100L;
+
+        // 기존 답변이 있어야 수정 가능
+        var mockAnswerer = mock(com.softwarecampus.backend.domain.user.Account.class);
+        when(mockAnswerer.getId()).thenReturn(userId);
+        testQA.setAnswerText("기존 답변입니다.");
+        testQA.setAnsweredBy(mockAnswerer);
+
+        when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
+        when(accountRepository.findById(userId))
+                .thenReturn(Optional.of(mockAnswerer));
+
+        // when
+        QAResponse response = qaService.updateAnswer(academyId, qaId, request, userId);
+
+        // then
+        assertEquals(modifiedAnswer, response.getAnswerText(), "응답 DTO의 답변 필드가 수정된 답변과 일치해야 합니다.");
+        assertEquals(modifiedAnswer, testQA.getAnswerText(), "엔티티의 답변 필드가 수정된 답변으로 업데이트되어야 합니다.");
     }
 
     // 답변 삭제 실패 (답변 없음)

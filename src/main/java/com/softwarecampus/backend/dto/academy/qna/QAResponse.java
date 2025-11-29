@@ -34,7 +34,6 @@ public class QAResponse {
             throw new IllegalStateException("Academy relationship is required for QA");
         }
 
-        var account = qa.getAccount();
         var answeredBy = qa.getAnsweredBy();
 
         return QAResponse.builder()
@@ -45,8 +44,8 @@ public class QAResponse {
                 .createdAt(qa.getCreatedAt())
                 .updatedAt(qa.getUpdatedAt())
                 .academyId(qa.getAcademy().getId())
-                .accountId(account != null ? account.getId() : null)
-                .writerName(account != null ? account.getUserName() : "익명")
+                .accountId(qa.getAccount().getId())
+                .writerName(qa.getAccount().getUserName())
                 .answeredById(answeredBy != null ? answeredBy.getId() : null)
                 .answeredByName(answeredBy != null ? answeredBy.getUserName() : null)
                 .isAnswered(qa.getAnswerText() != null && !qa.getAnswerText().isEmpty())

@@ -34,9 +34,14 @@ public interface AcademyQAService {
     void deleteQuestion(Long qaId, Long academyId, Long userId);
 
     /**
-     * 답변 등록 / 수정
+     * 답변 등록 (신규)
      */
-    QAResponse updateAnswer(Long qaId, Long academyId, QAUpdateRequest request, Long userId);
+    QAResponse answerQuestion(Long academyId, Long qaId, QAUpdateRequest request, Long userId);
+
+    /**
+     * 답변 수정 (기존 답변만)
+     */
+    QAResponse updateAnswer(Long academyId, Long qaId, QAUpdateRequest request, Long userId);
 
     /**
      * 답변 삭제
