@@ -38,4 +38,12 @@ public interface AcademyFileService {
      * @param academyId 기관 ID
      */
     void deleteAllFilesByAcademyId(Long academyId);
+    
+    /**
+     * S3 파일만 삭제 (DB 메타데이터는 유지)
+     * 트랜잭션 롤백 시 보상 로직용
+     * 
+     * @param s3Url S3 파일 URL
+     */
+    void deleteS3FileOnly(String s3Url);
 }

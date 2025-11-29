@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.service.academy;
 
 import com.softwarecampus.backend.domain.academy.Academy;
+import com.softwarecampus.backend.domain.academy.AcademyFile;
 import com.softwarecampus.backend.domain.academy.ApprovalStatus;
 import com.softwarecampus.backend.dto.academy.AcademyCreateRequest;
 import com.softwarecampus.backend.dto.academy.AcademyResponse;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -42,6 +44,7 @@ public class AcademyServiceImpl implements AcademyService {
      *  수정자: GitHub Copilot
      *  수정일: 2025-11-28
      *  수정 내용: 파일 업로드 기능 추가 (재직증명서)
+     *  수정일: 2025-11-29 - 트랜잭션 롤백 시 S3 파일 정리 보상 로직 추가
      */
     @Override
     @Transactional
@@ -57,10 +60,21 @@ public class AcademyServiceImpl implements AcademyService {
 
         Academy savedAcademy = academyRepository.save(academy);
         
-        // 2. 파일 업로드 (S3) - 작성자: GitHub Copilot, 작성일: 2025-11-28
+        // 2. 파일 업로드 (S3) - 트랜잭션 롤백 시 보상 로직 포함
+        List<String> uploadedS3Urls = new ArrayList<>();
         if (request.getFiles() != null && !request.getFiles().isEmpty()) {
-            for (var file : request.getFiles()) {
-                academyFileService.uploadFile(file, savedAcademy.getId());
+            try {
+                for (var file : request.getFiles()) {
+                    AcademyFile uploaded = academyFileService.uploadFile(file, savedAcademy.getId());
+                    uploadedS3Urls.add(uploaded.getFileUrl());
+                }
+            } catch (Exception e) {
+                // 업로드 중 실패 시 이미 업로드된 S3 파일 정리 (보상 트랜잭션)
+                log.warn("파일 업로드 실패 - 이미 업로드된 {} 개 파일 S3에서 삭제 시도", uploadedS3Urls.size());
+                for (String s3Url : uploadedS3Urls) {
+                    academyFileService.deleteS3FileOnly(s3Url);
+                }
+                throw e; // 예외 다시 던져서 트랜잭션 롤백 유도
             }
         }
         

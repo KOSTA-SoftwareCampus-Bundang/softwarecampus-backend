@@ -186,4 +186,21 @@ public class AcademyFileServiceImpl implements AcademyFileService {
         }
         return fileUrl.substring(folderIndex);
     }
+    
+    /**
+     * S3 파일만 삭제 (DB 메타데이터는 유지)
+     * 트랜잭션 롤백 시 보상 로직용으로 사용
+     * 
+     * @param s3Url S3 파일 URL
+     */
+    @Override
+    public void deleteS3FileOnly(String s3Url) {
+        try {
+            s3Service.deleteFile(s3Url);
+            log.debug("S3 file deleted (compensation): {}", s3Url);
+        } catch (S3UploadException e) {
+            // 보상 로직 실패는 로그만 남김 (고아 파일 발생 가능)
+            log.warn("보상 로직: S3 파일 삭제 실패 - 고아 파일 발생 가능: {}", s3Url, e);
+        }
+    }
 }
