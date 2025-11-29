@@ -1,3 +1,6 @@
+
+use softcampus_db;
+
 -- --------------------------------------------------------------------
 -- Mock Data for Software Campus
 -- 작성일자: 2025-11-26
@@ -76,25 +79,25 @@ INSERT INTO course_category (id, category_type, category_name, created_at, updat
 -- 관리자 계정
 -- 비밀번호: test (BCrypt 해시)
 INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, privacy_agreed, marketing_agreed, created_at, updated_at, is_deleted)
-VALUES (1, '관리자', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin@test.com', '010-1111-1111', 'ADMIN', NULL, NULL, NULL, 'APPROVED', NULL, true, true, true, NOW(), NOW(), false);
+VALUES (2, '관리자', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin@test.com', '010-1111-1111', 'ADMIN', NULL, NULL, NULL, 'APPROVED', NULL, true, true, true, NOW(), NOW(), false);
 
 -- 일반 사용자 계정 (비밀번호: test)
 INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, privacy_agreed, marketing_agreed, created_at, updated_at, is_deleted)
-VALUES (2, '일반사용자', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'user@test.com', '010-2222-2222', 'USER', NULL, NULL, '서울시 서초구', 'APPROVED', NULL, true, true, true, NOW(), NOW(), false);
+VALUES (3, '일반사용자', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'user@test.com', '010-2222-2222', 'USER', NULL, NULL, '서울시 서초구', 'APPROVED', NULL, true, true, true, NOW(), NOW(), false);
 
 -- 기관 사용자 계정 (KOSTA 종로 소속, 비밀번호: test)
 INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, privacy_agreed, marketing_agreed, created_at, updated_at, is_deleted)
-VALUES (3, '소프트캠퍼스 담당자', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'academy@test.com', '010-3333-3333', 'ACADEMY', '소프트캠퍼스', '교육팀장', '서울시 종로구', 'APPROVED', 1, true, true, true, NOW(), NOW(), false);
+VALUES (4, '소프트캠퍼스 담당자', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'academy@test.com', '010-3333-3333', 'ACADEMY', '소프트캠퍼스', '교육팀장', '서울시 종로구', 'APPROVED', 1, true, true, true, NOW(), NOW(), false);
 
 -- 추가 일반 사용자 (리뷰/댓글 작성용)
 INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, privacy_agreed, marketing_agreed, created_at, updated_at, is_deleted)
-VALUES (4, '김철수', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'kim@test.com', '010-4444-4444', 'USER', NULL, NULL, '서울시 강남구', 'APPROVED', NULL, true, true, true, NOW(), NOW(), false);
+VALUES (5, '김철수', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'kim@test.com', '010-4444-4444', 'USER', NULL, NULL, '서울시 강남구', 'APPROVED', NULL, true, true, true, NOW(), NOW(), false);
 
 INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, privacy_agreed, marketing_agreed, created_at, updated_at, is_deleted)
-VALUES (5, '이영희', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'lee@test.com', '010-5555-5555', 'USER', NULL, NULL, '서울시 송파구', 'APPROVED', NULL, true, true, true, NOW(), NOW(), false);
+VALUES (6, '이영희', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'lee@test.com', '010-5555-5555', 'USER', NULL, NULL, '서울시 송파구', 'APPROVED', NULL, true, true, true, NOW(), NOW(), false);
 
 INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, privacy_agreed, marketing_agreed, created_at, updated_at, is_deleted)
-VALUES (6, '박민수', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'park@test.com', '010-6666-6666', 'USER', NULL, NULL, '서울시 마포구', 'APPROVED', NULL, true, true, true, NOW(), NOW(), false);
+VALUES (7, '박민수', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'park@test.com', '010-6666-6666', 'USER', NULL, NULL, '서울시 마포구', 'APPROVED', NULL, true, true, true, NOW(), NOW(), false);
 
 
 -- 4. Course (과정 데이터)
