@@ -24,11 +24,13 @@ public interface AcademyFileService {
     /**
      * 파일 접근을 위한 S3 Presigned URL 생성
      * 
+     * @param academyId 기관 ID (파일 소속 검증용)
      * @param fileId 파일 ID
      * @return S3 Presigned URL (1시간 유효)
      * @throws com.softwarecampus.backend.exception.file.FileNotFoundException 파일을 찾을 수 없는 경우
+     * @throws IllegalArgumentException 파일이 해당 기관에 속하지 않는 경우
      */
-    String getFileUrl(Long fileId);
+    String getFileUrl(Long academyId, Long fileId);
     
     /**
      * 특정 기관의 모든 첨부파일을 S3와 DB에서 삭제

@@ -78,13 +78,14 @@ public class AdminController {
      * 기관 첨부파일 다운로드
      * 작성자: GitHub Copilot
      * 작성일: 2025-11-28
+     * 수정일: 2025-11-29 - academyId 검증 추가 (보안)
      */
     @GetMapping("/academies/{academyId}/files/{fileId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> downloadAcademyFile(
             @PathVariable Long academyId,
             @PathVariable Long fileId) {
-        String presignedUrl = academyFileService.getFileUrl(fileId);
+        String presignedUrl = academyFileService.getFileUrl(academyId, fileId);
         return ResponseEntity.status(HttpStatus.FOUND)
             .location(URI.create(presignedUrl))
             .build();

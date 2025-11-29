@@ -77,19 +77,27 @@ public class AcademyFileServiceImpl implements AcademyFileService {
      * 파일 ID로 Presigned URL을 생성합니다.
      * 보안을 위해 1시간 동안만 유효한 임시 다운로드 링크를 제공합니다.
      *
+     * @param academyId 기관 ID (파일 소속 검증용)
      * @param fileId 파일 ID
      * @return Presigned URL (1시간 유효)
-     * @throws IllegalArgumentException fileId에 해당하는 파일이 존재하지 않는 경우
+     * @throws IllegalArgumentException fileId에 해당하는 파일이 존재하지 않거나, 해당 기관에 속하지 않는 경우
      */
     @Override
-    public String getFileUrl(Long fileId) {
-        log.debug("Generating presigned URL for file ID: {}", fileId);
+    public String getFileUrl(Long academyId, Long fileId) {
+        log.debug("Generating presigned URL for academy ID: {}, file ID: {}", academyId, fileId);
 
         // 1. 파일 메타데이터 조회
         AcademyFile academyFile = academyFileRepository.findById(fileId)
                 .orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다. ID: " + fileId));
 
-        // 2. Presigned URL 생성 (1시간 유효)
+        // 2. 파일이 해당 기관에 속하는지 검증 (보안)
+        if (!academyFile.getAcademy().getId().equals(academyId)) {
+            log.warn("파일 접근 권한 없음: academyId={}, fileId={}, 실제 소속 기관={}", 
+                academyId, fileId, academyFile.getAcademy().getId());
+            throw new IllegalArgumentException("해당 기관의 파일이 아닙니다.");
+        }
+
+        // 3. Presigned URL 생성 (1시간 유효)
         String presignedUrl = s3Service.generatePresignedUrl(
                 academyFile.getS3Key(),
                 Duration.ofHours(1)
