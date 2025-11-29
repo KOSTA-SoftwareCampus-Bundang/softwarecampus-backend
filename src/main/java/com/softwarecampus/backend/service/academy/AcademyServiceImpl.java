@@ -10,13 +10,17 @@ import com.softwarecampus.backend.exception.academy.AcademyException;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.service.user.email.EmailSendService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -133,41 +137,64 @@ public class AcademyServiceImpl implements AcademyService {
      * 수정자: GitHub Copilot
      * 수정일: 2025-11-28
      * 수정 내용: 승인 완료 이메일 발송 기능 추가
+     * 수정일: 2025-11-29 - 이메일 발송을 트랜잭션 커밋 후로 분리
      */
     @Override
     @Transactional
     public AcademyResponse approveAcademy(Long id) {
         Academy academy = findAcademyOrThrow(id);
         academy.approve();
+        AcademyResponse response = AcademyResponse.from(academy);
         
-        // 승인 완료 이메일 발송 (작성자: GitHub Copilot, 작성일: 2025-11-28)
-        emailSendService.sendAcademyApprovalEmail(
-            academy.getEmail(),
-            academy.getName()
+        // 트랜잭션 커밋 후 이메일 발송 (이메일 실패해도 승인은 완료)
+        String email = academy.getEmail();
+        String name = academy.getName();
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        emailSendService.sendAcademyApprovalEmail(email, name);
+                    } catch (Exception e) {
+                        log.error("기관 승인 이메일 발송 실패 - 기관 ID: {}", id, e);
+                    }
+                }
+            }
         );
         
-        return AcademyResponse.from(academy);
+        return response;
     }
     
     /**
      * 기관 거절 처리
      * 작성자: GitHub Copilot
      * 작성일: 2025-11-28
+     * 수정일: 2025-11-29 - 이메일 발송을 트랜잭션 커밋 후로 분리
      */
     @Override
     @Transactional
     public AcademyResponse rejectAcademy(Long id, String reason) {
         Academy academy = findAcademyOrThrow(id);
         academy.reject(reason);
+        AcademyResponse response = AcademyResponse.from(academy);
         
-        // 거절 이메일 발송 (작성자: GitHub Copilot, 작성일: 2025-11-28)
-        emailSendService.sendAcademyRejectionEmail(
-            academy.getEmail(),
-            academy.getName(),
-            reason
+        // 트랜잭션 커밋 후 이메일 발송 (이메일 실패해도 거절은 완료)
+        String email = academy.getEmail();
+        String name = academy.getName();
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        emailSendService.sendAcademyRejectionEmail(email, name, reason);
+                    } catch (Exception e) {
+                        log.error("기관 거절 이메일 발송 실패 - 기관 ID: {}", id, e);
+                    }
+                }
+            }
         );
         
-        return AcademyResponse.from(academy);
+        return response;
     }
 
 }
