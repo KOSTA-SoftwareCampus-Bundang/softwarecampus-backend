@@ -26,7 +26,7 @@ public interface AcademyQAService {
     /**
      * 질문 수정
      */
-    QAResponse updateQuestion(Long academyId, Long qaId, QAUpdateRequest request);
+    QAResponse updateQuestion(Long academyId, Long qaId, QAUpdateRequest request, Long userId);
 
     /**
      * Q/A (질문과 답변 전체) 삭제
@@ -46,5 +46,5 @@ public interface AcademyQAService {
     /**
      * 답변 삭제
      */
-    QAResponse deleteAnswer(Long qaId, Long academyId);
+    QAResponse deleteAnswer(Long qaId, Long academyId, Long userId);
 }

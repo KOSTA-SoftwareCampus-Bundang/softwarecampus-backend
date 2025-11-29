@@ -64,9 +64,12 @@ public class AcademyQAController {
      * 훈련기관 질문 수정
      */
     @PatchMapping("/{qaId}/question")
-    public ResponseEntity<QAResponse> updateQuestion(@PathVariable Long qaId, @PathVariable Long academyId,
-            @RequestBody QAUpdateRequest request) {
-        QAResponse response = academyQAService.updateQuestion(academyId, qaId, request);
+    public ResponseEntity<QAResponse> updateQuestion(
+            @PathVariable Long qaId,
+            @PathVariable Long academyId,
+            @RequestBody QAUpdateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        QAResponse response = academyQAService.updateQuestion(academyId, qaId, request, userDetails.getId());
         return ResponseEntity.ok(response);
     }
 
@@ -112,8 +115,11 @@ public class AcademyQAController {
      * 훈련기관 답변 삭제
      */
     @DeleteMapping("/{qaId}/answer")
-    public ResponseEntity<QAResponse> deleteAnswer(@PathVariable Long qaId, @PathVariable Long academyId) {
-        QAResponse response = academyQAService.deleteAnswer(qaId, academyId);
+    public ResponseEntity<QAResponse> deleteAnswer(
+            @PathVariable Long qaId,
+            @PathVariable Long academyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        QAResponse response = academyQAService.deleteAnswer(qaId, academyId, userDetails.getId());
         return ResponseEntity.ok(response);
     }
 }

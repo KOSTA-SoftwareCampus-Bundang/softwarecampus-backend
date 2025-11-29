@@ -148,11 +148,12 @@ class AcademyQAServiceImplTest {
         QAUpdateRequest request = new QAUpdateRequest();
         request.setTitle("수정된 제목");
         request.setQuestionText("수정된 내용");
+        Long userId = 1L; // testQA의 account ID와 일치
 
         when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
 
         // when
-        QAResponse response = qaService.updateQuestion(academyId, qaId, request);
+        QAResponse response = qaService.updateQuestion(academyId, qaId, request, userId);
 
         // then
         assertEquals("수정된 제목", response.getTitle(), "제목이 수정되어야 합니다.");
@@ -239,12 +240,13 @@ class AcademyQAServiceImplTest {
     @DisplayName("답변 삭제 실패 (삭제할 답변이 없음)")
     void deleteAnswer_fail_noAnswer() {
         // given
+        Long userId = 1L;
         testQA.setAnswerText(null);
         when(qaRepository.findById(qaId)).thenReturn(Optional.of(testQA));
 
         // when & then
         assertThrows(com.softwarecampus.backend.exception.academy.AcademyException.class,
-                () -> qaService.deleteAnswer(qaId, academyId),
+                () -> qaService.deleteAnswer(qaId, academyId, userId),
                 "삭제할 답변이 없을 경우 AcademyException이 발생해야 합니다.");
 
         verify(qaRepository, never()).delete(testQA);

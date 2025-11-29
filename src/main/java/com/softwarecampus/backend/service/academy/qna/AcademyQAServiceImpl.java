@@ -162,8 +162,15 @@ public class AcademyQAServiceImpl implements AcademyQAService {
      */
     @Override
     @Transactional
-    public QAResponse updateQuestion(Long academyId, Long qaId, QAUpdateRequest request) {
+    public QAResponse updateQuestion(Long academyId, Long qaId, QAUpdateRequest request, Long userId) {
+        Objects.requireNonNull(userId, "User ID must not be null");
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
+
+        // 작성자 검증
+        if (!qa.getAccount().getId().equals(userId)) {
+            throw new ForbiddenException("본인의 질문만 수정할 수 있습니다.");
+        }
+
         qa.updateQuestion(request.getTitle(), request.getQuestionText());
 
         // 삭제 파일 처리
@@ -219,11 +226,17 @@ public class AcademyQAServiceImpl implements AcademyQAService {
      */
     @Override
     @Transactional
-    public QAResponse deleteAnswer(Long qaId, Long academyId) {
+    public QAResponse deleteAnswer(Long qaId, Long academyId, Long userId) {
+        Objects.requireNonNull(userId, "User ID must not be null");
         AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
 
         if (qa.getAnswerText() == null) {
             throw new AcademyException(AcademyErrorCode.ANSWER_NOT_EXIST);
+        }
+
+        // 작성자 검증
+        if (qa.getAnsweredBy() != null && !qa.getAnsweredBy().getId().equals(userId)) {
+            throw new AcademyException(AcademyErrorCode.ANSWER_NOT_OWNER);
         }
 
         qa.deleteAnswer();
