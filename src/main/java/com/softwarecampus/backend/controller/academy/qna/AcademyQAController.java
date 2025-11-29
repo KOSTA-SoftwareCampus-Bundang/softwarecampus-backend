@@ -58,7 +58,11 @@ public class AcademyQAController {
     public ResponseEntity<QAResponse> getAcademyQADetail(@PathVariable Long qaId, @PathVariable Long academyId) {
         QAResponse response = academyQAService.getAcademyQADetail(qaId, academyId);
         return ResponseEntity.ok(response);
+    }
 
+    /**
+     * 훈련기관 질문 수정
+     */
     @PatchMapping("/{qaId}/question")
     public ResponseEntity<QAResponse> updateQuestion(@PathVariable Long qaId, @PathVariable Long academyId,
             @RequestBody QAUpdateRequest request) {
@@ -73,7 +77,11 @@ public class AcademyQAController {
     public ResponseEntity<Void> deleteQuestion(@PathVariable Long qaId, @PathVariable Long academyId) {
         academyQAService.deleteQuestion(qaId, academyId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 
+    /**
+     * 훈련기관 답변 삭제
+     */
     @DeleteMapping("/{qaId}/answer")
     public ResponseEntity<QAResponse> deleteAnswer(@PathVariable Long qaId, @PathVariable Long academyId) {
         QAResponse response = academyQAService.deleteAnswer(qaId, academyId);

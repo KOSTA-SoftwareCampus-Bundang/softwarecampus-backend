@@ -31,6 +31,7 @@ public class AcademyQA extends BaseSoftDeleteSupportEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "is_approved", nullable = false)
+    @Builder.Default
     private ApprovalStatus isApproved = ApprovalStatus.PENDING;
 
     @Column(name = "approved_at")

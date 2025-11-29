@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +34,8 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     private final AccountRepository accountRepository;
 
     private AcademyQA findQAAndValidateAcademy(Long qaId, Long academyId) {
+        Objects.requireNonNull(qaId, "QA ID must not be null");
+        Objects.requireNonNull(academyId, "Academy ID must not be null");
         AcademyQA qa = academyQARepository.findById(qaId)
                 .orElseThrow(() -> new AcademyException(AcademyErrorCode.QA_NOT_FOUND));
 
@@ -71,11 +74,13 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     @Override
     @Transactional
     public QAResponse createQuestion(Long academyId, QACreateRequest request, Long userId) {
+        Objects.requireNonNull(academyId, "Academy ID must not be null");
+        Objects.requireNonNull(userId, "User ID must not be null");
         Academy academy = academyRepository.findById(academyId)
                 .orElseThrow(() -> new AcademyException(AcademyErrorCode.ACADEMY_NOT_FOUND));
 
         Account account = accountRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new AcademyException(AcademyErrorCode.USER_NOT_FOUND));
 
         AcademyQA qa = AcademyQA.builder()
                 .title(request.getTitle())
@@ -94,6 +99,22 @@ public class AcademyQAServiceImpl implements AcademyQAService {
                     AttachmentCategoryType.QNA);
         }
         return QAResponse.from(save);
+    }
+
+    /**
+     * 훈련기관 답변 수정
+     */
+    @Override
+    @Transactional
+    public QAResponse updateAnswer(Long academyId, Long qaId, QAUpdateRequest request, Long userId) {
+        Objects.requireNonNull(userId, "User ID must not be null");
+        AcademyQA qa = findQAAndValidateAcademy(qaId, academyId);
+
+        Account answeredBy = accountRepository.findById(userId)
+                .orElseThrow(() -> new AcademyException(AcademyErrorCode.USER_NOT_FOUND));
+
+        qa.updateAnswer(request.getAnswerText(), answeredBy);
+        return QAResponse.from(qa);
     }
 
     /**
@@ -147,6 +168,9 @@ public class AcademyQAServiceImpl implements AcademyQAService {
         academyQARepository.delete(qa);
     }
 
+    /**
+     * 훈련기관 답변 삭제
+     */
     @Override
     @Transactional
     public QAResponse deleteAnswer(Long qaId, Long academyId) {

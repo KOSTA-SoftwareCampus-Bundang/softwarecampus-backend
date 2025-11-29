@@ -52,6 +52,7 @@ public class CourseQna extends BaseSoftDeleteSupportEntity {
 
     /** 답변 완료 여부 */
     @Column(name = "is_answered", nullable = false)
+    @Builder.Default
     private boolean isAnswered = false;
 
     /** 답변 등록 메서드 */
