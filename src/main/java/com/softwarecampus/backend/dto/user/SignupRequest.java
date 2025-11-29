@@ -2,6 +2,7 @@ package com.softwarecampus.backend.dto.user;
 
 import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.validation.ValidAccountType;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -31,9 +32,10 @@ public record SignupRequest(
     @NotBlank(message = "비밀번호는 필수입니다")
     @Size(min = 8, max = 20, message = "비밀번호는 8~20자여야 합니다")
     @Pattern(
-        regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,20}$",
+        regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*()\\-_=+\\[\\]{}|;:'\",.<>/?~])[A-Za-z\\d!@#$%^&*()\\-_=+\\[\\]{}|;:'\",.<>/?~]{8,20}$",
         message = "비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다"
-    ) String password,
+    )
+    String password,
     
     @NotBlank(message = "사용자명은 필수입니다")
     @Size(min = 2, max = 50, message = "사용자명은 2~50자여야 합니다")
@@ -53,6 +55,16 @@ public record SignupRequest(
     @NotNull(message = "계정 타입은 필수입니다")
     AccountType accountType,
     
-    Long academyId
+    Long academyId,
+
+    @NotNull(message = "이용약관 동의는 필수입니다")
+    @AssertTrue(message = "이용약관에 동의해야 합니다")
+    Boolean termsAgreed,
+
+    @NotNull(message = "개인정보 처리방침 동의는 필수입니다")
+    @AssertTrue(message = "개인정보 처리방침에 동의해야 합니다")
+    Boolean privacyAgreed,
+
+    Boolean marketingAgreed
 ) {
 }

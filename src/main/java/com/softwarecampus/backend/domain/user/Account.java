@@ -71,6 +71,25 @@ public class Account extends BaseSoftDeleteSupportEntity implements java.io.Seri
     
     @Column(name = "academy_id")
     private Long academyId;               // 기관 ID (ACADEMY 타입일 때 설정, 향후 FK로 변경 예정)
+
+    // ===== 약관 동의 필드 =====
+    @Column(name = "terms_agreed", nullable = false)
+    private boolean termsAgreed;          // 이용약관 동의 여부
+
+    @Column(name = "terms_agreed_at")
+    private java.time.LocalDateTime termsAgreedAt; // 이용약관 동의 일시
+
+    @Column(name = "privacy_agreed", nullable = false)
+    private boolean privacyAgreed;        // 개인정보 처리방침 동의 여부
+
+    @Column(name = "privacy_agreed_at")
+    private java.time.LocalDateTime privacyAgreedAt; // 개인정보 처리방침 동의 일시
+
+    @Column(name = "marketing_agreed", nullable = false)
+    private boolean marketingAgreed;      // 마케팅 수신 동의 여부
+
+    @Column(name = "marketing_agreed_at")
+    private java.time.LocalDateTime marketingAgreedAt; // 마케팅 수신 동의 일시
     
     // ===== 향후 추가 예정 (다른 도메인 작업 후) =====
     // academy_id는 추후 Academy 엔티티 생성 시 @ManyToOne으로 변경 예정

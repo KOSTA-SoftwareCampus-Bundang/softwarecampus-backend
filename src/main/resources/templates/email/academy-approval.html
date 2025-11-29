@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회원가입 인증 코드</title>
+    <title>기관 등록 승인 완료</title>
     <style>
         * {
             margin: 0;
@@ -55,74 +55,53 @@
             line-height: 1.6;
         }
         
-        .code-section {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        .success-section {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
             border-radius: 8px;
             padding: 30px;
             text-align: center;
             margin: 30px 0;
+            border-left: 4px solid #4caf50;
         }
         
-        .code-label {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 12px;
-            font-weight: 500;
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
         }
         
-        .code {
-            font-size: 36px;
+        .academy-name {
+            font-size: 24px;
             font-weight: 700;
-            color: #667eea;
-            letter-spacing: 8px;
-            font-family: 'Courier New', monospace;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            display: inline-block;
-            min-width: 250px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: #2e7d32;
+            margin: 15px 0;
         }
         
-        .expiry-notice {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-        
-        .expiry-notice p {
-            color: #856404;
-            font-size: 14px;
+        .success-message {
+            font-size: 16px;
+            color: #1b5e20;
             line-height: 1.6;
         }
         
-        .expiry-notice strong {
-            color: #ff6b6b;
-            font-weight: 700;
-        }
-        
-        .instructions {
+        .info-box {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 8px;
             margin: 20px 0;
         }
         
-        .instructions h3 {
+        .info-box h3 {
             font-size: 16px;
             color: #333;
             margin-bottom: 12px;
             font-weight: 600;
         }
         
-        .instructions ul {
+        .info-box ul {
             list-style: none;
             padding-left: 0;
         }
         
-        .instructions li {
+        .info-box li {
             font-size: 14px;
             color: #666;
             line-height: 1.8;
@@ -130,12 +109,44 @@
             position: relative;
         }
         
-        .instructions li:before {
-            content: "•";
-            color: #667eea;
+        .info-box li:before {
+            content: "✓";
+            color: #4caf50;
             font-weight: bold;
             position: absolute;
             left: 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+            transition: transform 0.2s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .notice-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .notice-box p {
+            font-size: 14px;
+            color: #1976D2;
+            line-height: 1.6;
         }
         
         .footer {
@@ -155,62 +166,49 @@
             color: #667eea;
             font-weight: 600;
         }
-        
-        .security-notice {
-            margin-top: 20px;
-            padding: 15px;
-            background: #e7f3ff;
-            border-radius: 8px;
-            border-left: 4px solid #2196F3;
-        }
-        
-        .security-notice p {
-            font-size: 13px;
-            color: #1976D2;
-            line-height: 1.6;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🎓 소프트웨어캠퍼스</h1>
-            <p>회원가입 인증 코드</p>
+            <p>기관 등록 승인 완료</p>
         </div>
         
         <div class="content">
             <div class="greeting">
                 안녕하세요!<br>
-                소프트웨어캠퍼스 회원가입을 위한 인증 코드입니다.
+                소프트웨어캠퍼스 관리자입니다.
             </div>
             
-            <div class="code-section">
-                <div class="code-label">인증 코드</div>
-                <div class="code">${code}</div>
+            <div class="success-section">
+                <div class="success-icon">✅</div>
+                <div class="academy-name">${academyName}</div>
+                <div class="success-message">
+                    기관 등록이 승인되었습니다!<br>
+                    이제 소프트웨어캠퍼스의 교육 파트너로 함께합니다.
+                </div>
             </div>
             
-            <div class="expiry-notice">
-                <p>
-                    ⏰ 이 인증 코드는 <strong>3분 후 만료</strong>됩니다.<br>
-                    시간 내에 입력해주세요.
-                </p>
-            </div>
-            
-            <div class="instructions">
-                <h3>📌 유의사항</h3>
+            <div class="info-box">
+                <h3>📌 다음 단계</h3>
                 <ul>
-                    <li>인증 코드는 6자리 숫자입니다</li>
-                    <li>5회 이상 잘못 입력 시 30분간 인증이 차단됩니다</li>
-                    <li>인증 코드는 재전송 시 이전 코드는 무효화됩니다</li>
-                    <li>본인이 요청하지 않은 경우 이 메일을 무시하세요</li>
+                    <li>기관 소속 회원은 이제 회원가입 시 귀 기관을 선택할 수 있습니다</li>
+                    <li>기관 관리자 계정으로 로그인하여 기관 정보를 관리하세요</li>
+                    <li>교육 과정 등록 및 수강생 관리가 가능합니다</li>
+                    <li>기관 전용 대시보드에서 통계를 확인하세요</li>
                 </ul>
             </div>
             
-            <div class="security-notice">
+            <div style="text-align: center;">
+                <a href="${loginUrl}" class="cta-button">로그인하기</a>
+            </div>
+            
+            <div class="notice-box">
                 <p>
-                    🔒 <strong>보안 안내</strong><br>
-                    소프트웨어캠퍼스는 절대 이메일이나 전화로 인증 코드를 요구하지 않습니다.<br>
-                    타인에게 인증 코드를 공유하지 마세요.
+                    💡 <strong>안내사항</strong><br>
+                    기관 정보 수정이나 문의사항이 있으시면 관리자에게 연락해주세요.<br>
+                    이메일: support@softwarecampus.com
                 </p>
             </div>
         </div>

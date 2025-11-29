@@ -57,6 +57,14 @@ public class FileType {
     @Value("${file.upload.course-image.max-size}")
     private long courseImageMaxSize;
 
+    // 기관 첨부파일 설정 (academy_files 테이블)
+    @Value("${file.upload.academy-file.extensions}")
+    private String academyFileExtensionsStr;
+    @Value("${file.upload.academy-file.content-types}")
+    private String academyFileContentTypesStr;
+    @Value("${file.upload.academy-file.max-size}")
+    private long academyFileMaxSize;
+
     // 파싱된 설정을 저장하는 Map
     private final Map<FileTypeEnum, FileTypeConfig> configs = new HashMap<>();
 
@@ -77,6 +85,11 @@ public class FileType {
         Set<String> courseTypes = parseSet(courseImageContentTypesStr);
         validateFileTypeConfig("COURSE_IMAGE", courseExts, courseTypes, courseImageMaxSize);
         configs.put(FileTypeEnum.COURSE_IMAGE, new FileTypeConfig(courseExts, courseTypes, courseImageMaxSize));
+
+        Set<String> academyExts = parseSet(academyFileExtensionsStr);
+        Set<String> academyTypes = parseSet(academyFileContentTypesStr);
+        validateFileTypeConfig("ACADEMY_FILE", academyExts, academyTypes, academyFileMaxSize);
+        configs.put(FileTypeEnum.ACADEMY_FILE, new FileTypeConfig(academyExts, academyTypes, academyFileMaxSize));
 
         log.info("FileType configurations initialized: {}", configs.keySet());
     }
@@ -126,7 +139,9 @@ public class FileType {
         /** 게시판 첨부파일 (board_attach 테이블) */
         BOARD_ATTACH,
         /** 과정 이미지 (course_image 테이블) */
-        COURSE_IMAGE
+        COURSE_IMAGE,
+        /** 기관 첨부파일 (academy_files 테이블) */
+        ACADEMY_FILE
     }
 
     /**

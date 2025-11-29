@@ -1,24 +1,31 @@
 package com.softwarecampus.backend.service.admin;
 
+import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.AccountUpdateRequest;
 import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.service.user.email.EmailSendService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.NoSuchElementException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AccountAdminServiceImpl implements AccountAdminService {
 
     private final AccountRepository accountRepository;
+    private final EmailSendService emailSendService;
 
     private Account findAccount(Long accountId) {
         return accountRepository.findById(accountId)
@@ -115,5 +122,45 @@ public class AccountAdminServiceImpl implements AccountAdminService {
     public void deleteAccount(Long accountId) {
         Account account = findAccount(accountId);
         accountRepository.delete(account);
+    }
+    
+    /**
+     * 회원 승인
+     * - 승인 상태 변경 및 승인 이메일 발송
+     * - 수정일: 2025-11-29 - 이메일 발송을 트랜잭션 커밋 후로 분리
+     */
+    @Override
+    @Transactional
+    public AccountResponse approveAccount(Long accountId) {
+        Account account = findAccount(accountId);
+        
+        if (account.getIsDeleted()) {
+            throw new NoSuchElementException("Account with id: " + accountId + " not found");
+        }
+        
+        account.setAccountApproved(ApprovalStatus.APPROVED);
+        AccountResponse response = toResponse(account);
+        
+        // 트랜잭션 커밋 후 이메일 발송 (이메일 실패해도 승인은 완료)
+        String email = account.getEmail();
+        String userName = account.getUserName();
+        if (email != null) {
+            TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        try {
+                            emailSendService.sendAccountApprovalEmail(email, userName);
+                        } catch (Exception e) {
+                            log.error("회원 승인 이메일 발송 실패 - 회원 ID: {}", accountId, e);
+                        }
+                    }
+                }
+            );
+        } else {
+            log.warn("회원 ID {}는 이메일 주소가 없어 승인 이메일을 발송하지 않습니다", accountId);
+        }
+        
+        return response;
     }
 }

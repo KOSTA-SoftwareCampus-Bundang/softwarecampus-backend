@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.controller.user;
 
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 import com.softwarecampus.backend.service.user.profile.ProfileService;
 import jakarta.validation.Valid;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * - GET /api/mypage/profile: 프로필 조회
  * - PATCH /api/mypage/profile: 프로필 수정
  * - DELETE /api/mypage/account: 계정 삭제
+ * - PUT /api/mypage/password: 비밀번호 재설정
  * 
  * 인증: 모든 엔드포인트 JWT 토큰 필수
  */
@@ -80,5 +82,24 @@ public class MyPageController {
         
         profileService.deleteAccount(email);
         return ResponseEntity.noContent().build();
+    }
+    
+    /**
+     * 비밀번호 재설정
+     * 
+     * @param userDetails Spring Security 인증 정보
+     * @param request 인증 코드 및 새 비밀번호
+     * @return 200 OK
+     */
+    @PutMapping("/password")
+    public ResponseEntity<Void> resetPassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ResetPasswordRequest request) {
+        
+        String email = userDetails.getUsername();
+        log.info("비밀번호 재설정 요청");
+        
+        profileService.resetPassword(email, request);
+        return ResponseEntity.ok().build();
     }
 }

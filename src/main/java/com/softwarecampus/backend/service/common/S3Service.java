@@ -15,10 +15,14 @@ import jakarta.annotation.PostConstruct;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
@@ -29,6 +33,7 @@ import java.util.stream.Collectors;
 public class S3Service {
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
     private final FileType fileType;
 
     @Value("${aws.s3.bucket-name}")
@@ -42,8 +47,9 @@ public class S3Service {
             .map(S3Folder::getPath)
             .collect(Collectors.toSet());
 
-    public S3Service(S3Client s3Client, FileType fileType) {
+    public S3Service(S3Client s3Client, S3Presigner s3Presigner, FileType fileType) {
         this.s3Client = s3Client;
+        this.s3Presigner = s3Presigner;
         this.fileType = fileType;
     }
 
@@ -129,6 +135,44 @@ public class S3Service {
         } catch (S3Exception e) {
             log.error("S3 delete failed: {}", e.awsErrorDetails().errorMessage(), e);
             throw new S3UploadException("S3 파일 삭제에 실패했습니다.", e);
+        }
+    }
+
+    /**
+     * S3 파일에 대한 Presigned URL을 생성합니다.
+     * Presigned URL은 지정된 시간 동안만 유효한 임시 다운로드 링크입니다.
+     *
+     * @param s3Key S3 객체 키 (예: "academy/123/uuid-file.pdf")
+     * @param duration URL 유효 기간
+     * @return Presigned URL
+     * @throws S3UploadException Presigned URL 생성 실패 시
+     */
+    public String generatePresignedUrl(String s3Key, Duration duration) {
+        // 1. S3 키 검증
+        validateS3Key(s3Key);
+
+        try {
+            // 2. GetObject 요청 생성
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .build();
+
+            // 3. Presigned URL 요청 생성
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(duration)
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+
+            // 4. Presigned URL 생성
+            PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+            String presignedUrl = presignedRequest.url().toString();
+            
+            log.info("Presigned URL generated for S3 key: {}, duration: {}", s3Key, duration);
+            return presignedUrl;
+        } catch (S3Exception e) {
+            log.error("Failed to generate presigned URL for S3 key: {}", s3Key, e);
+            throw new S3UploadException("Presigned URL 생성에 실패했습니다.", e);
         }
     }
 
