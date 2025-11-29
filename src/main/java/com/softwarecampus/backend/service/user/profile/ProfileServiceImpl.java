@@ -3,6 +3,7 @@ package com.softwarecampus.backend.service.user.profile;
 import com.softwarecampus.backend.domain.common.VerificationType;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.EmailVerificationCodeRequest;
 import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
@@ -174,6 +175,29 @@ public class ProfileServiceImpl implements ProfileService {
         log.info("비밀번호 재설정 완료: email={}, accountId={}", 
             EmailUtils.maskEmail(email), account.getId());
     }
+
+    /**
+     * 비밀번호 변경 (로그인 상태)
+     */
+    @Override
+    @Transactional
+    public void changePassword(String email, ChangePasswordRequest request) {
+        // 1. 입력 검증
+        validateEmailInput(email);
+        
+        log.info("비밀번호 변경 시도: email={}", EmailUtils.maskEmail(email));
+        
+        // 2. 계정 조회
+        Account account = accountRepository.findByEmail(email)
+            .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
+        
+        // 3. 새 비밀번호 변경 (현재 비밀번호 확인 없이 덮어쓰기)
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        account.setPassword(encodedPassword);
+        
+        log.info("비밀번호 변경 완료: email={}, accountId={}", 
+            EmailUtils.maskEmail(email), account.getId());
+    }
     
     /**
      * Account 필드 업데이트 (null이 아닌 필드만)
@@ -194,6 +218,9 @@ public class ProfileServiceImpl implements ProfileService {
         if (request.getPosition() != null) {
             account.setPosition(request.getPosition());
         }
+        if (request.getProfileImage() != null) {
+            account.setProfileImage(request.getProfileImage());
+        }
     }
     
     /**
@@ -209,7 +236,8 @@ public class ProfileServiceImpl implements ProfileService {
             account.getAccountApproved(),
             account.getAddress(),
             account.getAffiliation(),
-            account.getPosition()
+            account.getPosition(),
+            account.getProfileImage()
         );
     }
 }

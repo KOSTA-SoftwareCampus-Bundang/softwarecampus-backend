@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.service.user.profile;
 
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 
@@ -57,4 +58,14 @@ public interface ProfileService {
      * @throws com.softwarecampus.backend.exception.email.TooManyAttemptsException 인증 시도 횟수 초과
      */
     void resetPassword(String email, ResetPasswordRequest request);
+
+    /**
+     * 비밀번호 변경 (로그인 상태)
+     * 
+     * @param email 이메일
+     * @param request 현재 비밀번호 및 새 비밀번호
+     * @throws com.softwarecampus.backend.exception.user.AccountNotFoundException 계정이 존재하지 않는 경우
+     * @throws com.softwarecampus.backend.exception.user.InvalidPasswordException 현재 비밀번호가 일치하지 않는 경우
+     */
+    void changePassword(String email, ChangePasswordRequest request);
 }

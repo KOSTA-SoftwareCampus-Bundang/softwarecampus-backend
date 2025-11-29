@@ -25,6 +25,7 @@ public record AccountResponse(
     ApprovalStatus approvalStatus,
     String address,
     String affiliation,
-    String position
+    String position,
+    String profileImage
 ) {
 }

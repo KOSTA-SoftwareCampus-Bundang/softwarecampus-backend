@@ -63,6 +63,8 @@ public class Account extends BaseSoftDeleteSupportEntity implements java.io.Seri
     private String position;              // 직책/역할
     
     // ===== 새로 추가된 필드 =====
+    private String profileImage;          // 프로필 이미지 URL
+
     private String address;               // 주소
     
     @Enumerated(EnumType.STRING)
