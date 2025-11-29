@@ -6,6 +6,8 @@ import org.springframework.util.FileCopyUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Year;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -33,6 +35,7 @@ public class EmailTemplateLoader {
     
     /**
      * 템플릿의 변수 치환
+     * - currentYear는 자동으로 현재 연도로 치환됨
      * 
      * @param template HTML 템플릿 문자열
      * @param variables 치환할 변수 맵 (키: 변수명, 값: 치환할 값)
@@ -41,7 +44,11 @@ public class EmailTemplateLoader {
     public String replaceVariables(String template, Map<String, String> variables) {
         String result = template;
         
-        for (Map.Entry<String, String> entry : variables.entrySet()) {
+        // 공통 변수 자동 추가 (저작권 연도)
+        Map<String, String> allVariables = new HashMap<>(variables);
+        allVariables.putIfAbsent("currentYear", String.valueOf(Year.now().getValue()));
+        
+        for (Map.Entry<String, String> entry : allVariables.entrySet()) {
             String placeholder = "${" + entry.getKey() + "}";
             result = result.replace(placeholder, entry.getValue());
         }
