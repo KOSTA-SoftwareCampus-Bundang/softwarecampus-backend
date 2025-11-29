@@ -6,5 +6,4 @@ public interface BoardAuthorizeService {
 
     boolean canManipulateComment(Long commentId,Long userId);
 
-
 }

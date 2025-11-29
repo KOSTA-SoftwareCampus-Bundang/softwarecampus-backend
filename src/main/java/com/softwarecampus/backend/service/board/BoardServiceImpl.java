@@ -7,6 +7,8 @@ import com.softwarecampus.backend.exception.board.BoardErrorCode;
 import com.softwarecampus.backend.exception.board.BoardException;
 import com.softwarecampus.backend.repository.board.*;
 import com.softwarecampus.backend.repository.user.AccountRepository;
+import com.softwarecampus.backend.service.common.FileType;
+import com.softwarecampus.backend.service.common.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,14 +17,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class BoardServiceImpl implements BoardService {
 
+    private final S3Service s3Service;
     private final BoardRepository boardRepository;
     private final BoardAttachRepository boardAttachRepository;
     private final AccountRepository accountRepository;
@@ -60,10 +62,14 @@ public class BoardServiceImpl implements BoardService {
         if (!board.isActive()) {
             throw new BoardException(BoardErrorCode.BOARD_NOT_FOUND);
         }
+        if (board.isSecret() && (userId == null || !userId.equals(board.getAccount().getId()))) {
+            throw new BoardException(BoardErrorCode.CANNOT_READ_BOARD);
+        }
         board.setHits(board.getHits() + 1);
-        BoardResponseDTO boardResponseDTO = BoardResponseDTO.from(board);
+        BoardResponseDTO boardResponseDTO = BoardResponseDTO.from(board,userId);
         if (userId != null) {
             boardResponseDTO.setLike(board.getBoardRecommends().stream().anyMatch(br -> br.getAccount().getId().equals(userId)));
+            boardResponseDTO.setOwner(userId.equals(board.getAccount().getId()));
         }
         return boardResponseDTO;
     }
@@ -130,6 +136,21 @@ public class BoardServiceImpl implements BoardService {
             throw new BoardException(BoardErrorCode.BOARD_NOT_FOUND);
         }
         board.markDeleted();
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Map<String, byte[]> downloadBoardAttach(Long boardId, Long boardAttachId, Long userId) {
+        BoardAttach boardAttach = boardAttachRepository.findById(boardAttachId).orElseThrow(() -> new BoardException(BoardErrorCode.FILE_NOT_FOUND));
+        if (!boardId.equals(boardAttach.getBoard().getId()) || !boardAttach.isActive()) {
+            throw new BoardException(BoardErrorCode.FILE_NOT_FOUND);
+        }
+        if (boardAttach.getBoard().isSecret() && (userId == null || !userId.equals(boardAttach.getBoard().getAccount().getId()))) {
+            throw new BoardException(BoardErrorCode.FILE_ACCESS_FORBIDDEN);
+        }
+
+        byte[] fileBytes = s3Service.downloadFile(boardAttach.getRealFilename());
+        return Map.of(boardAttach.getOriginalFilename(), fileBytes);
     }
 
     @Transactional
@@ -252,14 +273,13 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public BoardAttach uploadFile(MultipartFile file) {
         //s3 bucket upload code
-
-        return BoardAttach.builder().originalFilename(file.getOriginalFilename()).realFilename("xxxxxxxx").build();
+        String fileURL = s3Service.uploadFile(file, "board", FileType.FileTypeEnum.BOARD_ATTACH);
+        return BoardAttach.builder().originalFilename(file.getOriginalFilename()).realFilename(fileURL).build();
     }
 
     @Override
     public void deleteFile(BoardAttach boardAttach) {
-        //s3 버킷에서 삭제하는 코드
-
+        s3Service.deleteFile(boardAttach.getRealFilename());
     }
 
 }
