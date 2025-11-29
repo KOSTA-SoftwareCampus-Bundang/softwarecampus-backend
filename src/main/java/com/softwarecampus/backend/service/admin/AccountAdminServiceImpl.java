@@ -144,18 +144,22 @@ public class AccountAdminServiceImpl implements AccountAdminService {
         // 트랜잭션 커밋 후 이메일 발송 (이메일 실패해도 승인은 완료)
         String email = account.getEmail();
         String userName = account.getUserName();
-        TransactionSynchronizationManager.registerSynchronization(
-            new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    try {
-                        emailSendService.sendAccountApprovalEmail(email, userName);
-                    } catch (Exception e) {
-                        log.error("회원 승인 이메일 발송 실패 - 회원 ID: {}", accountId, e);
+        if (email != null) {
+            TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        try {
+                            emailSendService.sendAccountApprovalEmail(email, userName);
+                        } catch (Exception e) {
+                            log.error("회원 승인 이메일 발송 실패 - 회원 ID: {}", accountId, e);
+                        }
                     }
                 }
-            }
-        );
+            );
+        } else {
+            log.warn("회원 ID {}는 이메일 주소가 없어 승인 이메일을 발송하지 않습니다", accountId);
+        }
         
         return response;
     }

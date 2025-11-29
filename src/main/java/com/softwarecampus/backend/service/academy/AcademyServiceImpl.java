@@ -149,18 +149,22 @@ public class AcademyServiceImpl implements AcademyService {
         // 트랜잭션 커밋 후 이메일 발송 (이메일 실패해도 승인은 완료)
         String email = academy.getEmail();
         String name = academy.getName();
-        TransactionSynchronizationManager.registerSynchronization(
-            new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    try {
-                        emailSendService.sendAcademyApprovalEmail(email, name);
-                    } catch (Exception e) {
-                        log.error("기관 승인 이메일 발송 실패 - 기관 ID: {}", id, e);
+        if (email != null) {
+            TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        try {
+                            emailSendService.sendAcademyApprovalEmail(email, name);
+                        } catch (Exception e) {
+                            log.error("기관 승인 이메일 발송 실패 - 기관 ID: {}", id, e);
+                        }
                     }
                 }
-            }
-        );
+            );
+        } else {
+            log.warn("기관 ID {}는 이메일 주소가 없어 승인 이메일을 발송하지 않습니다", id);
+        }
         
         return response;
     }
@@ -181,18 +185,22 @@ public class AcademyServiceImpl implements AcademyService {
         // 트랜잭션 커밋 후 이메일 발송 (이메일 실패해도 거절은 완료)
         String email = academy.getEmail();
         String name = academy.getName();
-        TransactionSynchronizationManager.registerSynchronization(
-            new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    try {
-                        emailSendService.sendAcademyRejectionEmail(email, name, reason);
-                    } catch (Exception e) {
-                        log.error("기관 거절 이메일 발송 실패 - 기관 ID: {}", id, e);
+        if (email != null) {
+            TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        try {
+                            emailSendService.sendAcademyRejectionEmail(email, name, reason);
+                        } catch (Exception e) {
+                            log.error("기관 거절 이메일 발송 실패 - 기관 ID: {}", id, e);
+                        }
                     }
                 }
-            }
-        );
+            );
+        } else {
+            log.warn("기관 ID {}는 이메일 주소가 없어 거절 이메일을 발송하지 않습니다", id);
+        }
         
         return response;
     }
