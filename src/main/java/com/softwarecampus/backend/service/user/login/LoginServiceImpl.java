@@ -106,7 +106,7 @@ public class LoginServiceImpl implements LoginService {
             7 * 24 * 60 * 60 * 1000L,  // 7일
             TimeUnit.MILLISECONDS
         );
-        
+
         // 6. LoginResponse 생성
         AccountResponse accountResponse = new AccountResponse(
             account.getId(),

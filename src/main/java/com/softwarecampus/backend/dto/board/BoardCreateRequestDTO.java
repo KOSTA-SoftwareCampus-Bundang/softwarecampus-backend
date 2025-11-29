@@ -3,6 +3,7 @@ package com.softwarecampus.backend.dto.board;
 import com.softwarecampus.backend.domain.board.Board;
 import com.softwarecampus.backend.domain.board.BoardCategory;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
@@ -13,7 +14,7 @@ import lombok.*;
 @Builder
 public class BoardCreateRequestDTO {
 
-
+    @NotNull
     private BoardCategory category;
 
     @NotBlank

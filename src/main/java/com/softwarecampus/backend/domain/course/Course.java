@@ -65,7 +65,7 @@ public class Course extends BaseSoftDeleteSupportEntity {
     private List<CourseCurriculum> curriculums = new ArrayList<>();
 
     /** 리뷰 */
-    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "course", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, orphanRemoval = true)
     @Builder.Default
     private List<CourseReview> reviews = new ArrayList<>();
 
@@ -78,6 +78,11 @@ public class Course extends BaseSoftDeleteSupportEntity {
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<CourseFavorite> favorites = new ArrayList<>();
+
+    /** 이미지 */
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CourseImage> images = new ArrayList<>();
 
     // ======================
     // 연관관계 편의 메서드
@@ -125,6 +130,17 @@ public class Course extends BaseSoftDeleteSupportEntity {
     public void removeFavorite(CourseFavorite favorite) {
         favorites.remove(favorite);
         favorite.setCourse(null);
+    }
+
+    // Image
+    public void addImage(CourseImage image) {
+        images.add(image);
+        image.setCourse(this);
+    }
+
+    public void removeImage(CourseImage image) {
+        images.remove(image);
+        image.setCourse(null);
     }
 
     // 승인 처리 로직 (관리자용)

@@ -339,5 +339,27 @@ public class S3Service {
                     S3UploadException.FailureReason.INVALID_FILE_TYPE);
         }
     }
+
+    public byte[] downloadFile(String fileUrl) {
+        // URL 검증
+        validateFileUrl(fileUrl);
+
+        // key 디코딩 및 보안 검증
+        String key = extractKeyFromUrl(fileUrl);
+        validateS3Key(key);
+
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+
+            return s3Client.getObjectAsBytes(getObjectRequest).asByteArray();
+
+        } catch (S3Exception e) {
+            log.error("Failed to download file from S3: {}", e.awsErrorDetails().errorMessage(), e);
+            throw new S3UploadException("S3 파일 다운로드에 실패했습니다.", e);
+        }
+    }
 }
 

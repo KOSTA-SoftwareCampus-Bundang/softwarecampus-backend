@@ -19,12 +19,14 @@ public class BoardAuthorizeServiceImpl implements BoardAuthorizeService{
 
     @Override
     public boolean canManipulateBoard(Long boardId, Long userId) {
+        System.out.println("BoardAuthorizeServiceImpl.canManipulateBoard");
         Board board = boardRepository.findById(boardId).orElseThrow(()->new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
         return board.getAccount().getId().equals(userId);
     }
 
     @Override
     public boolean canManipulateComment(Long commentId, Long userId) {
+        System.out.println("BoardAuthorizeServiceImpl.canManipulateComment");
         Comment comment =commentRepository.findById(commentId).orElseThrow(()->new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
         return comment.getAccount().getId().equals(userId);
     }
