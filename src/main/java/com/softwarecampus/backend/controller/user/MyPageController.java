@@ -1,7 +1,6 @@
 package com.softwarecampus.backend.controller.user;
 
 import com.softwarecampus.backend.dto.user.AccountResponse;
-import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 import com.softwarecampus.backend.service.user.profile.ProfileService;
@@ -106,25 +105,6 @@ public class MyPageController {
         String email = userDetails.getUsername();
         log.info("비밀번호 변경 요청");
 
-        profileService.changePassword(email, request);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * 비밀번호 변경 (로그인 상태)
-     * 
-     * @param userDetails Spring Security 인증 정보
-     * @param request 현재 비밀번호 및 새 비밀번호
-     * @return 200 OK
-     */
-    @PatchMapping("/password")
-    public ResponseEntity<Void> changePassword(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody ChangePasswordRequest request) {
-        
-        String email = userDetails.getUsername();
-        log.info("비밀번호 변경 요청");
-        
         profileService.changePassword(email, request);
         return ResponseEntity.ok().build();
     }
