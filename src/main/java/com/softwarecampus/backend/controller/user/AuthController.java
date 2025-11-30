@@ -159,8 +159,7 @@ public class AuthController {
         // 방어적 프로그래밍: 인증 정보 null 체크
         if (userDetails == null) {
             log.warn("인증 정보 없이 현재 비밀번호 검증 요청이 들어왔습니다.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(VerifyPasswordResponse.failure());
+            return ResponseEntity.ok(VerifyPasswordResponse.failure());
         }
 
         String email = userDetails.getUsername();
@@ -174,7 +173,7 @@ public class AuthController {
             return ResponseEntity.ok(VerifyPasswordResponse.success());
         } else {
             log.warn("비밀번호 확인 실패 - 불일치: email={}", EmailUtils.maskEmail(email));
-            return ResponseEntity.badRequest().body(VerifyPasswordResponse.failure());
+            return ResponseEntity.ok(VerifyPasswordResponse.failure());
         }
     }
 
