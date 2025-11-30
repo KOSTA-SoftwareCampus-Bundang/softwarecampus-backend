@@ -53,12 +53,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         /**
          * ID로 과정 상세 조회 (삭제된 과정 제외, 연관엔티티 함께 로딩)
          * APPROVED 상태이고, Academy와 Category가 삭제되지 않은 경우만 조회
+         * 
+         * Note: MultipleBagFetchException 방지를 위해 curriculums만 FETCH
+         * images는 필요시 lazy loading으로 처리
          */
         @Query("SELECT c FROM Course c " +
                         "JOIN FETCH c.academy a " +
                         "JOIN FETCH c.category cat " +
                         "LEFT JOIN FETCH c.curriculums " +
-                        "LEFT JOIN FETCH c.images " +
                         "WHERE c.id = :id " +
                         "AND c.deletedAt IS NULL " +
                         "AND c.isApproved = 'APPROVED' " +
