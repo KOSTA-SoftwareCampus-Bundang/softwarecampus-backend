@@ -338,8 +338,16 @@ public class LoginAttemptService {
         String attempts = redisTemplate.opsForValue().get(key);
         
         if (attempts != null) {
-            int attemptCount = Integer.parseInt(attempts);
-            return attemptCount >= maxAttempts;
+            try {
+                int attemptCount = Integer.parseInt(attempts);
+                return attemptCount >= maxAttempts;
+            } catch (NumberFormatException e) {
+                // Redis에 잘못된 형식의 값이 저장된 경우
+                log.error("Invalid attempt count in Redis for key {}: {}", key, attempts, e);
+                // 안전한 기본값: 차단하지 않음 (false)
+                // 또는 보수적 접근: 차단함 (true) - 보안 우선 시 사용
+                return false;
+            }
         }
         
         return false;
