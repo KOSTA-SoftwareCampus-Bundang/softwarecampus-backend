@@ -29,9 +29,82 @@
 - 모든 개인정보 필드에 대해 동일한 정책 적용
 - 삭제된 계정은 "존재하지 않는 것"으로 간주
 
-### 3. GDPR 준수
-- 삭제된 계정의 정보는 재사용 가능
-- 필요시 물리적 삭제 정책 추가 가능
+### 3. GDPR '잊혀질 권리' 준수 (부분 준수)
+
+> ⚠️ **현재 상태**: Soft Delete 방식으로 **부분 준수**  
+> 완전한 GDPR 준수를 위해서는 추가 정책 및 구현이 필요합니다.
+
+#### 현재 구현 (Soft Delete)
+- ✅ 사용자 요청 시 즉시 논리적 삭제 (`isDeleted = true`)
+- ✅ 삭제된 데이터는 일반 조회/검색에서 완전히 배제
+- ✅ 개인정보 재사용 가능 (탈퇴 후 재가입)
+
+#### GDPR 완전 준수를 위한 추가 요구사항
+
+**1. 물리적 삭제 정책 (현재 미구현)**
+- 🔴 **요구사항**: 사용자 요청 후 30일 이내 완전 삭제 보장
+- 🔴 **구현 필요**: 스케줄러를 통한 자동 물리적 삭제
+  ```java
+  @Scheduled(cron = "0 0 2 * * ?") // 매일 새벽 2시
+  public void permanentlyDeleteExpiredAccounts() {
+      LocalDateTime threshold = LocalDateTime.now().minusDays(30);
+      List<Account> expiredAccounts = accountRepository
+          .findByIsDeletedTrueAndDeletedAtBefore(threshold);
+      accountRepository.deleteAll(expiredAccounts); // 물리적 삭제
+  }
+  ```
+
+**2. 제3자 데이터 처리자 삭제 전파 (현재 미구현)**
+- 🔴 **요구사항**: 이메일 서비스, 클라우드 스토리지 등 제3자에게 삭제 요청
+- 🔴 **구현 필요**: 외부 서비스 API 호출 및 삭제 확인 로깅
+  ```java
+  emailService.deleteUserData(account.getEmail());
+  cloudStorageService.deleteUserFiles(account.getId());
+  auditLog.recordDeletionPropagation(account.getId(), "EMAIL_SERVICE", "SUCCESS");
+  ```
+
+**3. 감사 로그 및 백업 처리 (현재 미구현)**
+- 🔴 **요구사항**: 감사 로그에서 개인정보 익명화 또는 삭제
+- 🔴 **요구사항**: 백업 데이터에서도 삭제 또는 익명화
+- 🔴 **구현 필요**: 
+  ```java
+  // 감사 로그 익명화
+  auditLogRepository.anonymizeByAccountId(account.getId());
+  
+  // 백업 정책: 30일 이후 백업에서도 제외
+  backupService.markForExclusion(account.getId());
+  ```
+
+**4. 법적 보존 의무 예외 처리 (현재 미구현)**
+- 🟡 **요구사항**: 법적 분쟁, 회계 감사 등 보존 의무 기간 준수
+- 🔴 **구현 필요**: 
+  ```java
+  if (account.hasLegalHold()) {
+      throw new LegalHoldException("법적 보존 의무로 삭제 불가");
+  }
+  ```
+
+**5. 삭제 확인 및 증명 (현재 미구현)**
+- 🔴 **요구사항**: 사용자에게 삭제 완료 통지
+- 🔴 **요구사항**: 삭제 증명서 발급 가능
+- 🔴 **구현 필요**: 
+  ```java
+  emailService.sendDeletionConfirmation(account.getEmail());
+  deletionCertificateService.generate(account.getId(), LocalDateTime.now());
+  ```
+
+#### 향후 작업 계획
+- [ ] 물리적 삭제 스케줄러 구현 (30일 후 자동 삭제)
+- [ ] 제3자 삭제 전파 API 연동
+- [ ] 감사 로그 익명화 정책 수립
+- [ ] 백업 데이터 삭제/익명화 절차 문서화
+- [ ] 법적 보존 의무 예외 처리 로직
+- [ ] 삭제 확인 통지 및 증명서 발급
+
+#### 참고 문서
+- **GDPR 전체 준수 가이드**: (작성 예정) `.md/account/정책/GDPR_compliance.md`
+- **물리적 삭제 정책**: (작성 예정) `.md/account/정책/physical_deletion_policy.md`
+- **데이터 보존 정책**: (작성 예정) `.md/account/정책/data_retention_policy.md`
 
 ---
 
