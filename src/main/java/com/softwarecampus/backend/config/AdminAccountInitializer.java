@@ -48,7 +48,7 @@ public class AdminAccountInitializer implements ApplicationRunner {
         }
 
         // ADMIN 계정이 이미 존재하는지 확인
-        if (accountRepository.existsByEmail(adminEmail)) {
+        if (accountRepository.existsByEmailAndIsDeletedFalse(adminEmail)) {
             log.info("초기 ADMIN 계정이 이미 존재합니다: {}", adminEmail);
             return;
         }

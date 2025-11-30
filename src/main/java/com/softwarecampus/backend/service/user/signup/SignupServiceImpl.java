@@ -216,6 +216,6 @@ public class SignupServiceImpl implements SignupService {
         validateEmailFormat(email);
 
         // 중복 확인
-        return !accountRepository.existsByEmail(email);
+        return !accountRepository.existsByEmailAndIsDeletedFalse(email);
     }
 }

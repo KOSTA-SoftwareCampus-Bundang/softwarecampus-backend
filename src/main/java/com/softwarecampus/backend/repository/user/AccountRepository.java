@@ -28,9 +28,11 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByEmailAndIsDeletedFalse(String email);
 
     /**
-     * 이메일 중복 체크
+     * 활성 이메일 중복 체크 (Soft Delete 고려)
+     * - isDeleted=false인 계정 중에서만 중복 체크
+     * - 삭제된 계정의 이메일 재사용 허용
      */
-    boolean existsByEmail(String email);
+    boolean existsByEmailAndIsDeletedFalse(String email);
 
     /**
      * 활성 사용자명 중복 체크 (Soft Delete 고려)

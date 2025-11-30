@@ -154,22 +154,22 @@ class SignupIntegrationTest {
         }
 
         @Test
-        @DisplayName("이메일 중복 확인 - existsByEmail() 검증")
+        @DisplayName("이메일 중복 확인 - existsByEmailAndIsDeletedFalse() 검증")
         void 이메일중복확인_Repository검증() throws Exception {
                 // given - 기존 계정 생성
                 Account existingAccount = Account.builder()
                                 .email("existing@test.com")
                                 .password("$2a$10$encodedPassword")
                                 .userName("기존사용자")
-                                .phoneNumber("010-1111-2222")
+                                .phoneNumber("010-1234-5678")
                                 .accountType(AccountType.USER)
                                 .accountApproved(ApprovalStatus.APPROVED)
                                 .build();
                 accountRepository.save(existingAccount);
 
-                // Repository 직접 검증
-                assertThat(accountRepository.existsByEmail("existing@test.com")).isTrue();
-                assertThat(accountRepository.existsByEmail("new@test.com")).isFalse();
+                // Repository 직접 검증 (Soft Delete 고려)
+                assertThat(accountRepository.existsByEmailAndIsDeletedFalse("existing@test.com")).isTrue();
+                assertThat(accountRepository.existsByEmailAndIsDeletedFalse("new@test.com")).isFalse();
 
                 // when & then - 중복 이메일로 회원가입 시도
                 SignupRequest duplicateRequest = new SignupRequest(
@@ -399,7 +399,7 @@ class SignupIntegrationTest {
                                 .andExpect(status().isCreated());
 
                 // Step 2: DB 저장 확인
-                assertThat(accountRepository.existsByEmail("fullflow@test.com")).isTrue();
+                assertThat(accountRepository.existsByEmailAndIsDeletedFalse("fullflow@test.com")).isTrue();
                 Account savedAccount = accountRepository.findByEmailAndIsDeletedFalse("fullflow@test.com")
                                 .orElseThrow(() -> new AssertionError("계정이 저장되지 않았습니다."));
                 assertThat(savedAccount.getUserName()).isEqualTo("플로우테스트");
