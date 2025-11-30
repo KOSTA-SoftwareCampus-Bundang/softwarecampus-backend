@@ -34,11 +34,7 @@ public class ReviewLikeController {
                 Long accountId = userDetails.getId();
                 var result = reviewLikeService.toggleLike(reviewId, accountId, request.getType());
 
-                return ResponseEntity.ok(
-                                new ReviewLikeResponse(
-                                                result.isActive() ? result.getType().name() : "NONE",
-                                                reviewLikeService.getLikeCount(reviewId),
-                                                reviewLikeService.getDislikeCount(reviewId)));
+                return ResponseEntity.ok(result);
         }
 
         /**

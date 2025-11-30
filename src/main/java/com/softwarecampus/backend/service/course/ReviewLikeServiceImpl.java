@@ -2,6 +2,7 @@ package com.softwarecampus.backend.service.course;
 
 import com.softwarecampus.backend.domain.course.ReviewLike;
 import com.softwarecampus.backend.domain.course.ReviewLike.LikeType;
+import com.softwarecampus.backend.dto.course.ReviewLikeResponse;
 import com.softwarecampus.backend.exception.course.BadRequestException;
 import com.softwarecampus.backend.exception.course.NotFoundException;
 import com.softwarecampus.backend.repository.course.CourseReviewRepository;
@@ -35,7 +36,7 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
 
     @Override
     @Transactional
-    public ReviewLike toggleLike(Long reviewId, Long accountId, LikeType type) {
+    public ReviewLikeResponse toggleLike(Long reviewId, Long accountId, LikeType type) {
 
         // 1) 리뷰와 계정 존재 확인
         var review = courseReviewRepository.findById(reviewId)
@@ -48,6 +49,8 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
         var existing = reviewLikeRepository
                 .findByReviewIdAndAccountId(reviewId, accountId); // soft-deleted 포함
 
+        ReviewLike resultLike;
+
         if (existing.isPresent()) {
             var like = existing.get();
 
@@ -55,28 +58,34 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
                 // soft-deleted 상태면 재활성화 + 타입 변경
                 like.restore();
                 like.setType(type);
-                return like;
-            }
-
-            // 같은 타입이면 취소 (soft delete)
-            if (like.getType() == type) {
+                resultLike = like;
+            } else if (like.getType() == type) {
+                // 같은 타입이면 취소 (soft delete)
                 like.markDeleted();
-                return like;
+                resultLike = like;
+            } else {
+                // 다른 타입이면 타입 변경
+                like.setType(type);
+                resultLike = like;
             }
-
-            // 다른 타입이면 타입 변경
-            like.setType(type);
-            return like;
+        } else {
+            // 3) 기존 레코드 없으면 새로 생성
+            ReviewLike newLike = ReviewLike.builder()
+                    .review(review)
+                    .account(account)
+                    .type(type)
+                    .build();
+            resultLike = reviewLikeRepository.save(newLike);
         }
 
-        // 3) 기존 레코드 없으면 새로 생성
-        ReviewLike newLike = ReviewLike.builder()
-                .review(review)
-                .account(account)
-                .type(type)
-                .build();
+        // 4) 카운트 조회 및 DTO 반환
+        long likeCount = reviewLikeRepository.countByReviewIdAndTypeAndIsDeletedFalse(reviewId, LikeType.LIKE);
+        long dislikeCount = reviewLikeRepository.countByReviewIdAndTypeAndIsDeletedFalse(reviewId, LikeType.DISLIKE);
 
-        return reviewLikeRepository.save(newLike);
+        return new ReviewLikeResponse(
+                resultLike.isActive() ? resultLike.getType().name() : "NONE",
+                likeCount,
+                dislikeCount);
     }
 
     @Override
