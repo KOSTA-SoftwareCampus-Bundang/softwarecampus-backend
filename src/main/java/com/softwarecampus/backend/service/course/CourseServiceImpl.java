@@ -29,42 +29,19 @@ public class CourseServiceImpl implements CourseService {
         private final CourseCategoryRepository courseCategoryRepository;
 
         @Override
-        public Page<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline, String keyword, Pageable pageable) {
+        public Page<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline,
+                        String keyword, Pageable pageable) {
                 // 통합 검색 쿼리 사용 (모든 파라미터가 null 가능)
-                Page<Course> coursePage = courseRepository.searchCourses(categoryId, categoryType, isOffline, keyword, pageable);
+                Page<Course> coursePage = courseRepository.searchCourses(categoryId, categoryType, isOffline, keyword,
+                                pageable);
                 return coursePage.map(CourseResponseDTO::fromEntity);
         }
 
         @Override
         @Deprecated
-        public List<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline, String keyword) {
-                List<Course> courses;
-
-                // 1. 키워드 검색이 있는 경우
-                if (keyword != null && !keyword.isBlank()) {
-                        courses = courseRepository.searchCoursesAll(categoryId, categoryType, isOffline, keyword);
-                }
-                // 2. categoryId로 필터링 (하위 카테고리 선택)
-                else if (categoryId != null) {
-                        courses = courseRepository.findByCategoryIdAndFilters(categoryId, isOffline);
-                }
-                // 3. categoryType으로 필터링 (재직자/취업예정자 전체)
-                else if (categoryType != null) {
-                        if (isOffline != null) {
-                                courses = courseRepository.findByCategory_CategoryTypeAndIsOfflineAndDeletedAtIsNull(categoryType, isOffline);
-                        } else {
-                                courses = courseRepository.findByCategory_CategoryTypeAndDeletedAtIsNull(categoryType);
-                        }
-                }
-                // 4. 전체 조회
-                else {
-                        if (isOffline != null) {
-                                courses = courseRepository.findByIsOfflineAndDeletedAtIsNull(isOffline);
-                        } else {
-                                courses = courseRepository.findByDeletedAtIsNull();
-                        }
-                }
-
+        public List<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline,
+                        String keyword) {
+                List<Course> courses = courseRepository.searchCoursesAll(categoryId, categoryType, isOffline, keyword);
                 return courses.stream()
                                 .map(CourseResponseDTO::fromEntity)
                                 .toList();
