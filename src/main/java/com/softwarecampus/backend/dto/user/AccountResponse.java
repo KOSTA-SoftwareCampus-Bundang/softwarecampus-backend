@@ -15,6 +15,7 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
  * @param address 주소
  * @param affiliation 소속
  * @param position 직책
+ * @param profileImage 프로필 이미지 URL
  */
 public record AccountResponse(
     Long id,

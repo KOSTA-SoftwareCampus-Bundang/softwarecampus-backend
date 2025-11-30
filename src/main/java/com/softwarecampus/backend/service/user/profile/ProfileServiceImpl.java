@@ -177,7 +177,7 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     /**
-     * 비밀번호 변경 (로그인 상태)
+     * 비밀번호 변경 (로그인 상태 - 이메일 인증 코드 기반)
      */
     @Override
     @Transactional
@@ -187,13 +187,20 @@ public class ProfileServiceImpl implements ProfileService {
         
         log.info("비밀번호 변경 시도: email={}", EmailUtils.maskEmail(email));
         
-        // 2. 계정 조회
+        // 2. 이메일 인증 코드 검증 (PASSWORD_CHANGE 타입)
+        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email, request.getVerificationCode());
+        emailVerificationService.verifyChangeCode(codeRequest);
+        
+        // 3. 계정 조회
         Account account = accountRepository.findByEmail(email)
             .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
         
-        // 3. 새 비밀번호 변경 (현재 비밀번호 확인 없이 덮어쓰기)
+        // 4. 새 비밀번호 암호화 및 저장
         String encodedPassword = passwordEncoder.encode(request.getNewPassword());
         account.setPassword(encodedPassword);
+        
+        // 5. 인증 레코드 삭제 (일회용 보장)
+        emailVerificationRepository.deleteByEmailAndType(email, VerificationType.PASSWORD_CHANGE);
         
         log.info("비밀번호 변경 완료: email={}, accountId={}", 
             EmailUtils.maskEmail(email), account.getId());

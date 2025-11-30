@@ -6,6 +6,7 @@ import com.softwarecampus.backend.dto.user.LoginRequest;
 import com.softwarecampus.backend.dto.user.LoginResponse;
 import com.softwarecampus.backend.dto.user.MessageResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
+import com.softwarecampus.backend.dto.user.VerifyPasswordRequest;
 import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
 import com.softwarecampus.backend.service.auth.TokenService;
 import com.softwarecampus.backend.service.user.login.LoginService;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -143,6 +145,38 @@ public class AuthController {
         log.info("로그인 성공 - accountType: {}", response.account().accountType());
         
         return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 현재 비밀번호 검증 API (비밀번호 변경 전 본인 확인)
+     * 
+     * 보안 고려사항:
+     * - 로그인 상태(JWT 토큰)에서만 호출 가능
+     * - 세션 탈취 공격 방어를 위한 현재 비밀번호 확인
+     * 
+     * @param userDetails Spring Security 인증 정보
+     * @param request 현재 비밀번호
+     * @return 200 OK - 검증 성공
+     * 
+     * @throws com.softwarecampus.backend.exception.user.AccountNotFoundException 404 - 계정 없음
+     * @throws com.softwarecampus.backend.exception.user.InvalidPasswordException 400 - 비밀번호 불일치
+     */
+    @PostMapping("/verify-password")
+    public ResponseEntity<?> verifyPassword(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @Valid @RequestBody VerifyPasswordRequest request) {
+        
+        String email = userDetails.getUsername();
+        log.info("현재 비밀번호 검증 요청: email={}", EmailUtils.maskEmail(email));
+        
+        loginService.verifyPassword(email, request.getCurrentPassword());
+        
+        log.info("현재 비밀번호 검증 성공: email={}", EmailUtils.maskEmail(email));
+        
+        return ResponseEntity.ok(Map.of(
+            "verified", true,
+            "message", "비밀번호가 확인되었습니다."
+        ));
     }
     
     /**

@@ -75,6 +75,12 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     }
     
     @Override
+    @Transactional
+    public EmailVerificationResponse verifyChangeCode(EmailVerificationCodeRequest request) {
+        return verifyCodeInternal(request, VerificationType.PASSWORD_CHANGE, "인증이 완료되었습니다. 새 비밀번호를 설정하세요");
+    }
+    
+    @Override
     @Transactional(readOnly = true)
     public boolean isEmailVerified(String email, VerificationType type) {
         return verificationRepository.existsByEmailAndTypeAndVerifiedTrue(email, type);

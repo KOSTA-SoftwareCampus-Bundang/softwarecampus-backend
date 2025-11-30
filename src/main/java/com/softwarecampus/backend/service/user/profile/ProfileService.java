@@ -65,7 +65,6 @@ public interface ProfileService {
      * @param email 이메일
      * @param request 현재 비밀번호 및 새 비밀번호
      * @throws com.softwarecampus.backend.exception.user.AccountNotFoundException 계정이 존재하지 않는 경우
-     * @throws com.softwarecampus.backend.exception.user.InvalidPasswordException 현재 비밀번호가 일치하지 않는 경우
      */
     void changePassword(String email, ChangePasswordRequest request);
 }

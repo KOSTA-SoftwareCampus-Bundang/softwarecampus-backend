@@ -9,6 +9,7 @@ import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.exception.user.InvalidCredentialsException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
+import com.softwarecampus.backend.exception.user.InvalidPasswordException;
 import com.softwarecampus.backend.exception.user.PhoneNumberAlreadyExistsException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -282,6 +283,41 @@ public class GlobalExceptionHandler {
 
         problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-credentials"));
         problemDetail.setTitle("Unauthorized");
+
+        return problemDetail;
+    }
+
+    /**
+     * 현재 비밀번호 불일치 예외 처리
+     * HTTP 400 Bad Request
+     */
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ProblemDetail handleInvalidPasswordException(InvalidPasswordException ex) {
+        log.warn("비밀번호 검증 실패: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage());
+
+        problemDetail.setType(URI.create(problemBaseUri + "/invalid-password"));
+        problemDetail.setTitle("Invalid Password");
+
+        return problemDetail;
+    }
+
+    /**
+     * 권한 부족 예외 처리
+     * HTTP 403 Forbidden
+     */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ProblemDetail handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex) {
+        log.warn("접근 권한 부족: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                "접근 권한이 없습니다.");
+        problemDetail.setType(URI.create(problemBaseUri + "/access-denied"));
+        problemDetail.setTitle("Access Denied");
 
         return problemDetail;
     }
