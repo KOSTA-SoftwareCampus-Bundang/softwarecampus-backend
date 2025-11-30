@@ -51,9 +51,19 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         Optional<Course> findByIdAndDeletedAtIsNull(Long id);
 
         /**
-         * ID로 과정 상세 조회 (삭제된 과정 제외, 연관 엔티티 함께 로딩)
+         * ID로 과정 상세 조회 (삭제된 과정 제외, 연관엔티티 함께 로딩)
+         * APPROVED 상태이고, Academy와 Category가 삭제되지 않은 경우만 조회
          */
-        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "academy", "category", "curriculums",
-                        "images" })
-        Optional<Course> findWithDetailsByIdAndDeletedAtIsNull(Long id);
+        @Query("SELECT c FROM Course c " +
+                        "JOIN FETCH c.academy a " +
+                        "JOIN FETCH c.category cat " +
+                        "LEFT JOIN FETCH c.curriculums " +
+                        "LEFT JOIN FETCH c.images " +
+                        "WHERE c.id = :id " +
+                        "AND c.deletedAt IS NULL " +
+                        "AND c.isApproved = 'APPROVED' " +
+                        "AND a.deletedAt IS NULL " +
+                        "AND cat.deletedAt IS NULL")
+        Optional<Course> findWithDetailsByIdAndDeletedAtIsNull(@Param("id") Long id);
+
 }
