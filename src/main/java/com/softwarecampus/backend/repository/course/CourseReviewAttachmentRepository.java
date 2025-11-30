@@ -14,4 +14,7 @@ public interface CourseReviewAttachmentRepository extends JpaRepository<CourseRe
 
     // Soft-Delete 되더라도 전체 조회 (관리자 복구용)
     List<CourseReviewAttachment> findByReviewId(Long reviewId);
+
+    // 스케줄러용: 삭제된 지 일정 기간이 지난 파일 조회
+    List<CourseReviewAttachment> findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime threshold);
 }
