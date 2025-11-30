@@ -7,6 +7,11 @@ import com.softwarecampus.backend.dto.course.QnaResponse;
 import com.softwarecampus.backend.service.course.CourseQnaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,12 +23,18 @@ public class CourseQnaController {
 
     private final CourseQnaService qnaService;
 
-    /** Q&A 목록 조회 */
+    /** Q&A 목록 조회 (페이징 및 검색 지원) */
     @GetMapping("/{courseId}/qna")
-    public List<QnaResponse> getQnaList(
+    public ResponseEntity<Page<QnaResponse>> getQnaList(
             @PathVariable CategoryType type,
-            @PathVariable Long courseId) {
-        return qnaService.getQnaList(type, courseId);
+            @PathVariable Long courseId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<QnaResponse> response = qnaService.getQnaList(type, courseId, keyword, pageable);
+        return ResponseEntity.ok(response);
     }
 
     /** Q&A 상세 조회 */

@@ -4,6 +4,8 @@ import com.softwarecampus.backend.domain.academy.qna.AcademyQA;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,9 +13,10 @@ import java.util.List;
 @Repository
 public interface AcademyQARepository extends JpaRepository<AcademyQA, Long> {
 
-    // 검색 및 페이징 지원
-    Page<AcademyQA> findByAcademyIdAndTitleContainingOrQuestionTextContaining(Long academyId, String titleKeyword,
-            String questionKeyword, Pageable pageable);
+    // 검색 및 페이징 지원 (JPQL로 명시적 조건 처리)
+    @Query("SELECT qa FROM AcademyQA qa WHERE qa.academy.id = :academyId AND (qa.title LIKE %:keyword% OR qa.questionText LIKE %:keyword%)")
+    Page<AcademyQA> searchByAcademyIdAndKeyword(@Param("academyId") Long academyId, @Param("keyword") String keyword,
+            Pageable pageable);
 
     // 페이징 지원 (검색어 없을 때)
     Page<AcademyQA> findByAcademyId(Long academyId, Pageable pageable);

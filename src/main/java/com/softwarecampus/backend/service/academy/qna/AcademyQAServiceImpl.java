@@ -59,8 +59,7 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     public Page<QAResponse> getQAsByAcademyId(Long academyId, String keyword, Pageable pageable) {
         Page<AcademyQA> qaPage;
         if (keyword != null && !keyword.isBlank()) {
-            qaPage = academyQARepository.findByAcademyIdAndTitleContainingOrQuestionTextContaining(
-                    academyId, keyword, keyword, pageable);
+            qaPage = academyQARepository.searchByAcademyIdAndKeyword(academyId, keyword, pageable);
         } else {
             qaPage = academyQARepository.findByAcademyId(academyId, pageable);
         }
