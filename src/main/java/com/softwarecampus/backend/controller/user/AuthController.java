@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -139,6 +140,10 @@ public class AuthController {
      * - 현재 비밀번호를 확인하여 본인 인증
      * - 성공 시 이메일 인증 코드 발송 진행 가능
      * 
+     * 보안 고려사항:
+     * - 로그인 상태(JWT 토큰)에서만 호출 가능
+     * - 세션 탈취 공격 방어를 위한 현재 비밀번호 확인
+     * 
      * @param userDetails Spring Security 인증 정보 (JWT에서 추출)
      * @param request     현재 비밀번호
      * @return 200 OK - 확인 결과
@@ -146,21 +151,29 @@ public class AuthController {
      * @throws AccountNotFoundException 404 - 계정 없음
      */
     @PostMapping("/verify-password")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<VerifyPasswordResponse> verifyPassword(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody VerifyPasswordRequest request) {
 
+        // 방어적 프로그래밍: 인증 정보 null 체크
+        if (userDetails == null) {
+            log.warn("인증 정보 없이 현재 비밀번호 검증 요청이 들어왔습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(VerifyPasswordResponse.failure());
+        }
+
         String email = userDetails.getUsername();
-        log.info("현재 비밀번호 확인 요청");
+        log.info("현재 비밀번호 확인 요청: email={}", EmailUtils.maskEmail(email));
 
         // 서비스 계층에서 비밀번호 검증
         boolean matches = loginService.verifyPassword(email, request.getCurrentPassword());
 
         if (matches) {
-            log.info("비밀번호 확인 성공");
+            log.info("비밀번호 확인 성공: email={}", EmailUtils.maskEmail(email));
             return ResponseEntity.ok(VerifyPasswordResponse.success());
         } else {
-            log.warn("비밀번호 확인 실패 - 불일치");
+            log.warn("비밀번호 확인 실패 - 불일치: email={}", EmailUtils.maskEmail(email));
             return ResponseEntity.badRequest().body(VerifyPasswordResponse.failure());
         }
     }

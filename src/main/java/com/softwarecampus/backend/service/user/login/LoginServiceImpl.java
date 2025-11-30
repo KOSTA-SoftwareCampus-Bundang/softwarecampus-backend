@@ -128,19 +128,23 @@ public class LoginServiceImpl implements LoginService {
     }
 
     /**
-     * 현재 비밀번호 검증
+     * 현재 비밀번호 검증 (비밀번호 변경 전 본인 확인용)
+     * 
+     * 보안 원칙:
+     * - 세션 탈취 공격 방어
+     * - JWT 토큰만으로는 비밀번호 변경 불가
      * 
      * 용도: 마이페이지 비밀번호 변경 Step 1
      * - 현재 비밀번호를 확인하여 본인 인증
      * 
      * @param email           사용자 이메일
      * @param currentPassword 현재 비밀번호
-     * @return 비밀번호 일치 여부
+     * @return 비밀번호 일치 여부 (예외를 던지지 않고 boolean 반환)
      * @throws AccountNotFoundException 계정 없음
      */
     @Override
     public boolean verifyPassword(String email, String currentPassword) {
-        log.info("비밀번호 검증 요청: email={}", EmailUtils.maskEmail(email));
+        log.info("현재 비밀번호 검증 시도: email={}", EmailUtils.maskEmail(email));
 
         Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> {
@@ -153,7 +157,7 @@ public class LoginServiceImpl implements LoginService {
         if (matches) {
             log.info("비밀번호 검증 성공: email={}", EmailUtils.maskEmail(email));
         } else {
-            log.warn("비밀번호 검증 실패 - 불일치: email={}", EmailUtils.maskEmail(email));
+            log.warn("비밀번호 검증 실패 - 비밀번호 불일치: email={}", EmailUtils.maskEmail(email));
         }
 
         return matches;
