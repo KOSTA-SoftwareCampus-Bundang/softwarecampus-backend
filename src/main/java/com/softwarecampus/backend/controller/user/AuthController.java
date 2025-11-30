@@ -8,6 +8,8 @@ import com.softwarecampus.backend.dto.user.MessageResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
 import com.softwarecampus.backend.dto.user.VerifyPasswordRequest;
 import com.softwarecampus.backend.dto.user.VerifyPasswordResponse;
+import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
+import com.softwarecampus.backend.dto.user.PasswordResetWithEmailRequest;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +19,7 @@ import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
 import com.softwarecampus.backend.service.auth.TokenService;
 import com.softwarecampus.backend.service.user.login.LoginService;
 import com.softwarecampus.backend.service.user.signup.SignupService;
+import com.softwarecampus.backend.service.user.profile.ProfileService;
 import com.softwarecampus.backend.util.EmailUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -61,6 +64,7 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ProfileService profileService;
 
     /**
      * 회원가입 API
@@ -265,5 +269,32 @@ public class AuthController {
             log.warn("Invalid refresh token for user: {}", EmailUtils.maskEmail(request.email()));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    /**
+     * 비밀번호 재설정 API (비로그인 상태)
+     * 
+     * 사용 시나리오 (비밀번호 찾기):
+     * 1. 사용자가 이메일 입력 후 인증 코드 발송 (POST /api/auth/email/send-reset-code)
+     * 2. 이메일로 받은 인증 코드 확인 (POST /api/auth/email/verify-reset)
+     * 3. 인증 코드 + 새 비밀번호로 비밀번호 재설정 (이 API)
+     * 
+     * @param request email, code, newPassword
+     * @return 200 OK - 비밀번호 재설정 성공
+     * 
+     * @throws AccountNotFoundException 404 - 계정 없음
+     * @throws InvalidInputException    400 - 인증 코드 불일치/만료
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<MessageResponse> resetPassword(
+            @Valid @RequestBody PasswordResetWithEmailRequest request) {
+        log.info("비밀번호 재설정 요청 (비로그인): email={}", EmailUtils.maskEmail(request.email()));
+
+        ResetPasswordRequest resetRequest = new ResetPasswordRequest(request.code(), request.newPassword());
+        profileService.resetPassword(request.email(), resetRequest);
+
+        log.info("비밀번호 재설정 완료: email={}", EmailUtils.maskEmail(request.email()));
+
+        return ResponseEntity.ok(MessageResponse.of("비밀번호가 성공적으로 변경되었습니다."));
     }
 }
