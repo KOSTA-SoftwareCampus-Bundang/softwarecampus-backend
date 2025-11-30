@@ -1,6 +1,5 @@
 package com.softwarecampus.backend.controller.course;
 
-import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.dto.course.QnaAnswerRequest;
 import com.softwarecampus.backend.dto.course.QnaRequest;
 import com.softwarecampus.backend.dto.course.QnaResponse;
@@ -12,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,60 +38,68 @@ public class CourseQnaController {
 
     /** Q&A 상세 조회 */
     @GetMapping("/qna/{qnaId}")
-    public QnaResponse getQnaDetail(
+    public ResponseEntity<QnaResponse> getQnaDetail(
             @PathVariable Long qnaId) {
-        return qnaService.getQnaDetail(qnaId);
+        return ResponseEntity.ok(qnaService.getQnaDetail(qnaId));
     }
 
     /** 질문 등록 */
     @PostMapping("/{courseId}/qna")
-    public QnaResponse createQuestion(
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<QnaResponse> createQuestion(
             @PathVariable Long courseId,
             @RequestBody @Valid QnaRequest request,
             @RequestAttribute("userId") Long writerId) {
-        return qnaService.createQuestion(courseId, writerId, request);
+        return ResponseEntity.ok(qnaService.createQuestion(courseId, writerId, request));
     }
 
     /** 질문 수정 */
     @PutMapping("/qna/{qnaId}")
-    public QnaResponse updateQuestion(
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<QnaResponse> updateQuestion(
             @PathVariable Long qnaId,
             @RequestBody @Valid QnaRequest request,
             @RequestAttribute("userId") Long writerId) {
-        return qnaService.updateQuestion(qnaId, writerId, request);
+        return ResponseEntity.ok(qnaService.updateQuestion(qnaId, writerId, request));
     }
 
     /** 질문 삭제 */
     @DeleteMapping("/qna/{qnaId}")
-    public void deleteQuestion(
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteQuestion(
             @PathVariable Long qnaId,
             @RequestAttribute("userId") Long writerId) {
         qnaService.deleteQuestion(qnaId, writerId);
+        return ResponseEntity.noContent().build();
     }
 
     /** 답변 등록 */
     @PostMapping("/qna/{qnaId}/answer")
-    public QnaResponse answerQuestion(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<QnaResponse> answerQuestion(
             @PathVariable Long qnaId,
             @RequestBody @Valid QnaAnswerRequest request,
             @RequestAttribute("userId") Long adminId) {
-        return qnaService.answerQuestion(qnaId, adminId, request);
+        return ResponseEntity.ok(qnaService.answerQuestion(qnaId, adminId, request));
     }
 
     /** 답변 수정 */
     @PutMapping("/qna/{qnaId}/answer")
-    public QnaResponse updateAnswer(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<QnaResponse> updateAnswer(
             @PathVariable Long qnaId,
             @RequestBody @Valid QnaAnswerRequest request,
             @RequestAttribute("userId") Long adminId) {
-        return qnaService.updateAnswer(qnaId, adminId, request);
+        return ResponseEntity.ok(qnaService.updateAnswer(qnaId, adminId, request));
     }
 
     /** 답변 삭제 */
     @DeleteMapping("/qna/{qnaId}/answer")
-    public void deleteAnswer(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteAnswer(
             @PathVariable Long qnaId,
             @RequestAttribute("userId") Long adminId) {
         qnaService.deleteAnswer(qnaId, adminId);
+        return ResponseEntity.noContent().build();
     }
 }
