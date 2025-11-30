@@ -73,11 +73,13 @@ public class EmailSendServiceImpl implements EmailSendService {
     private String getHtmlContent(String code, VerificationType type) throws IOException {
         String templateName = switch (type) {
             case SIGNUP -> "signup-verification.html";
-            case PASSWORD_RESET, PASSWORD_CHANGE -> "password-reset-verification.html";
+            case PASSWORD_RESET -> "password-reset-verification.html";
+            case PASSWORD_CHANGE -> "password-change-verification.html";
         };
 
         Map<String, String> variables = new HashMap<>();
         variables.put("code", code);
+        variables.put("currentYear", String.valueOf(java.time.Year.now().getValue()));
 
         return templateLoader.loadAndReplace(templateName, variables);
     }

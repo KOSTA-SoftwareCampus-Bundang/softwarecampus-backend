@@ -42,8 +42,7 @@ public class CourseImageServiceImpl implements CourseImageService {
             CategoryType type,
             Long courseId,
             MultipartFile file,
-            boolean isThumbnail
-    ) {
+            boolean isThumbnail) {
         // 1) Course 검증
         Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
                 .orElseThrow(() -> new IllegalArgumentException("Course not found for type: " + type));
@@ -53,16 +52,14 @@ public class CourseImageServiceImpl implements CourseImageService {
                 CourseImage.builder()
                         .course(course)
                         .isThumbnail(isThumbnail)
-                        .build()
-        );
+                        .build());
 
         try {
             // 3) S3 업로드
             String url = s3Service.uploadFile(
                     file,
                     S3Folder.COURSE.getPath(),
-                    FileType.FileTypeEnum.COURSE_IMAGE
-            );
+                    FileType.FileTypeEnum.COURSE_IMAGE);
 
             // 4) 업로드 성공 시 DB 레코드 URL 업데이트
             image.setImageUrl(url);
@@ -75,7 +72,6 @@ public class CourseImageServiceImpl implements CourseImageService {
 
         return CourseImageResponse.from(image);
     }
-
 
     @Override
     @Transactional
@@ -90,8 +86,8 @@ public class CourseImageServiceImpl implements CourseImageService {
 
     @Override
     public List<CourseImageResponse> getCourseImages(CategoryType type, Long courseId) {
-        List<CourseImage> images =
-                courseImageRepository.findByCourse_IdAndCourse_Category_CategoryTypeAndIsDeletedFalse(courseId, type);
+        List<CourseImage> images = courseImageRepository
+                .findByCourse_IdAndCourse_Category_CategoryTypeAndIsDeletedFalse(courseId, type);
 
         return images.stream()
                 .map(CourseImageResponse::from)
@@ -112,8 +108,8 @@ public class CourseImageServiceImpl implements CourseImageService {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String email = userDetails.getUsername(); // loadUserByUsername에서 설정한 username = email
 
-        // 3. 이메일로 Account 조회
-        Account account = accountRepository.findByEmail(email)
+        // 3. 이메일로 Account 조회 (Soft Delete 제외)
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         // 4. 관리자 권한 체크

@@ -19,45 +19,46 @@ import java.util.Optional;
  */
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
-    
+
     /**
-     * 이메일로 계정 조회 (로그인)
+     * 이메일로 활성 계정 조회 (Soft Delete 고려)
+     * - isDeleted=false인 계정만 조회
+     * - 로그인, 프로필 조회 등에 사용
      */
-    Optional<Account> findByEmail(String email);
-    
+    Optional<Account> findByEmailAndIsDeletedFalse(String email);
+
     /**
      * 이메일 중복 체크
      */
     boolean existsByEmail(String email);
-    
+
     /**
      * 활성 사용자명 중복 체크 (Soft Delete 고려)
      * - isDeleted=false인 계정 중에서만 중복 체크
      */
     boolean existsByUserNameAndIsDeletedFalse(String userName);
-    
+
     /**
      * 사용자명으로 활성 계정 조회 (Soft Delete 고려)
      */
     Optional<Account> findByUserNameAndIsDeletedFalse(String userName);
-    
+
     /**
      * 전화번호 중복 체크
      */
     boolean existsByPhoneNumber(String phoneNumber);
-    
+
     /**
      * 계정 타입별 활성 계정 조회
      */
     List<Account> findByAccountTypeAndIsDeletedFalse(AccountType accountType);
-    
+
     /**
      * 계정 타입 및 승인 상태별 활성 계정 조회
      */
     List<Account> findByAccountTypeAndAccountApprovedAndIsDeletedFalse(
-        AccountType accountType, 
-        ApprovalStatus accountApproved
-    );
+            AccountType accountType,
+            ApprovalStatus accountApproved);
 
     /**
      * 전체 활성 계정 목록 조회
