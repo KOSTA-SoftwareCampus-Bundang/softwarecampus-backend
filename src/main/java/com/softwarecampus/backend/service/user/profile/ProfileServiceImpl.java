@@ -3,6 +3,7 @@ package com.softwarecampus.backend.service.user.profile;
 import com.softwarecampus.backend.domain.common.VerificationType;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.EmailVerificationCodeRequest;
 import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
@@ -182,7 +183,7 @@ public class ProfileServiceImpl implements ProfileService {
      */
     @Override
     @Transactional
-    public void changePassword(String email, ResetPasswordRequest request) {
+    public void changePassword(String email, ChangePasswordRequest request) {
         // 1. 입력 검증
         validateEmailInput(email);
 
@@ -193,7 +194,7 @@ public class ProfileServiceImpl implements ProfileService {
                 .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
         // 3. 이메일 인증 코드 검증 (PASSWORD_CHANGE 타입)
-        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email, request.getCode());
+        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email, request.getVerificationCode());
         emailVerificationService.verifyChangeCode(codeRequest);
 
         // 4. 비밀번호 변경

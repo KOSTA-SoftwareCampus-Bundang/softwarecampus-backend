@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.service.user.profile;
 
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 
@@ -107,5 +108,5 @@ public interface ProfileService {
      *                                                                                     횟수
      *                                                                                     초과
      */
-    void changePassword(String email, ResetPasswordRequest request);
+    void changePassword(String email, ChangePasswordRequest request);
 }

@@ -1,7 +1,7 @@
 package com.softwarecampus.backend.controller.user;
 
 import com.softwarecampus.backend.dto.user.AccountResponse;
-import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
+import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 import com.softwarecampus.backend.service.user.profile.ProfileService;
 import jakarta.validation.Valid;
@@ -100,7 +100,7 @@ public class MyPageController {
     @PutMapping("/password")
     public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody ResetPasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequest request) {
 
         String email = userDetails.getUsername();
         log.info("비밀번호 변경 요청");
