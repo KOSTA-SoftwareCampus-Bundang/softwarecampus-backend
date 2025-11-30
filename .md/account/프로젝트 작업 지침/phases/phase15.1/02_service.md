@@ -90,7 +90,8 @@ public class ProfileServiceImpl implements ProfileService {
         if (request.getPhoneNumber() != null && 
             !request.getPhoneNumber().equals(account.getPhoneNumber())) {
             
-            if (accountRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            // ✅ 2025-12-01 업데이트: Soft Delete 고려
+            if (accountRepository.existsByPhoneNumberAndIsDeletedFalse(request.getPhoneNumber())) {
                 throw new PhoneNumberAlreadyExistsException(request.getPhoneNumber());
             }
         }

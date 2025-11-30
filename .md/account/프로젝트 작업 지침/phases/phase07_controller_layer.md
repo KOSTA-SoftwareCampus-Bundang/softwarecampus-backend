@@ -70,7 +70,7 @@ SignupService (인터페이스)
     ↓
 SignupServiceImpl (구현체)
     ↓
-    ├─ AccountRepository.existsByEmail(String)
+    ├─ AccountRepository.existsByEmailAndIsDeletedFalse(String)  // ✅ 2025-12-01 업데이트
     ├─ AccountRepository.save(Account)
     └─ PasswordEncoder.encode(String)
 

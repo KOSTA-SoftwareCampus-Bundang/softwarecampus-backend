@@ -75,7 +75,7 @@ ProfileService (인터페이스)
 ProfileServiceImpl
     ↓
     ├─ AccountRepository.findByEmail(String)
-    ├─ AccountRepository.existsByPhoneNumber(String)
+    ├─ AccountRepository.existsByPhoneNumberAndIsDeletedFalse(String)  // ✅ 2025-12-01 업데이트
     └─ Account.update() (엔티티 메서드)
 
 인증 플로우:

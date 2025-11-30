@@ -329,28 +329,37 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
 ### 4.2 메소드 설명
 
-| 메소드명 | 반환 타입 | 용도 | 비고 |
-|----------|-----------|------|------|
-| `findByEmail(String)` | `Optional<Account>` | 로그인 시 이메일로 계정 조회 | Soft Delete 미고려 |
-| `existsByEmail(String)` | `boolean` | 회원가입 시 이메일 중복 체크 | Soft Delete 미고려 |
+> ⚠️ **중요 변경사항 (2025-12-01)**: 모든 개인정보 필드(email, userName, phoneNumber)가 Soft Delete를 고려하도록 변경되었습니다.  
+> 이 문서는 초기 설계를 보존하기 위해 "끝난거" 폴더에 보관되며, 최신 정보는 `soft_delete_username_strategy.md`를 참고하세요.
+
+| 메소드명 | 반환 타입 | 용도 | 변경 상태 |
+|----------|-----------|------|-----------|
+| `findByEmailAndIsDeletedFalse(String)` | `Optional<Account>` | 로그인 시 이메일로 활성 계정 조회 | ✅ 변경됨 (2025-12-01) |
+| `existsByEmailAndIsDeletedFalse(String)` | `boolean` | 회원가입 시 이메일 중복 체크 (활성만) | ✅ 변경됨 (2025-12-01) |
 | `existsByUserNameAndIsDeletedFalse(String)` | `boolean` | 활성 사용자명 중복 체크 | ✅ Soft Delete 고려 |
 | `findByUserNameAndIsDeletedFalse(String)` | `Optional<Account>` | 활성 계정 조회 (사용자명) | ✅ Soft Delete 고려 |
-| `existsByPhoneNumber(String)` | `boolean` | 회원가입 시 전화번호 중복 체크 | Soft Delete 미고려 |
+| `existsByPhoneNumberAndIsDeletedFalse(String)` | `boolean` | 회원가입 시 전화번호 중복 체크 (활성만) | ✅ 변경됨 (2025-12-01) |
 | `findByAccountTypeAndIsDeletedFalse(AccountType)` | `List<Account>` | 계정 타입별 활성 계정 조회 | ✅ Soft Delete 고려 |
 | `findByAccountTypeAndAccountApprovedAndIsDeletedFalse(...)` | `List<Account>` | 타입+승인 상태별 활성 계정 조회 | ✅ Soft Delete 고려 |
 
-### 4.3 Soft Delete 처리 전략
+### 4.3 Soft Delete 처리 전략 (⚠️ 구버전 - 참고용)
 
-**userName**: Soft Delete 고려 (재가입 가능)
-- ✅ `existsByUserNameAndIsDeletedFalse()` - 활성 계정만 중복 체크
-- ✅ `findByUserNameAndIsDeletedFalse()` - 활성 계정만 조회
+**[구버전] 초기 설계 (2025-10-29)**:
+- ✅ userName: Soft Delete 고려 (재가입 가능)
+- ❌ email, phoneNumber: Soft Delete 미고려 (재가입 불가)
 
-**email, phoneNumber**: Soft Delete 미고려 (unique 제약 유지)
-- ⚠️ `existsByEmail()` - 삭제된 계정도 포함 (재가입 불가)
-- ⚠️ `existsByPhoneNumber()` - 삭제된 계정도 포함 (재가입 불가)
+**[신버전] 변경된 정책 (2025-12-01 적용)**:
+- ✅ **email**: Soft Delete 고려 → 재사용 가능
+- ✅ **userName**: Soft Delete 고려 → 재사용 가능
+- ✅ **phoneNumber**: Soft Delete 고려 → 재사용 가능
 
-> 💡 **참고**: userName만 Soft Delete 후 재사용 가능. email/phoneNumber는 unique 제약으로 재가입 불가.
-> 자세한 내용은 `soft_delete_username_strategy.md` 참고.
+> 📘 **최신 정보**: 모든 개인정보 필드가 Soft Delete 후 재사용 가능하도록 정책 변경됨.  
+> 상세 내용은 `soft_delete_username_strategy.md` (2025-12-01 업데이트) 참고.
+> 
+> **관련 커밋**:
+> - `303fb42` - Allow email reuse after soft delete
+> - `e284efe` - Allow phone number reuse after soft delete
+> - `49d982e` - Correct soft-deleted account test mock
 
 ---
 

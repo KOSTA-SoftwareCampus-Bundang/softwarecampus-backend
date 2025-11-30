@@ -1,11 +1,32 @@
 # Phase 12.5-5: Rate Limiting
 
 > **소요 시간:** 1시간  
-> **목표:** DDoS 공격 방어 및 브루트포스 로그인 차단
+> **목표:** DDoS 공격 방어 및 브루트포스 로그인 차단  
+> **최종 업데이트:** 2025-12-01 - 다층 Rate Limiting 정책 적용
 
 ---
 
-## 개요
+## ⚠️ 최신 구현 상태 (2025-12-01)
+
+### 현재 적용된 Rate Limiting 전략
+
+**3단계 다층 방어 체계:**
+1. **전역 IP 제한**: 100 req/min (모든 엔드포인트)
+2. **로그인 엔드포인트**: 10 req/min (IP별)
+3. **비밀번호 검증**: 5 req/min (IP별)
+
+**구현 위치:**
+- `RateLimitFilter.java` - 통합 Rate Limiting 필터
+- Redis Lua Script 사용 (원자적 INCR + EXPIRE)
+- 엔드포인트별 독립적인 제한 정책
+
+**관련 커밋:**
+- `f8de1a3` - feat: Add multi-tier rate limiting with Redis
+- `account-update-v3` 브랜치에서 완전히 구현됨
+
+---
+
+## 개요 (초기 설계)
 
 ### 문제점: 무제한 요청 허용
 
