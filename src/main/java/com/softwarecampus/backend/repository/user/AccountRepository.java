@@ -21,6 +21,13 @@ import java.util.Optional;
 public interface AccountRepository extends JpaRepository<Account, Long> {
 
     /**
+     * ID로 활성 계정 조회 (Soft Delete 고려)
+     * - isDeleted=false인 계정만 조회
+     * - 프로필 조회, 계정 정보 확인 등에 사용
+     */
+    Optional<Account> findByIdAndIsDeletedFalse(Long id);
+
+    /**
      * 이메일로 활성 계정 조회 (Soft Delete 고려)
      * - isDeleted=false인 계정만 조회
      * - 로그인, 프로필 조회 등에 사용

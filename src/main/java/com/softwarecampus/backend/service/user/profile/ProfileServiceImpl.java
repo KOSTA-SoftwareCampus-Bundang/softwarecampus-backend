@@ -44,7 +44,7 @@ public class ProfileServiceImpl implements ProfileService {
     public AccountResponse getAccountById(Long accountId) {
         log.info("계정 조회 시도: accountId={}", accountId);
 
-        Account account = accountRepository.findById(accountId)
+        Account account = accountRepository.findByIdAndIsDeletedFalse(accountId)
                 .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
         log.info("계정 조회 완료: accountId={}, email={}, accountType={}",
