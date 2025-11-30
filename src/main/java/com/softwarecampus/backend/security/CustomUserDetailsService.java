@@ -75,7 +75,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
 
         // 미승인 상태인 계정은 인증 거부
-        if (!account.isActive() || !ApprovalStatus.APPROVED.equals(account.getAccountApproved())) {
+        if (!ApprovalStatus.APPROVED.equals(account.getAccountApproved())) {
             throw new UsernameNotFoundException("인증할 수 없는 계정입니다: " + email);
         }
 
