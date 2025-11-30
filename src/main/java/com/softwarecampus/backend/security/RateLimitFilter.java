@@ -17,6 +17,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -86,6 +87,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final String LOGIN_RATE_LIMIT_PREFIX = "ratelimit:login:";
     private static final String PASSWORD_VERIFY_RATE_LIMIT_PREFIX = "ratelimit:password:";
     
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -99,19 +102,19 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return;
         }
         
-        String requestUri = request.getRequestURI();
+        String requestUri = normalizeRequestPath(request.getRequestURI());
         String clientIp = getClientIp(request);
         
         try {
             // 1. 비밀번호 검증 API - 가장 엄격한 제한 (IP + username)
-            if (requestUri.endsWith("/api/auth/verify-password")) {
+            if (pathMatcher.match("/api/auth/verify-password", requestUri)) {
                 if (!checkPasswordVerificationLimit(request, response, clientIp)) {
                     return;
                 }
             }
             
             // 2. 로그인 API - 엄격한 제한 (IP)
-            if (requestUri.endsWith("/api/auth/login")) {
+            if (pathMatcher.match("/api/auth/login", requestUri)) {
                 if (!checkLoginLimit(response, clientIp)) {
                     return;
                 }
@@ -130,6 +133,33 @@ public class RateLimitFilter extends OncePerRequestFilter {
             // Redis 오류 시에도 요청은 허용 (가용성 우선)
             filterChain.doFilter(request, response);
         }
+    }
+    
+    /**
+     * 요청 경로 정규화
+     * - 쿼리 파라미터 제거
+     * - 후행 슬래시 제거
+     * 
+     * @param uri 원본 URI
+     * @return 정규화된 경로
+     */
+    private String normalizeRequestPath(String uri) {
+        if (uri == null) {
+            return "";
+        }
+        
+        // 쿼리 파라미터 제거
+        int queryIndex = uri.indexOf('?');
+        if (queryIndex > 0) {
+            uri = uri.substring(0, queryIndex);
+        }
+        
+        // 후행 슬래시 제거 (루트 경로 "/" 제외)
+        if (uri.length() > 1 && uri.endsWith("/")) {
+            uri = uri.substring(0, uri.length() - 1);
+        }
+        
+        return uri;
     }
     
     /**
