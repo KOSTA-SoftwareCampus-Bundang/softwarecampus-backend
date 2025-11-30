@@ -19,7 +19,9 @@ public class HomeCourseDTO {
 
     private Long id;
     private String name;
+    private Long academyId;
     private String academyName;
+    private Long categoryId;
     private String categoryName;
     private CategoryType categoryType;
 
@@ -44,7 +46,9 @@ public class HomeCourseDTO {
         return HomeCourseDTO.builder()
                 .id(course.getId())
                 .name(course.getName())
+                .academyId(course.getAcademy() != null ? course.getAcademy().getId() : null)
                 .academyName(course.getAcademy() != null ? course.getAcademy().getName() : null)
+                .categoryId(course.getCategory() != null ? course.getCategory().getId() : null)
                 .categoryName(course.getCategory() != null ? course.getCategory().getCategoryName() : null)
                 .categoryType(course.getCategory() != null ? course.getCategory().getCategoryType() : null)
                 .recruitStart(course.getRecruitStart())

@@ -26,20 +26,26 @@ class FileTypeTest {
     @BeforeEach
     void setUp() {
         fileType = new FileType();
-        
+
         // @Value 필드 주입 시뮬레이션
         ReflectionTestUtils.setField(fileType, "profileExtensionsStr", "jpg,jpeg,png,gif,webp");
         ReflectionTestUtils.setField(fileType, "profileContentTypesStr", "image/jpeg,image/png,image/gif,image/webp");
         ReflectionTestUtils.setField(fileType, "profileMaxSize", 5242880L); // 5MB
-        
+
         ReflectionTestUtils.setField(fileType, "boardAttachExtensionsStr", "jpg,jpeg,png,pdf,doc,docx,zip");
-        ReflectionTestUtils.setField(fileType, "boardAttachContentTypesStr", "image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip");
+        ReflectionTestUtils.setField(fileType, "boardAttachContentTypesStr",
+                "image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip");
         ReflectionTestUtils.setField(fileType, "boardAttachMaxSize", 52428800L); // 50MB
-        
+
         ReflectionTestUtils.setField(fileType, "courseImageExtensionsStr", "jpg,jpeg,png,webp");
         ReflectionTestUtils.setField(fileType, "courseImageContentTypesStr", "image/jpeg,image/png,image/webp");
         ReflectionTestUtils.setField(fileType, "courseImageMaxSize", 10485760L); // 10MB
-        
+
+        ReflectionTestUtils.setField(fileType, "academyFileExtensionsStr", "pdf,doc,docx,zip");
+        ReflectionTestUtils.setField(fileType, "academyFileContentTypesStr",
+                "application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip");
+        ReflectionTestUtils.setField(fileType, "academyFileMaxSize", 52428800L); // 50MB
+
         // @PostConstruct 메서드 수동 호출
         ReflectionTestUtils.invokeMethod(fileType, "init");
     }
@@ -215,7 +221,7 @@ class FileTypeTest {
         // when & then
         assertThatThrownBy(() -> config.getAllowedExtensions().add("exe"))
                 .isInstanceOf(UnsupportedOperationException.class);
-        
+
         assertThatThrownBy(() -> config.getAllowedContentTypes().add("application/exe"))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
@@ -258,7 +264,8 @@ class FileTypeTest {
     void testParseSet_ValidInput() throws Exception {
         // when
         @SuppressWarnings("unchecked")
-        Set<String> result = (Set<String>) ReflectionTestUtils.invokeMethod(fileType, "parseSet", "JPG,PNG,  GIF  ,WebP");
+        Set<String> result = (Set<String>) ReflectionTestUtils.invokeMethod(fileType, "parseSet",
+                "JPG,PNG,  GIF  ,WebP");
 
         // then
         assertThat(result).containsExactlyInAnyOrder("jpg", "png", "gif", "webp");

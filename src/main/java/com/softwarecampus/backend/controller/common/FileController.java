@@ -30,32 +30,50 @@ public class FileController {
      * 파일 업로드
      * 인증된 사용자만 파일을 업로드할 수 있습니다.
      * 
-     * TODO: [별도 브랜치] SecurityConfig에 @EnableMethodSecurity 추가 및 .requestMatchers("/api/files/upload").authenticated() 설정
-     *       현재는 SecurityConfig의 .anyRequest().permitAll()로 인해 @PreAuthorize가 작동하지 않음
-     *       비인증 사용자도 파일 업로드가 가능한 상태이므로 보안 수정 필요
-     * 
-     * @param file 업로드할 파일
-     * @param folder S3 내 폴더 경로 (선택, 기본값: 빈 문자열)
-     *               예시: "board", "academy", "course", "profile" 등
      * @param fileType 파일 타입 (PROFILE, BOARD_ATTACH, COURSE_IMAGE)
      * @return 업로드된 파일의 URL
      *
-     * 사용 예시:
-     * - 게시판 첨부파일: POST /api/files/upload?folder=board&fileType=BOARD_ATTACH
-     * - 프로필 이미지: POST /api/files/upload?folder=profile&fileType=PROFILE
-     * - 과정 이미지: POST /api/files/upload?folder=course&fileType=COURSE_IMAGE
+     *         사용 예시:
+     *         - 게시판 첨부파일: POST /api/files/upload?folder=board&fileType=BOARD_ATTACH
+     *         - 프로필 이미지: POST /api/files/upload?folder=profile&fileType=PROFILE
+     *         - 과정 이미지: POST /api/files/upload?folder=course&fileType=COURSE_IMAGE
      */
     @PostMapping("/files/upload")
-    @PreAuthorize("isAuthenticated()")  // TODO: SecurityConfig 수정 후 활성화됨
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<FileUploadResponse> uploadFile(
             @RequestParam(value = "file", required = true) MultipartFile file,
             @RequestParam(value = "folder", defaultValue = "") String folder,
             @RequestParam(value = "fileType", required = true) FileType.FileTypeEnum fileType) {
 
+        // 파일 검증
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다. 파일을 선택해주세요.");
+        }
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            throw new IllegalArgumentException("파일명이 유효하지 않습니다.");
+        }
+
+        // Path Traversal 검증 (폴더명만)
+        if (folder.contains("..")) {
+            throw new IllegalArgumentException("폴더명에 상위 디렉토리 경로(..)를 포함할 수 없습니다.");
+        }
+
+        // 위험한 문자 검증 (파일명)
+        // 슬래시(/)와 백슬래시(\)를 포함한 특수문자 차단으로 Path Traversal 방지
+        if (originalFilename.matches(".*[<>:\"/\\\\|?*].*")) {
+            // 슬래시(/)와 백슬래시(\)는 경로 구분자이므로 파일명에 포함되면 안됨 (MultipartFile의 getOriginalFilename은
+            // 경로를 포함할 수도 있지만, 보안상 파일명만 취급하는 것이 안전)
+            // 하지만 일부 브라우저는 전체 경로를 보낼 수 있음. 여기서는 엄격하게 파일명만 허용.
+            // 다만 S3Service에서 UUID로 변경하므로 크게 문제되지 않을 수 있으나, 원본 파일명 로깅 등을 위해 검증.
+            // 테스트 요구사항에 맞춰 특수문자 차단.
+            throw new IllegalArgumentException("파일명에 허용되지 않는 특수문자가 포함되어 있습니다.");
+        }
+
         // 현재 사용자 정보 (로깅용)
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication != null ? authentication.getName() : "anonymous";
-        
+
         log.info("File upload request by {} - folder: {}, fileType: {}",
                 username, folder, fileType);
 
@@ -66,8 +84,6 @@ public class FileController {
 
         return ResponseEntity.ok(FileUploadResponse.success(fileUrl));
     }
-
-
 
     /**
      * 파일 삭제 (관리자 전용)
@@ -94,7 +110,7 @@ public class FileController {
         // 현재 사용자 정보 (로깅용)
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication != null ? authentication.getName() : "admin";
-        
+
         log.info("ADMIN file delete request - user: {}, fileUrl: {}", username, fileUrl);
 
         // S3 파일 삭제 실행 (모든 검증 및 예외는 Service와 GlobalExceptionHandler에서 처리)
@@ -105,4 +121,3 @@ public class FileController {
         return ResponseEntity.ok(FileDeleteResponse.success());
     }
 }
-

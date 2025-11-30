@@ -137,6 +137,7 @@ API 규칙은 `.md/API_GUIDELINES.md`를 따르며, 오류 응답은 RFC 9457 Pr
 - 단위 테스트: 서비스/유틸 중심. 통합 테스트: `@SpringBootTest`.
 - 슬라이스 테스트 권장: 컨트롤러 `@WebMvcTest`, 리포지토리 `@DataJpaTest`.
 - 중요 서비스/엔드포인트는 의미 있는 커버리지 확보. 실행: `./mvnw test`.
+- 테스트 작성 시 각 시행 단계별 주석(given/when/then) 필수.
 
 ## 커밋 및 PR 지침
 

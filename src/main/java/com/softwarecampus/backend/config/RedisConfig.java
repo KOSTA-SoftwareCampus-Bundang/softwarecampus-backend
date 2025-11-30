@@ -24,6 +24,9 @@ import java.time.Duration;
  * Phase 12.5: UserDetails 캐싱, Refresh Token 저장, Rate Limiting
  *
  * Redis가 없는 환경(테스트/로컬)에서는 자동으로 비활성화됨
+ * 
+ * 참고: Redis Repository는 사용하지 않으므로 @EnableRedisRepositories 비활성화
+ * Redis는 캐싱(@EnableCaching)과 RedisTemplate으로만 사용
  *
  * @since 2025-11-19
  */
@@ -32,61 +35,60 @@ import java.time.Duration;
 @ConditionalOnProperty(name = "spring.data.redis.host", matchIfMissing = false)
 public class RedisConfig {
 
-    @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
+        @Bean
+        @ConditionalOnProperty(name = "spring.data.redis.host")
+        public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+                RedisTemplate<String, Object> template = new RedisTemplate<>();
+                template.setConnectionFactory(connectionFactory);
 
-        // ObjectMapper 설정 (LocalDateTime 등 Java 8 시간 처리)
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+                // ObjectMapper 설정 (LocalDateTime 등 Java 8 시간 처리)
+                ObjectMapper objectMapper = new ObjectMapper();
+                objectMapper.registerModule(new JavaTimeModule());
+                objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        // Key: String 직렬화
-        StringRedisSerializer stringSerializer = new StringRedisSerializer();
-        template.setKeySerializer(stringSerializer);
-        template.setHashKeySerializer(stringSerializer);
+                // Key: String 직렬화
+                StringRedisSerializer stringSerializer = new StringRedisSerializer();
+                template.setKeySerializer(stringSerializer);
+                template.setHashKeySerializer(stringSerializer);
 
-        // Value: JSON 직렬화
-        GenericJackson2JsonRedisSerializer jsonSerializer =
-                new GenericJackson2JsonRedisSerializer(objectMapper);
-        template.setValueSerializer(jsonSerializer);
-        template.setHashValueSerializer(jsonSerializer);
+                // Value: JSON 직렬화
+                GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(
+                                objectMapper);
+                template.setValueSerializer(jsonSerializer);
+                template.setHashValueSerializer(jsonSerializer);
 
-        return template;
-    }
+                return template;
+        }
 
-    @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // ObjectMapper 설정 - PROPERTY 기반 타입 정보
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        
-        // 타입 정보를 JSON 프로퍼티로 저장 (LinkedHashMap 문제 해결)
-        PolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
-                .allowIfBaseType(Object.class)
-                .build();
-        objectMapper.activateDefaultTyping(
-                typeValidator, 
-                ObjectMapper.DefaultTyping.NON_FINAL,
-                com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY
-        );
+        @Bean
+        @ConditionalOnProperty(name = "spring.data.redis.host")
+        public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+                // ObjectMapper 설정 - PROPERTY 기반 타입 정보
+                ObjectMapper objectMapper = new ObjectMapper();
+                objectMapper.registerModule(new JavaTimeModule());
+                objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        GenericJackson2JsonRedisSerializer serializer =
-                new GenericJackson2JsonRedisSerializer(objectMapper);
+                // 타입 정보를 JSON 프로퍼티로 저장 (LinkedHashMap 문제 해결)
+                PolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
+                                .allowIfBaseType(Object.class)
+                                .build();
+                objectMapper.activateDefaultTyping(
+                                typeValidator,
+                                ObjectMapper.DefaultTyping.NON_FINAL,
+                                com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY);
 
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(10)) // 기본 TTL 10분
-                .serializeKeysWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer())
-                )
-                .serializeValuesWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(serializer)
-                );
+                GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(config)
-                .build();
-    }
+                RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                                .entryTtl(Duration.ofMinutes(10)) // 기본 TTL 10분
+                                .serializeKeysWith(
+                                                RedisSerializationContext.SerializationPair
+                                                                .fromSerializer(new StringRedisSerializer()))
+                                .serializeValuesWith(
+                                                RedisSerializationContext.SerializationPair.fromSerializer(serializer));
+
+                return RedisCacheManager.builder(connectionFactory)
+                                .cacheDefaults(config)
+                                .build();
+        }
 }

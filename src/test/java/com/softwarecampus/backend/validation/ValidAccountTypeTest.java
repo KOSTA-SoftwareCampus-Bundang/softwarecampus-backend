@@ -41,7 +41,10 @@ class ValidAccountTypeTest {
                                 null,
                                 null,
                                 AccountType.ACADEMY,
-                                123L // academyId 제공
+                                123L, // academyId 제공
+                                true, // termsAgreed
+                                true, // privacyAgreed
+                                true // marketingAgreed
                 );
 
                 // when
@@ -66,7 +69,10 @@ class ValidAccountTypeTest {
                                 null,
                                 null,
                                 AccountType.ACADEMY,
-                                null // academyId 미제공
+                                null, // academyId 미제공
+                                true, // termsAgreed
+                                true, // privacyAgreed
+                                true // marketingAgreed
                 );
 
                 // when
@@ -91,7 +97,10 @@ class ValidAccountTypeTest {
                                 null,
                                 null,
                                 AccountType.USER,
-                                null // USER는 academyId 불필요
+                                null, // USER는 academyId 불필요
+                                true, // termsAgreed
+                                true, // privacyAgreed
+                                true // marketingAgreed
                 );
 
                 // when
@@ -116,7 +125,10 @@ class ValidAccountTypeTest {
                                 null,
                                 null,
                                 AccountType.USER,
-                                123L // USER는 academyId가 있어도 무시
+                                123L, // USER는 academyId가 있어도 무시
+                                true, // termsAgreed
+                                true, // privacyAgreed
+                                true // marketingAgreed
                 );
 
                 // when
@@ -141,7 +153,10 @@ class ValidAccountTypeTest {
                                 null,
                                 null,
                                 AccountType.ADMIN,
-                                null // ADMIN은 academyId 불필요
+                                null, // ADMIN은 academyId 불필요
+                                true, // termsAgreed
+                                true, // privacyAgreed
+                                true // marketingAgreed
                 );
 
                 // when

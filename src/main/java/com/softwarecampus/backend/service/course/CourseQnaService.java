@@ -5,11 +5,14 @@ import com.softwarecampus.backend.dto.course.QnaAnswerRequest;
 import com.softwarecampus.backend.dto.course.QnaRequest;
 import com.softwarecampus.backend.dto.course.QnaResponse;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface CourseQnaService {
 
-    List<QnaResponse> getQnaList(CategoryType type, Long courseId);
+    Page<QnaResponse> getQnaList(CategoryType type, Long courseId, String keyword, Pageable pageable);
 
     QnaResponse getQnaDetail(CategoryType type, Long qnaId);
 

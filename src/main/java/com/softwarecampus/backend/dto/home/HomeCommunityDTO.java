@@ -19,6 +19,7 @@ public class HomeCommunityDTO {
     private String title;
     private String category; // NOTICE, QUESTION, etc.
     private String categoryName; // 공지사항, 문의사항 등
+    private Long accountId;
     private String writerName;
     private int viewCount;
     private int likeCount;
@@ -32,6 +33,7 @@ public class HomeCommunityDTO {
                 .title(board.getTitle())
                 .category(category)
                 .categoryName(getCategoryName(category))
+                .accountId(board.getAccount() != null ? board.getAccount().getId() : null)
                 .writerName(board.getAccount() != null ? board.getAccount().getUserName() : "익명")
                 .viewCount((int) Math.min(board.getHits(), Integer.MAX_VALUE))
                 .likeCount(board.getBoardRecommends().size())
