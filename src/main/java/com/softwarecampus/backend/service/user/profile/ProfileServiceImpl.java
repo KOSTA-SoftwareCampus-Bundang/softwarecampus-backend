@@ -62,10 +62,10 @@ public class ProfileServiceImpl implements ProfileService {
         // 1. 입력 검증
         validateEmailInput(email);
 
-        // 2. 계정 조회 (PII 마스킹 로깅)
+        // 2. 계정 조회 (Soft Delete 제외, PII 마스킹 로깅)
         log.info("계정 조회 시도: email={}", EmailUtils.maskEmail(email));
 
-        Account account = accountRepository.findByEmail(email)
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
         log.info("계정 조회 완료: accountId={}, accountType={}, userName={}",
@@ -100,9 +100,9 @@ public class ProfileServiceImpl implements ProfileService {
         // 1. 입력 검증
         validateEmailInput(email);
 
-        // 2. Account 조회
+        // 2. Account 조회 (Soft Delete 제외)
         log.info("프로필 수정 시도: email={}", EmailUtils.maskEmail(email));
-        Account account = accountRepository.findByEmail(email)
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
         // 3. 전화번호 중복 검증 (변경하는 경우에만)
@@ -132,9 +132,9 @@ public class ProfileServiceImpl implements ProfileService {
         // 1. 입력 검증
         validateEmailInput(email);
 
-        // 2. Account 조회
+        // 2. Account 조회 (Soft Delete 제외)
         log.info("계정 삭제 시도: email={}", EmailUtils.maskEmail(email));
-        Account account = accountRepository.findByEmail(email)
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
         // 3. 소프트 삭제
@@ -156,8 +156,8 @@ public class ProfileServiceImpl implements ProfileService {
 
         log.info("비밀번호 재설정 시도: email={}", EmailUtils.maskEmail(email));
 
-        // 2. 계정 조회
-        Account account = accountRepository.findByEmail(email)
+        // 2. 계정 조회 (Soft Delete 제외)
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
         // 3. 이메일 인증 코드 검증 (EmailVerificationService 재사용)
@@ -188,8 +188,8 @@ public class ProfileServiceImpl implements ProfileService {
 
         log.info("비밀번호 변경 시도: email={}", EmailUtils.maskEmail(email));
 
-        // 2. 계정 조회
-        Account account = accountRepository.findByEmail(email)
+        // 2. 계정 조회 (Soft Delete 제외)
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
         // 3. 이메일 인증 코드 검증 (PASSWORD_CHANGE 타입)

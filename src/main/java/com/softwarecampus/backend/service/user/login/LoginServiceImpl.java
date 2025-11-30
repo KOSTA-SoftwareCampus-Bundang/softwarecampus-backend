@@ -55,8 +55,8 @@ public class LoginServiceImpl implements LoginService {
     public LoginResponse login(LoginRequest request) {
         log.info("로그인 시도: email={}", EmailUtils.maskEmail(request.email()));
 
-        // 1. Account 조회
-        Account account = accountRepository.findByEmail(request.email())
+        // 1. Account 조회 (Soft Delete 제외)
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(request.email())
                 .orElseThrow(() -> {
                     log.warn("로그인 실패 - 존재하지 않는 이메일: {}", EmailUtils.maskEmail(request.email()));
                     return new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다");
@@ -141,7 +141,7 @@ public class LoginServiceImpl implements LoginService {
     public boolean verifyPassword(String email, String currentPassword) {
         log.info("비밀번호 검증 요청: email={}", EmailUtils.maskEmail(email));
 
-        Account account = accountRepository.findByEmail(email)
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> {
                     log.warn("비밀번호 검증 실패 - 계정 없음: {}", EmailUtils.maskEmail(email));
                     return new com.softwarecampus.backend.exception.user.AccountNotFoundException("계정을 찾을 수 없습니다.");
