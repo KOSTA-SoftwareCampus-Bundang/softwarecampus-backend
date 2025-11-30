@@ -28,11 +28,10 @@ public class ReviewLikeController {
                         @PathVariable Long reviewId,
                         @RequestBody ReviewLikeRequest request,
                         @AuthenticationPrincipal CustomUserDetails userDetails) {
-                // reviewId가 courseId에 속하는지 검증
-                reviewLikeService.validateReviewBelongsToCourse(courseId, reviewId);
 
                 Long accountId = userDetails.getId();
-                var result = reviewLikeService.toggleLike(reviewId, accountId, request.getType());
+                // Service에서 courseId 검증까지 함께 처리
+                var result = reviewLikeService.toggleLike(courseId, reviewId, accountId, request.getType());
 
                 return ResponseEntity.ok(result);
         }

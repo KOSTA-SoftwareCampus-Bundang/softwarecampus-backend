@@ -34,67 +34,82 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
                 .orElseThrow(() -> new NotFoundException("리뷰를 찾을 수 없습니다: " + reviewId));
     }
 
+    /**
+     * 리뷰 좋아요/싫어요 토글
+     * 
+     * <p>
+     * 하드 삭제 정책:
+     * </p>
+     * <ul>
+     * <li>같은 타입 클릭: DELETE (취소)</li>
+     * <li>다른 타입 클릭: UPDATE (타입 변경)</li>
+     * <li>신규 클릭: INSERT</li>
+     * </ul>
+     * 
+     * @param courseId  코스 ID (검증용)
+     * @param reviewId  리뷰 ID
+     * @param accountId 계정 ID
+     * @param type      좋아요/싫어요 타입
+     * @return 토글 결과 및 카운트
+     */
     @Override
     @Transactional
-    public ReviewLikeResponse toggleLike(Long reviewId, Long accountId, LikeType type) {
+    public ReviewLikeResponse toggleLike(Long courseId, Long reviewId, Long accountId, LikeType type) {
 
-        // 1) 리뷰와 계정 존재 확인
-        var review = courseReviewRepository.findById(reviewId)
-                .orElseThrow(() -> new NotFoundException("리뷰를 찾을 수 없습니다: " + reviewId));
+        // 1) 삭제되지 않은 리뷰 검증 (courseId도 함께 검증)
+        var review = courseReviewRepository.findByIdAndCourseIdAndIsDeletedFalse(reviewId, courseId)
+                .orElseThrow(() -> new NotFoundException("리뷰를 찾을 수 없거나 삭제되었습니다"));
 
+        // 2) 계정 존재 확인
         var account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("계정을 찾을 수 없습니다: " + accountId));
 
-        // 2) soft-delete 포함 기존 좋아요/싫어요 조회
-        var existing = reviewLikeRepository
-                .findByReviewIdAndAccountId(reviewId, accountId); // soft-deleted 포함
+        // 3) 기존 좋아요/싫어요 조회
+        var existing = reviewLikeRepository.findByReviewIdAndAccountId(reviewId, accountId);
 
-        ReviewLike resultLike;
+        ReviewLike resultLike = null;
+        String resultType;
+        long likeCount;
+        long dislikeCount;
 
         if (existing.isPresent()) {
             var like = existing.get();
 
-            if (!like.isActive()) {
-                // soft-deleted 상태면 재활성화 + 타입 변경
-                like.restore();
-                like.setType(type);
-                resultLike = like;
-            } else if (like.getType() == type) {
-                // 같은 타입이면 취소 (soft delete)
-                like.markDeleted();
-                resultLike = like;
+            if (like.getType() == type) {
+                // 같은 타입: 취소 (하드 삭제)
+                reviewLikeRepository.delete(like);
+                resultType = "NONE";
             } else {
-                // 다른 타입이면 타입 변경
+                // 다른 타입: 타입 변경 (UPDATE)
                 like.setType(type);
                 resultLike = like;
+                resultType = type.name();
             }
         } else {
-            // 3) 기존 레코드 없으면 새로 생성
+            // 신규: INSERT
             ReviewLike newLike = ReviewLike.builder()
                     .review(review)
                     .account(account)
                     .type(type)
                     .build();
             resultLike = reviewLikeRepository.save(newLike);
+            resultType = type.name();
         }
 
-        // 4) 카운트 조회 및 DTO 반환
-        long likeCount = reviewLikeRepository.countByReviewIdAndTypeAndIsDeletedFalse(reviewId, LikeType.LIKE);
-        long dislikeCount = reviewLikeRepository.countByReviewIdAndTypeAndIsDeletedFalse(reviewId, LikeType.DISLIKE);
+        // 4) 카운트 조회
+        likeCount = reviewLikeRepository.countByReviewIdAndType(reviewId, LikeType.LIKE);
+        dislikeCount = reviewLikeRepository.countByReviewIdAndType(reviewId, LikeType.DISLIKE);
 
-        return new ReviewLikeResponse(
-                resultLike.isActive() ? resultLike.getType().name() : "NONE",
-                likeCount,
-                dislikeCount);
+        return new ReviewLikeResponse(resultType, likeCount, dislikeCount);
     }
 
     @Override
     public long getLikeCount(Long reviewId) {
-        return reviewLikeRepository.countByReviewIdAndTypeAndIsDeletedFalse(reviewId, LikeType.LIKE);
+        return reviewLikeRepository.countByReviewIdAndType(reviewId, LikeType.LIKE);
     }
 
     @Override
     public long getDislikeCount(Long reviewId) {
-        return reviewLikeRepository.countByReviewIdAndTypeAndIsDeletedFalse(reviewId, LikeType.DISLIKE);
+        return reviewLikeRepository.countByReviewIdAndType(reviewId, LikeType.DISLIKE);
     }
 }

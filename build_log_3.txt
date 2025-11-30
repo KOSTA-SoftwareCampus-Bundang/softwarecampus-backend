@@ -1,0 +1,100 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.softwarecampus:backend >---------------------
+[INFO] Building softwarecampus-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.4.1:clean (default-clean) @ backend ---
+[INFO] Deleting D:\Projects\KOSTA_Softcampus\softwarecampus-backend\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 6 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 238 source files with javac [debug parameters release 17] to target\classes
+[INFO] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/service/home/HomeServiceImpl.java: D:\Projects\KOSTA_Softcampus\softwarecampus-backend\src\main\java\com\softwarecampus\backend\service\home\HomeServiceImpl.java uses or overrides a deprecated API.
+[INFO] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/service/home/HomeServiceImpl.java: Recompile with -Xlint:deprecation for details.
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING : 
+[INFO] -------------------------------------------------------------
+[WARNING] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/dto/course/CourseRequestDTO.java:[45,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/domain/course/Course.java:[50,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/domain/course/Course.java:[58,28] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[INFO] 3 warnings 
+[INFO] -------------------------------------------------------------
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[123,39] cannot find symbol
+  symbol:   method getId()
+  location: variable entity of type T
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[131,73] cannot find symbol
+  symbol:   method getId()
+  location: variable entity of type T
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[155,73] cannot find symbol
+  symbol:   method getId()
+  location: variable entity of type T
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[184,85] cannot find symbol
+  symbol:   method getFileKey()
+  location: class com.softwarecampus.backend.domain.course.CourseReviewFile
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[216,39] cannot find symbol
+  symbol:   method findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime)
+  location: variable courseReviewRepository of type com.softwarecampus.backend.repository.course.CourseReviewRepository
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[218,36] cannot find symbol
+  symbol:   method findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime)
+  location: variable courseQnaRepository of type com.softwarecampus.backend.repository.course.CourseQnaRepository
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[220,34] cannot find symbol
+  symbol:   method findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime)
+  location: variable commentRepository of type com.softwarecampus.backend.repository.board.CommentRepository
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[222,33] cannot find symbol
+  symbol:   method findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime)
+  location: variable bannerRepository of type com.softwarecampus.backend.repository.banner.BannerRepository
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[224,36] cannot find symbol
+  symbol:   method findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime)
+  location: variable academyQARepository of type com.softwarecampus.backend.repository.academy.academyQA.AcademyQARepository
+[INFO] 9 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  14.752 s
+[INFO] Finished at: 2025-11-30T22:58:08+09:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.0:compile (default-compile) on project backend: Compilation failure: Compilation failure: 
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[123,39] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable entity of type T
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[131,73] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable entity of type T
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[155,73] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable entity of type T
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[184,85] cannot find symbol
+[ERROR]   symbol:   method getFileKey()
+[ERROR]   location: class com.softwarecampus.backend.domain.course.CourseReviewFile
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[216,39] cannot find symbol
+[ERROR]   symbol:   method findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime)
+[ERROR]   location: variable courseReviewRepository of type com.softwarecampus.backend.repository.course.CourseReviewRepository
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[218,36] cannot find symbol
+[ERROR]   symbol:   method findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime)
+[ERROR]   location: variable courseQnaRepository of type com.softwarecampus.backend.repository.course.CourseQnaRepository
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[220,34] cannot find symbol
+[ERROR]   symbol:   method findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime)
+[ERROR]   location: variable commentRepository of type com.softwarecampus.backend.repository.board.CommentRepository
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[222,33] cannot find symbol
+[ERROR]   symbol:   method findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime)
+[ERROR]   location: variable bannerRepository of type com.softwarecampus.backend.repository.banner.BannerRepository
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[224,36] cannot find symbol
+[ERROR]   symbol:   method findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime)
+[ERROR]   location: variable academyQARepository of type com.softwarecampus.backend.repository.academy.academyQA.AcademyQARepository
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

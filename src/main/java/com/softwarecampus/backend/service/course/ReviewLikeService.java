@@ -2,6 +2,7 @@ package com.softwarecampus.backend.service.course;
 
 import com.softwarecampus.backend.domain.course.ReviewLike;
 import com.softwarecampus.backend.domain.course.ReviewLike.LikeType;
+import com.softwarecampus.backend.dto.course.ReviewLikeResponse;
 
 public interface ReviewLikeService {
 
@@ -18,7 +19,7 @@ public interface ReviewLikeService {
      */
     void validateReviewBelongsToCourse(Long courseId, Long reviewId);
 
-    ReviewLikeResponse toggleLike(Long reviewId, Long accountId, LikeType type);
+    ReviewLikeResponse toggleLike(Long courseId, Long reviewId, Long accountId, LikeType type);
 
     long getLikeCount(Long reviewId);
 
