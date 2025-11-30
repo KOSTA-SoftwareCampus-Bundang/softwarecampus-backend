@@ -77,6 +77,11 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
         CourseReviewFile file = reviewFileRepository.findById(fileId)
                 .orElseThrow(() -> new NotFoundException("삭제할 파일이 존재하지 않습니다."));
 
+        // 이미 삭제된 파일인지 검증
+        if (file.getIsDeleted()) {
+            throw new NotFoundException("이미 삭제된 파일입니다.");
+        }
+
         // 2️⃣ 요청한 reviewId에 속한 파일인지 검증
         if (!file.getReviewId().equals(reviewId)) {
             throw new NotFoundException("요청한 리뷰에 속한 파일이 아닙니다.");
@@ -106,6 +111,11 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
         CourseReviewFile file = reviewFileRepository.findById(fileId)
                 .orElseThrow(() -> new NotFoundException("복구할 파일이 존재하지 않습니다."));
 
+        // 삭제되지 않은 파일인지 검증
+        if (!file.getIsDeleted()) {
+            throw new IllegalStateException("삭제되지 않은 파일은 복구할 수 없습니다.");
+        }
+
         // 3️⃣ 요청한 reviewId에 속한 파일인지 검증
         if (!file.getReviewId().equals(reviewId)) {
             throw new NotFoundException("요청한 리뷰에 속한 파일이 아닙니다.");
@@ -129,6 +139,11 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
         // 2️⃣ 파일 조회
         CourseReviewFile file = reviewFileRepository.findById(fileId)
                 .orElseThrow(() -> new NotFoundException("삭제할 파일이 존재하지 않습니다."));
+
+        // 삭제되지 않은 파일인지 검증 (hard delete는 soft delete 후에만)
+        if (!file.getIsDeleted()) {
+            throw new IllegalStateException("삭제되지 않은 파일입니다. 먼저 소프트 삭제를 수행하세요.");
+        }
 
         // 3️⃣ 요청한 reviewId에 속한 파일인지 검증
         if (!file.getReviewId().equals(reviewId)) {
