@@ -120,6 +120,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
         </dependency>
+        <!-- Bucket4j for Rate Limiting -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>8.10.1</version>
+        </dependency>
         <!-- AWS S3 SDK -->
         <!-- 버전 명시적으로 관리하여 의존성 업데이트에 의한 코드 고장 방지 -->
         <dependency>

@@ -3,7 +3,6 @@ package com.softwarecampus.backend.service.user.profile;
 import com.softwarecampus.backend.domain.common.VerificationType;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
-import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.EmailVerificationCodeRequest;
 import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
@@ -152,99 +151,60 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public void resetPassword(String email, ResetPasswordRequest request) {
-        log.info("비밀번호 재설정 시도: email={}", EmailUtils.maskEmail(email));
-        
-        updatePasswordWithVerification(
-                email, 
-                request.getNewPassword(), 
-                request.getCode(), 
-                VerificationType.PASSWORD_RESET);
-        
-        log.info("비밀번호 재설정 완료: email={}", EmailUtils.maskEmail(email));
-    }
-
-    /**
-     * 비밀번호 변경 (이메일 인증 코드 검증) - 로그인 사용자용
-     * 
-     * 보안 요구사항:
-     * - 로그인 상태에서만 호출 가능 (JWT 토큰 필요)
-     * - 이메일 인증 코드 검증 필수 (PASSWORD_CHANGE 타입)
-     * - 이중 인증 방식: JWT + 이메일 인증
-     * 
-     * 사용 시나리오:
-     * 1. POST /api/auth/verify-password - 현재 비밀번호 확인
-     * 2. POST /api/auth/email/send-change-code - 이메일 인증 코드 발송
-     * 3. PATCH /api/mypage/password - 인증 코드 + 새 비밀번호로 변경
-     * 
-     * - EmailVerificationService.verifyChangeCode() 사용
-     * - type: PASSWORD_CHANGE
-     */
-    @Override
-    @Transactional
-    public void changePassword(String email, ChangePasswordRequest request) {
-        log.info("비밀번호 변경 시도: email={}", EmailUtils.maskEmail(email));
-        
-        updatePasswordWithVerification(
-                email, 
-                request.getNewPassword(), 
-                request.getVerificationCode(), 
-                VerificationType.PASSWORD_CHANGE);
-        
-        log.info("비밀번호 변경 완료: email={}", EmailUtils.maskEmail(email));
-    }
-
-    /**
-     * 비밀번호 업데이트 공통 워크플로우
-     * 
-     * 처리 순서:
-     * 1. 이메일 입력 검증
-     * 2. 계정 조회 (Soft Delete 제외)
-     * 3. 이메일 인증 코드 검증 (타입별 분기)
-     * 4. 비밀번호 암호화 및 저장
-     * 5. 인증 레코드 삭제 (일회용 보장)
-     * 
-     * @param email             사용자 이메일
-     * @param newPassword       새 비밀번호
-     * @param verificationCode  이메일 인증 코드
-     * @param verificationType  인증 타입 (PASSWORD_RESET 또는 PASSWORD_CHANGE)
-     * @throws AccountNotFoundException          계정이 존재하지 않는 경우
-     * @throws EmailVerificationException        인증 코드가 존재하지 않는 경우
-     * @throws VerificationCodeExpiredException  인증 코드가 만료된 경우
-     * @throws TooManyAttemptsException          인증 시도 횟수 초과
-     */
-    private void updatePasswordWithVerification(
-            String email, 
-            String newPassword, 
-            String verificationCode, 
-            VerificationType verificationType) {
-        
         // 1. 입력 검증
         validateEmailInput(email);
+
+        log.info("비밀번호 재설정 시도: email={}", EmailUtils.maskEmail(email));
 
         // 2. 계정 조회 (Soft Delete 제외)
         Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
-        // 3. 이메일 인증 코드 검증 (타입별 분기)
-        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email, verificationCode);
-        
-        if (verificationType == VerificationType.PASSWORD_RESET) {
-            emailVerificationService.verifyResetCode(codeRequest);
-        } else if (verificationType == VerificationType.PASSWORD_CHANGE) {
-            emailVerificationService.verifyChangeCode(codeRequest);
-        } else {
-            throw new IllegalArgumentException("지원하지 않는 인증 타입입니다: " + verificationType);
-        }
+        // 3. 이메일 인증 코드 검증 (EmailVerificationService 재사용)
+        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email, request.getCode());
+        emailVerificationService.verifyResetCode(codeRequest);
 
-        // 4. 비밀번호 암호화 및 저장
-        String encodedPassword = passwordEncoder.encode(newPassword);
+        // 4. 비밀번호 변경
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
         account.setPassword(encodedPassword);
 
         // 5. 인증 레코드 삭제 (일회용 보장)
-        emailVerificationRepository.deleteByEmailAndType(email, verificationType);
+        emailVerificationRepository.deleteByEmailAndType(email, VerificationType.PASSWORD_RESET);
 
-        log.debug("비밀번호 업데이트 완료: email={}, accountId={}, type={}", 
-                EmailUtils.maskEmail(email), account.getId(), verificationType);
+        log.info("비밀번호 재설정 완료: email={}, accountId={}",
+                EmailUtils.maskEmail(email), account.getId());
+    }
+
+    /**
+     * 비밀번호 변경 (이메일 인증 코드 검증) - 로그인 사용자용
+     * - EmailVerificationService.verifyChangeCode() 사용
+     * - type: PASSWORD_CHANGE
+     */
+    @Override
+    @Transactional
+    public void changePassword(String email, ResetPasswordRequest request) {
+        // 1. 입력 검증
+        validateEmailInput(email);
+
+        log.info("비밀번호 변경 시도: email={}", EmailUtils.maskEmail(email));
+
+        // 2. 계정 조회 (Soft Delete 제외)
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
+                .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
+
+        // 3. 이메일 인증 코드 검증 (PASSWORD_CHANGE 타입)
+        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email, request.getCode());
+        emailVerificationService.verifyChangeCode(codeRequest);
+
+        // 4. 비밀번호 변경
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        account.setPassword(encodedPassword);
+
+        // 5. 인증 레코드 삭제 (일회용 보장)
+        emailVerificationRepository.deleteByEmailAndType(email, VerificationType.PASSWORD_CHANGE);
+
+        log.info("비밀번호 변경 완료: email={}, accountId={}",
+                EmailUtils.maskEmail(email), account.getId());
     }
 
     /**

@@ -1,8 +1,10 @@
 package com.softwarecampus.backend.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -10,11 +12,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * 
  * 주요 설정:
  * - CORS (Cross-Origin Resource Sharing)
+ * - Rate Limiting Interceptor
  * 
  * @author 태윤
  */
 @Configuration
+@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
+
+    private final RateLimitInterceptor rateLimitInterceptor;
 
     @Value("${FRONTEND_PORT:3000}")
     private String frontendPort;
@@ -45,6 +51,18 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("Authorization", "Content-Type", "X-Requested-With")
                 .allowCredentials(true)
                 .maxAge(3600);
+    }
+
+    /**
+     * Interceptor 등록
+     * 
+     * 설정:
+     * - RateLimitInterceptor: 비밀번호 검증, 로그인 API Rate Limiting
+     */
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(rateLimitInterceptor)
+                .addPathPatterns("/api/auth/verify-password", "/api/auth/login");
     }
 
 }

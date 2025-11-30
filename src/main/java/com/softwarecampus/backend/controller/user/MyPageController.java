@@ -2,6 +2,7 @@ package com.softwarecampus.backend.controller.user;
 
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
+import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 import com.softwarecampus.backend.service.user.profile.ProfileService;
 import jakarta.validation.Valid;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * - GET /api/mypage/profile: 프로필 조회
  * - PATCH /api/mypage/profile: 프로필 수정
  * - DELETE /api/mypage/account: 계정 삭제
- * - PATCH /api/mypage/password: 비밀번호 변경 (이중 인증)
+ * - PUT /api/mypage/password: 비밀번호 변경 (이중 인증)
  * 
  * 인증: 모든 엔드포인트 JWT 토큰 필수
  */
@@ -88,32 +89,43 @@ public class MyPageController {
     /**
      * 비밀번호 변경 (이중 인증 - 로그인 사용자용)
      * 
-     * 보안 요구사항:
-     * - 로그인 상태에서만 호출 가능 (JWT 토큰 필수)
-     * - 이메일 인증 코드 검증 필수
-     * - 이중 인증 방식: JWT + 이메일 인증
-     * 
-     * 선행 조건 (3단계 프로세스):
-     * 1. POST /api/auth/verify-password - 현재 비밀번호 확인
-     * 2. POST /api/auth/email/send-change-code - 인증 코드 발송
-     * 3. PATCH /api/mypage/password - 인증 코드 + 새 비밀번호로 변경 (이 API)
+     * 선행 조건:
+     * 1. POST /api/auth/verify-password (현재 비밀번호 확인)
+     * 2. POST /api/auth/email/send-change-code (인증 코드 발송)
      * 
      * @param userDetails Spring Security 인증 정보
      * @param request     인증 코드 및 새 비밀번호
      * @return 200 OK
      */
     @PreAuthorize("isAuthenticated()")
+    @PutMapping("/password")
+    public ResponseEntity<Void> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ResetPasswordRequest request) {
+
+        String email = userDetails.getUsername();
+        log.info("비밀번호 변경 요청");
+
+        profileService.changePassword(email, request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 비밀번호 변경 (로그인 상태)
+     * 
+     * @param userDetails Spring Security 인증 정보
+     * @param request 현재 비밀번호 및 새 비밀번호
+     * @return 200 OK
+     */
     @PatchMapping("/password")
     public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ChangePasswordRequest request) {
         
         String email = userDetails.getUsername();
-        log.info("비밀번호 변경 요청: email={}", email);
+        log.info("비밀번호 변경 요청");
         
         profileService.changePassword(email, request);
-        
-        log.info("비밀번호 변경 성공: email={}", email);
         return ResponseEntity.ok().build();
     }
 }
