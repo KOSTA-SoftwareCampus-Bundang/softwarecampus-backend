@@ -27,8 +27,13 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
     /**
      * courseId 기준으로 삭제되지 않은 리뷰 전체 조회
      */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "writer", "sections", "attachments",
+            "likes" })
     List<CourseReview> findAllByCourse_IdAndIsDeletedFalse(Long courseId);
 
     Optional<CourseReview> findByIdAndCourseIdAndIsDeletedFalse(Long reviewId, Long courseId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "writer", "sections", "attachments",
+            "likes" })
+    Optional<CourseReview> findWithDetailsById(Long id);
 }

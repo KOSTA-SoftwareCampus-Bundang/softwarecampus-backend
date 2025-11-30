@@ -1,17 +1,17 @@
+
 package com.softwarecampus.backend.service.course;
 
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
+import com.softwarecampus.backend.dto.course.CourseDetailResponseDTO;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.repository.course.CourseCategoryRepository;
 import com.softwarecampus.backend.repository.course.CourseRepository;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -112,9 +112,9 @@ public class CourseServiceImpl implements CourseService {
         }
 
         @Override
-        public com.softwarecampus.backend.dto.course.CourseDetailResponseDTO getCourseDetail(Long courseId) {
-                Course course = courseRepository.findById(courseId)
+        public CourseDetailResponseDTO getCourseDetail(Long courseId) {
+                Course course = courseRepository.findWithDetailsByIdAndDeletedAtIsNull(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
-                return com.softwarecampus.backend.dto.course.CourseDetailResponseDTO.fromEntity(course);
+                return CourseDetailResponseDTO.fromEntity(course);
         }
 }

@@ -143,7 +143,6 @@ public class CourseQnaServiceImpl implements CourseQnaService {
         if (qna.getAnsweredBy() != null && !qna.getAnsweredBy().getId().equals(adminId)) {
             throw new ForbiddenException("본인의 답변만 삭제할 수 있습니다.");
         }
-
         qna.setAnswerText(null);
         qna.setAnsweredBy(null);
         qna.setAnswered(false);
@@ -164,7 +163,7 @@ public class CourseQnaServiceImpl implements CourseQnaService {
 
     private CourseQna validateQna(CategoryType type, Long qnaId) {
         Objects.requireNonNull(qnaId, "QnA ID must not be null");
-        CourseQna qna = qnaRepository.findById(qnaId)
+        CourseQna qna = qnaRepository.findWithDetailsById(qnaId)
                 .orElseThrow(() -> new NotFoundException("Q&A를 찾을 수 없습니다."));
         if (qna.getIsDeleted()) {
             throw new NotFoundException("Q&A를 찾을 수 없습니다.");

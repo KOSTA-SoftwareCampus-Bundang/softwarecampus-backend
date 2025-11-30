@@ -1,7 +1,7 @@
-
 package com.softwarecampus.backend.controller.course;
 
 import com.softwarecampus.backend.domain.course.CategoryType;
+import com.softwarecampus.backend.dto.course.CourseDetailResponseDTO;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
 import com.softwarecampus.backend.service.course.CourseService;
@@ -37,19 +37,19 @@ public class CourseController {
 
     /** 과정 상세 조회 (신규 추가) */
     @GetMapping("/courses/{courseId}")
-    public ResponseEntity<com.softwarecampus.backend.dto.course.CourseDetailResponseDTO> getCourseDetail(
+    public ResponseEntity<CourseDetailResponseDTO> getCourseDetail(
             @PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.getCourseDetail(courseId));
     }
 
     /** 관리자 - 과정 등록 승인 */
-    @PostMapping("/{type}/course/{courseId}/approve")
+    @PostMapping("/courses/{courseId}/approve")
     public ResponseEntity<CourseResponseDTO> approveCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.approveCourse(courseId));
     }
 
     /** 과정 수정 */
-    @PutMapping("/{type}/course/{courseId}")
+    @PutMapping("/courses/{courseId}")
     public ResponseEntity<CourseResponseDTO> updateCourse(
             @PathVariable Long courseId,
             @RequestBody @Valid CourseRequestDTO dto) {
@@ -57,14 +57,14 @@ public class CourseController {
     }
 
     /** 과정 삭제 */
-    @DeleteMapping("/{type}/course/{courseId}")
+    @DeleteMapping("/courses/{courseId}")
     public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
         courseService.deleteCourse(courseId);
         return ResponseEntity.noContent().build();
     }
 
     /** 기관유저 - 과정 등록 요청 */
-    @PostMapping("/{type}/course/request")
+    @PostMapping("/courses/request")
     public ResponseEntity<CourseResponseDTO> requestCourse(@RequestBody @Valid CourseRequestDTO dto) {
         return ResponseEntity.ok(courseService.requestCourseRegistration(dto));
     }

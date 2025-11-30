@@ -46,6 +46,8 @@ public class AcademyQAController {
         return ResponseEntity.ok(fileDetails);
     }
 
+    private static final int MAX_PAGE_SIZE = 100;
+
     /**
      * Q/A 조회 (페이징 및 검색 지원)
      */
@@ -55,6 +57,17 @@ public class AcademyQAController {
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+
+        if (page < 0) {
+            throw new com.softwarecampus.backend.exception.course.BadRequestException("페이지 번호는 0 이상이어야 합니다.");
+        }
+        if (size <= 0) {
+            throw new com.softwarecampus.backend.exception.course.BadRequestException("페이지 크기는 1 이상이어야 합니다.");
+        }
+        if (size > MAX_PAGE_SIZE) {
+            throw new com.softwarecampus.backend.exception.course.BadRequestException(
+                    "페이지 크기는 " + MAX_PAGE_SIZE + " 이하여야 합니다.");
+        }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<QAResponse> response = academyQAService.getQAsByAcademyId(academyId, keyword, pageable);

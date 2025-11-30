@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,7 +17,6 @@ import java.util.stream.Collectors;
  * - 기본 정보 + 커리큘럼 정보 포함
  */
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -70,14 +70,17 @@ public class CourseDetailResponseDTO {
     }
 
     public static CourseDetailResponseDTO fromEntity(Course course) {
+        var academy = course.getAcademy();
+        var category = course.getCategory();
+
         return CourseDetailResponseDTO.builder()
                 .id(course.getId())
                 .name(course.getName())
-                .academyId(course.getAcademy() != null ? course.getAcademy().getId() : null)
-                .academyName(course.getAcademy() != null ? course.getAcademy().getName() : null)
-                .categoryId(course.getCategory() != null ? course.getCategory().getId() : null)
-                .categoryName(course.getCategory() != null ? course.getCategory().getCategoryName() : null)
-                .categoryType(course.getCategory() != null ? course.getCategory().getCategoryType() : null)
+                .academyId(academy != null ? academy.getId() : null)
+                .academyName(academy != null ? academy.getName() : null)
+                .categoryId(category != null ? category.getId() : null)
+                .categoryName(category != null ? category.getCategoryName() : null)
+                .categoryType(category != null ? category.getCategoryType() : null)
                 .recruitStart(course.getRecruitStart())
                 .recruitEnd(course.getRecruitEnd())
                 .courseStart(course.getCourseStart())
@@ -91,9 +94,11 @@ public class CourseDetailResponseDTO {
                 .requirement(course.getRequirement())
                 .approvalStatus(course.getIsApproved())
                 .approvedAt(course.getApprovedAt())
-                .curriculums(course.getCurriculums().stream()
-                        .map(CurriculumDTO::from)
-                        .collect(Collectors.toList()))
+                .curriculums(course.getCurriculums() != null
+                        ? course.getCurriculums().stream()
+                                .map(CurriculumDTO::from)
+                                .collect(Collectors.toList())
+                        : Collections.emptyList())
                 .build();
     }
 }

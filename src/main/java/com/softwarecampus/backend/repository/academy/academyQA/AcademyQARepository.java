@@ -14,7 +14,7 @@ import java.util.List;
 public interface AcademyQARepository extends JpaRepository<AcademyQA, Long> {
 
     // 검색 및 페이징 지원 (JPQL로 명시적 조건 처리)
-    @Query("SELECT qa FROM AcademyQA qa WHERE qa.academy.id = :academyId AND (qa.title LIKE %:keyword% OR qa.questionText LIKE %:keyword%)")
+    @Query("SELECT qa FROM AcademyQA qa WHERE qa.academy.id = :academyId AND qa.isDeleted = false AND (LOWER(qa.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(qa.questionText) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<AcademyQA> searchByAcademyIdAndKeyword(@Param("academyId") Long academyId, @Param("keyword") String keyword,
             Pageable pageable);
 

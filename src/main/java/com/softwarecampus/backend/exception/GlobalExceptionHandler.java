@@ -501,6 +501,39 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Academy 도메인 예외 처리
+     */
+    @ExceptionHandler(com.softwarecampus.backend.exception.academy.AcademyException.class)
+    public ProblemDetail handleAcademyException(com.softwarecampus.backend.exception.academy.AcademyException ex) {
+        log.warn("Academy exception occurred: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                ex.getErrorCode().getStatus(),
+                ex.getMessage());
+        problemDetail.setType(URI.create(problemBaseUri + "/academy-error"));
+        problemDetail.setTitle(ex.getErrorCode().name());
+        problemDetail.setProperty("code", ex.getErrorCode().getCode());
+
+        return problemDetail;
+    }
+
+    /**
+     * JPA Entity 미존재 예외 처리
+     */
+    @ExceptionHandler(jakarta.persistence.EntityNotFoundException.class)
+    public ProblemDetail handleEntityNotFoundException(jakarta.persistence.EntityNotFoundException ex) {
+        log.warn("Entity not found: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage());
+        problemDetail.setType(URI.create(problemBaseUri + "/entity-not-found"));
+        problemDetail.setTitle("Entity Not Found");
+
+        return problemDetail;
+    }
+
+    /**
      * 잘못된 요청/비즈니스 로직 위반 처리
      */
     @ExceptionHandler(IllegalArgumentException.class)
