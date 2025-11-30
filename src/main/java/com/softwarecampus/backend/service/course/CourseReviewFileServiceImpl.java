@@ -1,6 +1,5 @@
 package com.softwarecampus.backend.service.course;
 
-import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.CourseReview;
 import com.softwarecampus.backend.domain.course.CourseReviewFile;
 import com.softwarecampus.backend.domain.user.Account;
@@ -30,7 +29,7 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
 
     @Override
     @Transactional
-    public ReviewFileResponse uploadReviewFile(CategoryType type, Long courseId, Long reviewId, Long userId, MultipartFile file) {
+    public ReviewFileResponse uploadReviewFile(Long courseId, Long reviewId, Long userId, MultipartFile file) {
         // 1 파일 null/empty 체크
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("업로드할 파일이 없습니다.");
@@ -56,12 +55,11 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
             String url = s3Service.uploadFile(
                     file,
                     S3Folder.COURSE.getPath(),
-                    FileType.FileTypeEnum.COURSE_IMAGE
-            );
+                    FileType.FileTypeEnum.COURSE_IMAGE);
             reviewFile.setFileUrl(url);
 
         } catch (Exception e) {
-            reviewFileRepository.delete(reviewFile);  // 업로드 실패 시 롤백
+            reviewFileRepository.delete(reviewFile); // 업로드 실패 시 롤백
             throw new RuntimeException("S3 업로드 실패: " + e.getMessage(), e);
         }
 
@@ -70,7 +68,7 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
 
     @Override
     @Transactional
-    public void deleteReviewFile(CategoryType type, Long courseId, Long reviewId, Long fileId, Long userId) {
+    public void deleteReviewFile(Long courseId, Long reviewId, Long fileId, Long userId) {
         // 1️⃣ 파일 조회
         CourseReviewFile file = reviewFileRepository.findById(fileId)
                 .orElseThrow(() -> new NotFoundException("삭제할 파일이 존재하지 않습니다."));
@@ -91,9 +89,10 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
 
     @Override
     @Transactional
-    public void restoreReviewFile(CategoryType type, Long courseId, Long reviewId, Long fileId, Long adminId) {
+    public void restoreReviewFile(Long courseId, Long reviewId, Long fileId, Long adminId) {
         // 1️⃣ 관리자 권한 체크
-        if (!isAdmin(adminId)) throw new ForbiddenException("관리자만 복구할 수 있습니다.");
+        if (!isAdmin(adminId))
+            throw new ForbiddenException("관리자만 복구할 수 있습니다.");
 
         // 2️⃣ 파일 조회
         CourseReviewFile file = reviewFileRepository.findById(fileId)
@@ -110,9 +109,10 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
 
     @Override
     @Transactional
-    public void hardDeleteReviewFile(CategoryType type, Long courseId, Long reviewId, Long fileId, Long adminId) {
+    public void hardDeleteReviewFile(Long courseId, Long reviewId, Long fileId, Long adminId) {
         // 1️⃣ 관리자 권한 체크
-        if (!isAdmin(adminId)) throw new ForbiddenException("관리자만 첨부파일을 삭제할 수 있습니다.");
+        if (!isAdmin(adminId))
+            throw new ForbiddenException("관리자만 첨부파일을 삭제할 수 있습니다.");
 
         // 2️⃣ 파일 조회
         CourseReviewFile file = reviewFileRepository.findById(fileId)

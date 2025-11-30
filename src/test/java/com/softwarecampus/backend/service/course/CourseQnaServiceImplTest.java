@@ -95,7 +95,7 @@ class CourseQnaServiceImplTest {
         when(qnaRepository.findByCourseId(eq(courseId), any(Pageable.class))).thenReturn(qnaPage);
 
         // when
-        Page<QnaResponse> response = qnaService.getQnaList(CategoryType.JOB_SEEKER, courseId, null, pageable);
+        Page<QnaResponse> response = qnaService.getQnaList(courseId, null, pageable);
 
         // then
         assertEquals(2, response.getContent().size());
@@ -117,7 +117,7 @@ class CourseQnaServiceImplTest {
                 .thenReturn(qnaPage);
 
         // when
-        Page<QnaResponse> response = qnaService.getQnaList(CategoryType.JOB_SEEKER, courseId, keyword, pageable);
+        Page<QnaResponse> response = qnaService.getQnaList(courseId, keyword, pageable);
 
         // then
         assertEquals(1, response.getContent().size());
@@ -131,7 +131,7 @@ class CourseQnaServiceImplTest {
         when(qnaRepository.findWithDetailsById(qnaId)).thenReturn(Optional.of(testQna));
 
         // when
-        QnaResponse response = qnaService.getQnaDetail(CategoryType.JOB_SEEKER, qnaId);
+        QnaResponse response = qnaService.getQnaDetail(qnaId);
 
         // then
         assertNotNull(response);
@@ -151,7 +151,7 @@ class CourseQnaServiceImplTest {
         when(qnaRepository.save(any(CourseQna.class))).thenReturn(testQna);
 
         // when
-        QnaResponse response = qnaService.createQuestion(CategoryType.JOB_SEEKER, courseId, userId, request);
+        QnaResponse response = qnaService.createQuestion(courseId, userId, request);
 
         // then
         assertNotNull(response);
@@ -169,7 +169,7 @@ class CourseQnaServiceImplTest {
         when(qnaRepository.findWithDetailsById(qnaId)).thenReturn(Optional.of(testQna));
 
         // when
-        QnaResponse response = qnaService.updateQuestion(CategoryType.JOB_SEEKER, qnaId, userId, request);
+        QnaResponse response = qnaService.updateQuestion(qnaId, userId, request);
 
         // then
         assertEquals("Updated Title", testQna.getTitle());
@@ -183,7 +183,7 @@ class CourseQnaServiceImplTest {
         when(qnaRepository.findWithDetailsById(qnaId)).thenReturn(Optional.of(testQna));
 
         // when
-        qnaService.deleteQuestion(CategoryType.JOB_SEEKER, qnaId, userId);
+        qnaService.deleteQuestion(qnaId, userId);
 
         // then
         assertTrue(testQna.getIsDeleted());
@@ -202,7 +202,7 @@ class CourseQnaServiceImplTest {
         when(accountRepository.findById(adminId)).thenReturn(Optional.of(admin));
 
         // when
-        QnaResponse response = qnaService.answerQuestion(CategoryType.JOB_SEEKER, qnaId, adminId, request);
+        QnaResponse response = qnaService.answerQuestion(qnaId, adminId, request);
 
         // then
         assertEquals("Answer Content", testQna.getAnswerText());
