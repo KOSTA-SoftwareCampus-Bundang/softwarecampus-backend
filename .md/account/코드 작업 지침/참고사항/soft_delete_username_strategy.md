@@ -160,15 +160,26 @@ void 이메일중복확인_Repository검증() {
 )
 ```
 
-### ⚠️ 주의사항
-- `email`과 `phoneNumber`는 여전히 unique 제약을 가짐
-- 하지만 애플리케이션 레벨에서 `isDeleted=false`인 계정만 체크
+### ⚠️ 현재 상태 및 주의사항
+- `email`과 `phoneNumber`는 **JPA Entity에 unique 제약 유지**
+- 애플리케이션 레벨에서 `isDeleted=false`인 계정만 체크
 - DB 레벨에서는 물리적 중복 허용 (삭제된 계정 + 활성 계정)
 
-### Partial Index 지원 (선택사항)
-PostgreSQL / MySQL 8.0+에서 가능:
+### 🎯 Partial Index 적용 (권장사항)
+
+#### 지원 DBMS
+- ✅ PostgreSQL (모든 버전)
+- ✅ MySQL 8.0.13+
+- ❌ MySQL 5.7 이하 (지원 안 함)
+
+#### 장점
+- DB 레벨에서 중복 방지 (이중 보호)
+- Race Condition 완전 제거
+- 애플리케이션 로직 단순화
+
+#### SQL 스크립트
 ```sql
--- 활성 계정만 unique 보장
+-- 활성 계정만 unique 보장 (PostgreSQL / MySQL 8.0+)
 CREATE UNIQUE INDEX uk_account_email_active 
 ON account(email) 
 WHERE is_deleted = false;
@@ -181,6 +192,152 @@ CREATE UNIQUE INDEX uk_account_username_active
 ON account(user_name) 
 WHERE is_deleted = false;
 ```
+
+---
+
+## 🔧 마이그레이션 절차 (Partial Index 적용 시)
+
+### 1단계: 백업 및 사전 검증
+```sql
+-- 현재 중복 데이터 확인
+SELECT email, COUNT(*) 
+FROM account 
+WHERE is_deleted = false 
+GROUP BY email 
+HAVING COUNT(*) > 1;
+
+-- 백업 (권장)
+pg_dump -U postgres -d softwarecampus > backup_before_migration.sql
+```
+
+### 2단계: 새 Partial Index 생성
+```sql
+-- 기존 unique index는 유지한 채 새 index 생성
+CREATE UNIQUE INDEX CONCURRENTLY uk_account_email_active 
+ON account(email) 
+WHERE is_deleted = false;
+
+CREATE UNIQUE INDEX CONCURRENTLY uk_account_phone_active 
+ON account(phone_number) 
+WHERE is_deleted = false;
+
+CREATE UNIQUE INDEX CONCURRENTLY uk_account_username_active 
+ON account(user_name) 
+WHERE is_deleted = false;
+```
+
+### 3단계: 검증
+```sql
+-- Index 생성 확인
+\d account  -- PostgreSQL
+SHOW INDEX FROM account;  -- MySQL
+
+-- 중복 테스트 (실패해야 정상)
+INSERT INTO account (email, is_deleted) VALUES ('test@example.com', false);
+INSERT INTO account (email, is_deleted) VALUES ('test@example.com', false);
+-- ERROR: duplicate key value violates unique constraint
+```
+
+### 4단계: JPA Entity 수정
+```java
+@Table(
+    name = "account",
+    indexes = {
+        // ❌ 기존 unique index 제거
+        // @Index(name = "uk_account_email", columnList = "email", unique = true),
+        // @Index(name = "uk_account_phone", columnList = "phone_number", unique = true),
+        
+        // ✅ 일반 index로 변경 (Partial Index는 직접 SQL로 관리)
+        @Index(name = "idx_account_email", columnList = "email"),
+        @Index(name = "idx_account_phone", columnList = "phone_number"),
+        @Index(name = "idx_account_username", columnList = "user_name"),
+        @Index(name = "idx_account_deleted", columnList = "is_deleted")
+    }
+)
+```
+
+### 5단계: 기존 UNIQUE Index 제거 (선택사항)
+```sql
+-- 새 Partial Index가 정상 작동 확인 후 제거
+DROP INDEX uk_account_email;
+DROP INDEX uk_account_phone;
+
+-- 참고: userName은 원래 unique index가 없었음
+```
+
+---
+
+## 🛡️ Fallback 전략 (Partial Index 미지원 환경)
+
+### MySQL 5.7 이하 또는 기타 DBMS
+
+#### 방법 1: 애플리케이션 레벨 검증 (현재 적용 중)
+```java
+// 현재 구현 - 트랜잭션 + 애플리케이션 레벨 중복 체크
+@Transactional
+public void signup(SignupRequest request) {
+    if (accountRepository.existsByEmailAndIsDeletedFalse(request.getEmail())) {
+        throw new DuplicateEmailException("이미 사용 중인 이메일입니다");
+    }
+    
+    Account account = Account.builder()
+        .email(request.getEmail())
+        .build();
+    
+    accountRepository.save(account);
+}
+```
+
+**장점**: 모든 DBMS에서 동작  
+**단점**: Race Condition 가능성 (동시 요청 시)
+
+#### 방법 2: 비관적 락 (Pessimistic Lock)
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("SELECT a FROM Account a WHERE a.email = :email")
+Optional<Account> findByEmailForUpdate(@Param("email") String email);
+
+@Transactional
+public void signup(SignupRequest request) {
+    // 테이블 행 잠금
+    accountRepository.findByEmailForUpdate(request.getEmail());
+    
+    if (accountRepository.existsByEmailAndIsDeletedFalse(request.getEmail())) {
+        throw new DuplicateEmailException("이미 사용 중인 이메일입니다");
+    }
+    
+    accountRepository.save(Account.builder().email(request.getEmail()).build());
+}
+```
+
+**장점**: Race Condition 완전 제거  
+**단점**: 성능 저하 (동시성 감소)
+
+#### 방법 3: Unique Index + 예외 처리
+```java
+// unique index 유지하고 예외 처리
+@Transactional
+public void signup(SignupRequest request) {
+    try {
+        accountRepository.save(Account.builder()
+            .email(request.getEmail())
+            .build());
+    } catch (DataIntegrityViolationException e) {
+        if (e.getMessage().contains("uk_account_email")) {
+            throw new DuplicateEmailException("이미 사용 중인 이메일입니다");
+        }
+        throw e;
+    }
+}
+```
+
+**장점**: DB 레벨 보장, Race Condition 없음  
+**단점**: 탈퇴 후 재가입 불가능 (정책 위배)
+
+#### 권장 전략
+- **Partial Index 지원**: 방법 1 (애플리케이션 레벨) + Partial Index (DB 레벨 이중 보호)
+- **Partial Index 미지원**: 방법 1 (애플리케이션 레벨) 단독 사용
+- **높은 동시성 환경**: 방법 2 (비관적 락) 고려
 
 ---
 
