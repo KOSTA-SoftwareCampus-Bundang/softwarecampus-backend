@@ -24,8 +24,9 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     /**
      * reviewId가 courseId에 속하는지 검증
      * 
-     * @throws NotFoundException   reviewId가 존재하지 않거나 course가 null인 경우
-     * @throws BadRequestException reviewId가 courseId에 속하지 않는 경우
+     * @param courseId 코스 ID
+     * @param reviewId 리뷰 ID
+     * @throws NotFoundException 리뷰를 찾을 수 없거나 삭제된 경우
      */
     @Override
     @Transactional(readOnly = true)
