@@ -12,6 +12,7 @@ import com.softwarecampus.backend.exception.user.InvalidInputException;
 import com.softwarecampus.backend.exception.user.PhoneNumberAlreadyExistsException;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import com.softwarecampus.backend.repository.user.EmailVerificationRepository;
+import com.softwarecampus.backend.security.CustomUserDetailsService;
 import com.softwarecampus.backend.service.user.email.EmailVerificationService;
 import com.softwarecampus.backend.util.EmailUtils;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final EmailVerificationRepository emailVerificationRepository;
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
+    private final CustomUserDetailsService customUserDetailsService;
 
     /**
      * ID로 계정 조회
@@ -169,7 +171,10 @@ public class ProfileServiceImpl implements ProfileService {
         String encodedPassword = passwordEncoder.encode(request.getNewPassword());
         account.setPassword(encodedPassword);
 
-        // 5. 인증 레코드 삭제 (일회용 보장)
+        // 5. Redis 캠시 무효화 (기존 비밀번호 데이터 사용 방지)
+        customUserDetailsService.evictUserDetailsCache(email);
+
+        // 6. 인증 레코드 삭제 (일회용 보장)
         emailVerificationRepository.deleteByEmailAndType(email, VerificationType.PASSWORD_RESET);
 
         log.info("비밀번호 재설정 완료: email={}, accountId={}",
@@ -201,7 +206,10 @@ public class ProfileServiceImpl implements ProfileService {
         String encodedPassword = passwordEncoder.encode(request.getNewPassword());
         account.setPassword(encodedPassword);
 
-        // 5. 인증 레코드 삭제 (일회용 보장)
+        // 5. Redis 캠시 무효화 (기존 비밀번호 데이터 사용 방지)
+        customUserDetailsService.evictUserDetailsCache(email);
+
+        // 6. 인증 레코드 삭제 (일회용 보장)
         emailVerificationRepository.deleteByEmailAndType(email, VerificationType.PASSWORD_CHANGE);
 
         log.info("비밀번호 변경 완료: email={}, accountId={}",
