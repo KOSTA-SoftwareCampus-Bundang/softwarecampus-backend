@@ -33,10 +33,10 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         @Override
         public List<CourseReviewResponse> getReviews(CategoryType type, Long courseId) {
 
-                Course course = courseRepository.findByIdAndCategory(courseId, type)
+                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
-                List<CourseReview> reviews = reviewRepository.findAllByCourse_IdAndIsDeletedFalse(courseId);
+                List<CourseReview> reviews = reviewRepository.findByCourseIdAndIsDeletedFalse(courseId);
 
                 return reviews.stream()
                                 .map(this::toDto)
@@ -49,7 +49,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         @Override
         public CourseReviewResponse getReviewDetail(CategoryType type, Long courseId, Long reviewId) {
 
-                Course course = courseRepository.findByIdAndCategory(courseId, type)
+                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 CourseReview review = reviewRepository.findWithDetailsById(reviewId)
@@ -64,7 +64,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         public CourseReviewResponse createReview(CategoryType type, Long courseId, Long accountId,
                         CourseReviewRequest request) {
 
-                Course course = courseRepository.findByIdAndCategory(courseId, type)
+                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 Account writer = accountRepository.findById(accountId)
@@ -134,7 +134,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         public CourseReviewResponse updateReview(CategoryType type, Long courseId, Long reviewId, Long accountId,
                         CourseReviewRequest request) {
 
-                Course course = courseRepository.findByIdAndCategory(courseId, type)
+                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 CourseReview review = reviewRepository.findById(reviewId)
@@ -181,7 +181,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         @Transactional
         public void deleteReview(CategoryType type, Long courseId, Long reviewId, Long accountId) {
 
-                Course course = courseRepository.findByIdAndCategory(courseId, type)
+                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 CourseReview review = reviewRepository.findById(reviewId)
@@ -206,7 +206,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         @Transactional
         public void requestDeleteReview(CategoryType type, Long courseId, Long reviewId, Long accountId) {
 
-                Course course = courseRepository.findByIdAndCategory(courseId, type)
+                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 CourseReview review = reviewRepository.findWithDetailsById(reviewId)
