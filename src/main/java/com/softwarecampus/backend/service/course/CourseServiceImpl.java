@@ -37,6 +37,13 @@ public class CourseServiceImpl implements CourseService {
                 return coursePage.map(CourseResponseDTO::fromEntity);
         }
 
+        /**
+         * @deprecated This method fetches all courses without pagination, which can
+         *             cause performance issues.
+         *             Use
+         *             {@link #getCourses(Long, CategoryType, Boolean, String, Pageable)}
+         *             instead.
+         */
         @Override
         @Deprecated
         public List<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline,
