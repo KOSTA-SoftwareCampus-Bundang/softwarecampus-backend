@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -90,6 +91,7 @@ public class EmailVerificationController {
      * - JWT에서 이메일 추출
      * - PASSWORD_CHANGE 타입으로 인증 코드 발송
      */
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/send-change-code")
     public ResponseEntity<EmailVerificationResponse> sendPasswordChangeCode(
             @AuthenticationPrincipal UserDetails userDetails) {
