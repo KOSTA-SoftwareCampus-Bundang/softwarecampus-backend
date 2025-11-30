@@ -100,14 +100,25 @@ boolean existsByPhoneNumberAndIsDeletedFalse(String phoneNumber);
 
 ### 검색 메서드 (JPQL)
 ```java
+/**
+ * 활성 계정 검색 (키워드 기반)
+ * 
+ * 대소문자 구분:
+ * - userName, email: LOWER() 적용 (대소문자 무시)
+ * - phoneNumber: LOWER() 미적용 (숫자 형식으로 대소문자 개념 없음)
+ */
 @Query("SELECT a FROM Account a " +
        "WHERE a.isDeleted = false AND " +
        "(:keyword IS NULL OR " +
-       "LOWER(a.userName) LIKE %:keyword% OR " +
-       "LOWER(a.email) LIKE %:keyword% OR " +
-       "a.phoneNumber LIKE %:keyword%)")
+       "LOWER(a.userName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+       "LOWER(a.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+       "a.phoneNumber LIKE CONCAT('%', :keyword, '%'))")
 Page<Account> searchActiveAccounts(@Param("keyword") String keyword, Pageable pageable);
 ```
+
+**설계 근거:**
+- `userName`, `email`: 대소문자 혼용 가능 → `LOWER()` 적용
+- `phoneNumber`: 숫자 형식 (010-1234-5678) → 대소문자 개념 없음, `LOWER()` 불필요
 
 ---
 
