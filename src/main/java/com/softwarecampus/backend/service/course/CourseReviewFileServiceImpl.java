@@ -59,7 +59,7 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
             reviewFile.setFileUrl(url);
 
         } catch (Exception e) {
-            reviewFileRepository.delete(reviewFile); // 업로드 실패 시 롤백
+            // reviewFileRepository.delete(reviewFile); // 트랜잭션 롤백으로 인해 불필요
             throw new RuntimeException("S3 업로드 실패: " + e.getMessage(), e);
         }
 
