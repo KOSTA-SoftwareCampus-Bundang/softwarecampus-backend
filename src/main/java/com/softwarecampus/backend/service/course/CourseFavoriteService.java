@@ -5,8 +5,11 @@ import java.util.List;
 
 public interface CourseFavoriteService {
 
-    /** 찜하기 토글 (등록 or 해제) */
-    CourseFavoriteResponseDTO toggleFavorite(String type, Long accountId, Long courseId);
+    /** 찜하기 추가 (idempotent) */
+    void addFavorite(Long accountId, Long courseId);
+
+    /** 찜하기 삭제 (idempotent) */
+    void removeFavorite(Long accountId, Long courseId);
 
     /** 찜 목록 조회 */
     List<CourseFavoriteResponseDTO> getFavorites(Long accountId);

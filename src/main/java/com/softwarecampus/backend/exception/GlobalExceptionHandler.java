@@ -1,5 +1,7 @@
 package com.softwarecampus.backend.exception;
 
+import com.softwarecampus.backend.exception.course.BadRequestException;
+import com.softwarecampus.backend.exception.course.NotFoundException;
 import com.softwarecampus.backend.exception.email.EmailSendException;
 import com.softwarecampus.backend.exception.email.EmailVerificationException;
 import com.softwarecampus.backend.exception.email.EmailNotVerifiedException;
@@ -11,6 +13,7 @@ import com.softwarecampus.backend.exception.user.InvalidCredentialsException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
 import com.softwarecampus.backend.exception.user.InvalidPasswordException;
 import com.softwarecampus.backend.exception.user.PhoneNumberAlreadyExistsException;
+import com.softwarecampus.backend.exception.user.UnauthorizedException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -291,6 +294,19 @@ public class GlobalExceptionHandler {
 
         problemDetail.setType(URI.create(problemBaseUri + "/invalid-password"));
         problemDetail.setTitle("Invalid Password");
+     * 인증되지 않은 사용자 접근 예외 처리
+     * HTTP 401 Unauthorized
+     */
+    @ExceptionHandler(UnauthorizedException.class)
+    public ProblemDetail handleUnauthorizedException(UnauthorizedException ex) {
+        log.warn("인증되지 않은 사용자 접근: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage());
+
+        problemDetail.setType(URI.create(problemBaseUri + "/unauthorized"));
+        problemDetail.setTitle("Unauthorized");
 
         return problemDetail;
     }
@@ -532,6 +548,40 @@ public class GlobalExceptionHandler {
         problemDetail.setType(URI.create(problemBaseUri + "/academy-error"));
         problemDetail.setTitle(ex.getErrorCode().name());
         problemDetail.setProperty("code", ex.getErrorCode().getCode());
+
+        return problemDetail;
+    }
+
+    /**
+     * Course 도메인 - NotFoundException 처리
+     */
+    @ExceptionHandler(NotFoundException.class)
+    public ProblemDetail handleCourseNotFoundException(NotFoundException ex) {
+        log.warn("Course resource not found: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/course-not-found"));
+        problemDetail.setTitle("Course Resource Not Found");
+
+        return problemDetail;
+    }
+
+    /**
+     * Course 도메인 - BadRequestException 처리
+     */
+    @ExceptionHandler(BadRequestException.class)
+    public ProblemDetail handleCourseBadRequestException(BadRequestException ex) {
+        log.warn("Course bad request: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+        problemDetail.setType(URI.create(problemBaseUri + "/course-bad-request"));
+        problemDetail.setTitle("Invalid Course Request");
 
         return problemDetail;
     }

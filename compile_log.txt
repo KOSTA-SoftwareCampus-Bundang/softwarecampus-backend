@@ -1,0 +1,109 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.softwarecampus:backend >---------------------
+[INFO] Building softwarecampus-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 6 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 238 source files with javac [debug parameters release 17] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/academy/AcademyRepository.java:[18,69] reached end of file while parsing
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[3,92] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[10,92] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[17,92] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[24,244] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[24,303] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[24,338] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[41,413] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[41,459] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[41,497] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[41,542] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[41,577] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[48,425] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[48,474] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[48,512] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[48,557] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[48,592] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[51,1] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[54,1] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[59,1] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[68,257] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[68,323] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[70,1] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[2,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[7,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[12,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[17,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[22,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[27,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[28,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[29,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[30,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[31,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[32,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[33,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[34,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[36,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[37,5] class, interface, enum, or record expected
+[INFO] 38 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.366 s
+[INFO] Finished at: 2025-11-30T22:54:36+09:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.0:compile (default-compile) on project backend: Compilation failure: Compilation failure: 
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/academy/AcademyRepository.java:[18,69] reached end of file while parsing
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[3,92] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[10,92] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[17,92] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[24,244] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[24,303] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[24,338] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[41,413] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[41,459] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[41,497] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[41,542] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[41,577] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[48,425] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[48,474] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[48,512] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[48,557] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[48,592] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[51,1] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[54,1] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[59,1] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[68,257] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[68,323] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/repository/course/CourseRepository.java:[70,1] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[2,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[7,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[12,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[17,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[22,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[27,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[28,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[29,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[30,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[31,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[32,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[33,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[34,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[36,9] class, interface, enum, or record expected
+[ERROR] /D:/Projects/KOSTA_Softcampus/softwarecampus-backend/src/main/java/com/softwarecampus/backend/scheduler/FileCleanupScheduler.java:[37,5] class, interface, enum, or record expected
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

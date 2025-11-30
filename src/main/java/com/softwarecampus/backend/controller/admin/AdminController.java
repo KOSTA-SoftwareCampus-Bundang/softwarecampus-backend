@@ -34,6 +34,7 @@ public class AdminController {
     // 기관 관리 서비스 (작성자: GitHub Copilot, 작성일: 2025-11-28)
     private final AcademyService academyService;
     private final AcademyFileService academyFileService;
+    private final com.softwarecampus.backend.scheduler.FileCleanupScheduler fileCleanupScheduler;
 
     /**
      * 회원 승인
@@ -87,7 +88,18 @@ public class AdminController {
             @PathVariable Long fileId) {
         String presignedUrl = academyFileService.getFileUrl(academyId, fileId);
         return ResponseEntity.status(HttpStatus.FOUND)
-            .location(URI.create(presignedUrl))
-            .build();
+                .location(URI.create(presignedUrl))
+                .build();
+    }
+
+    /**
+     * 파일 정리 스케줄러 수동 실행 (테스트용)
+     * 작성일: 2025-11-30
+     */
+    @PostMapping("/files/cleanup")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> triggerFileCleanup() {
+        fileCleanupScheduler.cleanupDeletedFiles();
+        return ResponseEntity.ok("파일 정리 스케줄러가 수동으로 실행되었습니다.");
     }
 }

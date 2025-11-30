@@ -3,10 +3,10 @@ package com.softwarecampus.backend.repository.course;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.Course;
 import com.softwarecampus.backend.domain.course.CategoryType;
-import jakarta.persistence.QueryHint;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
@@ -16,28 +16,93 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
         /**
          * 카테고리 타입별 과정 전체 조회 (재직자/취업예정자)
+         * @deprecated searchCourses() 페이지네이션 버전 사용 권장
          */
+        @Deprecated
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
         List<Course> findByCategory_CategoryTypeAndDeletedAtIsNull(CategoryType type);
 
         /**
          * 카테고리 타입 + 온/오프라인 필터 조회
+         * @deprecated searchCourses() 페이지네이션 버전 사용 권장
          */
+        @Deprecated
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
         List<Course> findByCategory_CategoryTypeAndIsOfflineAndDeletedAtIsNull(CategoryType type, boolean isOffline);
 
         /**
-         * 카테고리 타입 + 키워드 검색 (+ 온/오프라인 필터 옵션)
+         * 온/오프라인 필터만으로 조회
+         * @deprecated searchCourses() 페이지네이션 버전 사용 권장
          */
-        @QueryHints(@QueryHint(name = org.hibernate.annotations.QueryHints.CACHEABLE, value = "false"))
-        @Query(value = "SELECT * FROM course c " +
-                        "JOIN course_category cc ON c.category_id = cc.id " +
-                        "WHERE cc.category_type = :type " +
-                        "AND c.deleted_at IS NULL " +
-                        "AND (:isOffline IS NULL OR c.is_offline = :isOffline) " +
-                        "AND LOWER(c.name) LIKE CONCAT('%', LOWER(:keyword), '%')", nativeQuery = true)
-        List<Course> searchByName(@Param("type") String type, @Param("keyword") String keyword,
-                        @Param("isOffline") Boolean isOffline);
+        @Deprecated
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
+        List<Course> findByIsOfflineAndDeletedAtIsNull(boolean isOffline);
+
+        /**
+         * 전체 과정 조회 (삭제되지 않은 것만)
+         * @deprecated searchCourses() 페이지네이션 버전 사용 권장
+         */
+        @Deprecated
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
+        List<Course> findByDeletedAtIsNull();
+
+        /**
+         * 카테고리 ID + 온/오프라인 필터 조회
+         * @deprecated searchCourses() 페이지네이션 버전 사용 권장
+         */
+        @Deprecated
+        @Query("SELECT c FROM Course c " +
+                        "WHERE c.category.id = :categoryId " +
+                        "AND c.deletedAt IS NULL " +
+                        "AND (:isOffline IS NULL OR c.isOffline = :isOffline)")
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
+        List<Course> findByCategoryIdAndFilters(@Param("categoryId") Long categoryId, 
+                                                 @Param("isOffline") Boolean isOffline);
+
+        /**
+         * 통합 검색 (categoryId, categoryType, isOffline, keyword 조합) - 페이지네이션 지원
+         * 
+         * 성능 고려사항:
+         * - LIKE '%keyword%' 패턴은 인덱스를 활용할 수 없음
+         * - 대용량 데이터의 경우 course.name 컨럼에 Full-Text Index 추가 권장
+         * - 또는 Elasticsearch 등 전문 검색 엔진 도입 검토
+         * 
+         * @param categoryId 카테고리 ID (옵션)
+         * @param categoryType 카테고리 타입 (옵션)
+         * @param isOffline 온/오프라인 필터 (옵션)
+         * @param keyword 검색 키워드 (옵션)
+         * @param pageable 페이지 정보
+         * @return 페이지네이션된 과정 목록
+         */
+        @Query("SELECT c FROM Course c " +
+                        "WHERE c.deletedAt IS NULL " +
+                        "AND (:categoryId IS NULL OR c.category.id = :categoryId) " +
+                        "AND (:categoryType IS NULL OR c.category.categoryType = :categoryType) " +
+                        "AND (:isOffline IS NULL OR c.isOffline = :isOffline) " +
+                        "AND (:keyword IS NULL OR LOWER(c.name) LIKE CONCAT('%', LOWER(:keyword), '%'))")
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
+        Page<Course> searchCourses(@Param("categoryId") Long categoryId,
+                                    @Param("categoryType") CategoryType categoryType,
+                                    @Param("isOffline") Boolean isOffline,
+                                    @Param("keyword") String keyword,
+                                    Pageable pageable);
+
+        /**
+         * 통합 검색 (categoryId, categoryType, isOffline, keyword 조합) - 전체 조회
+         * @deprecated 페이지네이션 버전 사용 권장
+         */
+        @Deprecated
+        @Query("SELECT c FROM Course c " +
+                        "WHERE c.deletedAt IS NULL " +
+                        "AND (:categoryId IS NULL OR c.category.id = :categoryId) " +
+                        "AND (:categoryType IS NULL OR c.category.categoryType = :categoryType) " +
+                        "AND (:isOffline IS NULL OR c.isOffline = :isOffline) " +
+                        "AND (:keyword IS NULL OR LOWER(c.name) LIKE CONCAT('%', LOWER(:keyword), '%'))")
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
+        List<Course> searchCoursesAll(@Param("categoryId") Long categoryId,
+                                       @Param("categoryType") CategoryType categoryType,
+                                       @Param("isOffline") Boolean isOffline,
+                                       @Param("keyword") String keyword);
 
         // 등록 요청 목록 (승인 대기 중)
         List<Course> findByIsApproved(ApprovalStatus status);
