@@ -12,6 +12,8 @@ import com.softwarecampus.backend.repository.course.ReviewSectionRepository;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,28 +30,26 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         private final ReviewSectionRepository reviewSectionRepository;
 
         /**
-         * 1. 리뷰 리스트 조회
+         * 1. 리뷰 리스트 조회 (Pageable)
          */
         @Override
-        public List<CourseReviewResponse> getReviews(CategoryType type, Long courseId) {
+        public Page<CourseReviewResponse> getReviews(Long courseId, Pageable pageable) {
 
-                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
+                Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
-                List<CourseReview> reviews = reviewRepository.findByCourseIdAndIsDeletedFalse(courseId);
+                Page<CourseReview> reviewPage = reviewRepository.findByCourseIdAndIsDeletedFalse(courseId, pageable);
 
-                return reviews.stream()
-                                .map(this::toDto)
-                                .toList();
+                return reviewPage.map(this::toDto);
         }
 
         /**
          * 2. 리뷰 상세 조회
          */
         @Override
-        public CourseReviewResponse getReviewDetail(CategoryType type, Long courseId, Long reviewId) {
+        public CourseReviewResponse getReviewDetail(Long courseId, Long reviewId) {
 
-                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
+                Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 CourseReview review = reviewRepository.findWithDetailsById(reviewId)
@@ -61,10 +61,10 @@ public class CourseReviewServiceImpl implements CourseReviewService {
 
         @Override
         @Transactional
-        public CourseReviewResponse createReview(CategoryType type, Long courseId, Long accountId,
+        public CourseReviewResponse createReview(Long courseId, Long accountId,
                         CourseReviewRequest request) {
 
-                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
+                Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 Account writer = accountRepository.findById(accountId)
@@ -102,6 +102,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 return CourseReviewResponse.builder()
                                 .reviewId(review.getId())
                                 .writerId(review.getWriter().getId())
+                                .writerName(review.getWriter().getUserName()) // 추가
                                 .courseId(review.getCourse().getId())
                                 .comment(review.getComment())
                                 .approvalStatus(review.getApprovalStatus().name())
@@ -123,6 +124,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                                                 .filter(l -> !l.getIsDeleted()
                                                                 && l.getType() == ReviewLike.LikeType.DISLIKE)
                                                 .count())
+                                .createdAt(review.getCreatedAt()) // 추가
                                 .build();
         }
 
@@ -131,10 +133,10 @@ public class CourseReviewServiceImpl implements CourseReviewService {
          */
         @Override
         @Transactional
-        public CourseReviewResponse updateReview(CategoryType type, Long courseId, Long reviewId, Long accountId,
+        public CourseReviewResponse updateReview(Long courseId, Long reviewId, Long accountId,
                         CourseReviewRequest request) {
 
-                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
+                Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 CourseReview review = reviewRepository.findById(reviewId)
@@ -179,9 +181,9 @@ public class CourseReviewServiceImpl implements CourseReviewService {
          */
         @Override
         @Transactional
-        public void deleteReview(CategoryType type, Long courseId, Long reviewId, Long accountId) {
+        public void deleteReview(Long courseId, Long reviewId, Long accountId) {
 
-                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
+                Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 CourseReview review = reviewRepository.findById(reviewId)
@@ -204,9 +206,9 @@ public class CourseReviewServiceImpl implements CourseReviewService {
          */
         @Override
         @Transactional
-        public void requestDeleteReview(CategoryType type, Long courseId, Long reviewId, Long accountId) {
+        public void requestDeleteReview(Long courseId, Long reviewId, Long accountId) {
 
-                Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
+                Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 CourseReview review = reviewRepository.findWithDetailsById(reviewId)

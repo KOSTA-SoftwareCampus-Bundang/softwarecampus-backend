@@ -3,14 +3,29 @@ package com.softwarecampus.backend.service.course;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface CourseService {
 
-    List<CourseResponseDTO> getAllCourses(CategoryType type, Boolean isOffline);
+    /**
+     * 과정 목록 조회 (페이지네이션 지원)
+     * @param categoryId 카테고리 ID (옵션)
+     * @param categoryType 카테고리 타입 EMPLOYEE/JOB_SEEKER (옵션)
+     * @param isOffline 온/오프라인 필터 (옵션)
+     * @param keyword 검색 키워드 (옵션)
+     * @param pageable 페이지 정보
+     */
+    Page<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline, String keyword, Pageable pageable);
 
-    List<CourseResponseDTO> searchCourses(CategoryType type, String keyword, Boolean isOffline);
+    /**
+     * 과정 목록 조회 (전체)
+     * @deprecated 페이지네이션 버전 사용 권장
+     */
+    @Deprecated
+    List<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline, String keyword);
 
     /** 관리자 - 요청 승인 후 등록 */
     CourseResponseDTO approveCourse(Long courseId);
