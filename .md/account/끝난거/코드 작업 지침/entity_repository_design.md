@@ -295,7 +295,21 @@ List<Account> findByAccountApproved(ApprovalStatus approved);
 
 ## 4. AccountRepository 설계
 
-### 4.1 현재 구현 (최종)
+### 4.1 현재 구현 (초기 버전 - 2025-10-29)
+
+> ⚠️ **주의**: 이 코드는 초기 설계 시점(2025-10-29)의 내용입니다.  
+> 2025-12-01에 정책이 변경되어 실제 구현과 다릅니다.  
+> 실제 구현 코드는 `soft_delete_username_strategy.md`를 참조하세요.
+
+**이 섹션의 용도:**
+- 초기 설계 당시 Repository 메서드 이해
+- 변경 전후 비교
+- 히스토리 추적
+
+**실제 구현 (2025-12-01 이후):**
+- `findByEmail` → `findByEmailAndIsDeletedFalse`
+- `existsByEmail` → `existsByEmailAndIsDeletedFalse`
+- `existsByPhoneNumber` → `existsByPhoneNumberAndIsDeletedFalse`
 
 ```java
 package com.softwarecampus.backend.repository.user;
@@ -310,46 +324,102 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Account 엔티티에 대한 Repository
+ * Account 엔티티에 대한 Repository (초기 버전 - 2025-10-29)
  * - 사용자 계정 CRUD 및 조회 기능
+ * 
+ * ⚠️ 주의: 이 코드는 초기 설계이며, 2025-12-01에 변경되었습니다.
  */
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
     
     /**
      * 이메일로 계정 조회 (로그인)
+     * 
+     * ⚠️ 변경됨 (2025-12-01): findByEmailAndIsDeletedFalse로 변경
      */
     Optional<Account> findByEmail(String email);
     
     /**
      * 이메일 중복 체크
+     * 
+     * ⚠️ 변경됨 (2025-12-01): existsByEmailAndIsDeletedFalse로 변경
+     * - 초기: 삭제된 계정도 포함 (재가입 불가)
+     * - 변경 후: 활성 계정만 체크 (재가입 가능)
      */
     boolean existsByEmail(String email);
     
     /**
      * 활성 사용자명 중복 체크 (Soft Delete 고려)
      * - isDeleted=false인 계정 중에서만 중복 체크
+     * 
+     * ✅ 유지됨: 변경 없음
      */
     boolean existsByUserNameAndIsDeletedFalse(String userName);
     
     /**
      * 사용자명으로 활성 계정 조회 (Soft Delete 고려)
+     * 
+     * ✅ 유지됨: 변경 없음
      */
     Optional<Account> findByUserNameAndIsDeletedFalse(String userName);
     
     /**
      * 전화번호 중복 체크
+     * 
+     * ⚠️ 변경됨 (2025-12-01): existsByPhoneNumberAndIsDeletedFalse로 변경
+     * - 초기: 삭제된 계정도 포함 (재가입 불가)
+     * - 변경 후: 활성 계정만 체크 (재가입 가능)
      */
     boolean existsByPhoneNumber(String phoneNumber);
     
     /**
      * 계정 타입별 활성 계정 조회
+     * 
+     * ✅ 유지됨: 변경 없음
      */
     List<Account> findByAccountTypeAndIsDeletedFalse(AccountType accountType);
     
     /**
      * 계정 타입 및 승인 상태별 활성 계정 조회
+     * 
+     * ✅ 유지됨: 변경 없음
      */
+    List<Account> findByAccountTypeAndAccountApprovedAndIsDeletedFalse(
+        AccountType accountType, 
+        ApprovalStatus accountApproved
+    );
+}
+```
+
+#### 변경된 메서드 (2025-12-01 적용)
+
+**실제 구현 코드 (최신):**
+```java
+/**
+ * Account 엔티티에 대한 Repository (최신 버전 - 2025-12-01)
+ */
+@Repository
+public interface AccountRepository extends JpaRepository<Account, Long> {
+    
+    // ✅ 변경됨: 활성 계정만 조회
+    Optional<Account> findByEmailAndIsDeletedFalse(String email);
+    
+    // ✅ 변경됨: 활성 계정만 중복 체크
+    boolean existsByEmailAndIsDeletedFalse(String email);
+    
+    // ✅ 유지됨
+    boolean existsByUserNameAndIsDeletedFalse(String userName);
+    
+    // ✅ 유지됨
+    Optional<Account> findByUserNameAndIsDeletedFalse(String userName);
+    
+    // ✅ 변경됨: 활성 계정만 중복 체크
+    boolean existsByPhoneNumberAndIsDeletedFalse(String phoneNumber);
+    
+    // ✅ 유지됨
+    List<Account> findByAccountTypeAndIsDeletedFalse(AccountType accountType);
+    
+    // ✅ 유지됨
     List<Account> findByAccountTypeAndAccountApprovedAndIsDeletedFalse(
         AccountType accountType, 
         ApprovalStatus accountApproved
