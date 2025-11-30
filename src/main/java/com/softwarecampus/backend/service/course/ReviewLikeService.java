@@ -5,6 +5,13 @@ import com.softwarecampus.backend.domain.course.ReviewLike.LikeType;
 
 public interface ReviewLikeService {
 
+    /**
+     * reviewId가 courseId에 속하는지 검증
+     * @throws com.softwarecampus.backend.exception.course.NotFoundException reviewId가 존재하지 않는 경우
+     * @throws com.softwarecampus.backend.exception.course.BadRequestException reviewId가 courseId에 속하지 않는 경우
+     */
+    void validateReviewBelongsToCourse(Long courseId, Long reviewId);
+
     ReviewLike toggleLike(Long reviewId, Long accountId, LikeType type);
 
     long getLikeCount(Long reviewId);
