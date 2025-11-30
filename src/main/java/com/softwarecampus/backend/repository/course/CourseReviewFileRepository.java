@@ -13,4 +13,6 @@ public interface CourseReviewFileRepository extends JpaRepository<CourseReviewFi
     List<CourseReviewFile> findByReviewIdAndIsDeletedFalse(Long reviewId);
 
     Optional<CourseReviewFile> findByIdAndReviewId(Long fileId, Long reviewId);
+
+    List<CourseReviewFile> findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime threshold);
 }

@@ -2,57 +2,56 @@ package com.softwarecampus.backend.controller.course;
 
 import com.softwarecampus.backend.dto.course.ReviewLikeRequest;
 import com.softwarecampus.backend.dto.course.ReviewLikeResponse;
+import com.softwarecampus.backend.security.CustomUserDetails;
 import com.softwarecampus.backend.service.course.ReviewLikeService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/{type}/course/reviews")
+@RequestMapping("/api/courses/{courseId}/reviews")
 @RequiredArgsConstructor
 public class ReviewLikeController {
 
-    private final ReviewLikeService reviewLikeService;
+        private final ReviewLikeService reviewLikeService;
 
-    /**
-     * 좋아요/싫어요 토글
-     */
-    @PostMapping("/{reviewId}/recommend")
-    public ResponseEntity<ReviewLikeResponse> toggleLike(
-            @PathVariable String type,
-            @PathVariable Long reviewId,
-            @RequestParam Long accountId,
-            @RequestBody ReviewLikeRequest request
-    ) {
+        /**
+         * 좋아요/싫어요 토글 (인증 필요)
+         * POST /api/courses/{courseId}/reviews/{reviewId}/likes
+         */
+        @PostMapping("/{reviewId}/likes")
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<ReviewLikeResponse> toggleLike(
+                        @PathVariable Long courseId,
+                        @PathVariable Long reviewId,
+                        @Valid @RequestBody ReviewLikeRequest request,
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // 서비스는 request.getType() 을 받도록 FIX 필요
-        var result = reviewLikeService.toggleLike(reviewId, accountId, request.getType());
+                Long accountId = userDetails.getId();
+                // Service에서 courseId 검증까지 함께 처리
+                var result = reviewLikeService.toggleLike(courseId, reviewId, accountId, request.getType());
 
-        // JSON 응답에 type은 String으로 변환해야 함
-        return ResponseEntity.ok(
-                new ReviewLikeResponse(
-                        result.getType().name(),
-                        reviewLikeService.getLikeCount(reviewId),
-                        reviewLikeService.getDislikeCount(reviewId)
-                )
-        );
-    }
+                return ResponseEntity.ok(result);
+        }
 
+        /**
+         * 좋아요/싫어요 개수 조회
+         * GET /api/courses/{courseId}/reviews/{reviewId}/likes
+         */
+        @GetMapping("/{reviewId}/likes")
+        public ResponseEntity<ReviewLikeResponse> getCounts(
+                        @PathVariable Long courseId,
+                        @PathVariable Long reviewId) {
+                // reviewId가 courseId에 속하는지 검증
+                reviewLikeService.validateReviewBelongsToCourse(courseId, reviewId);
 
-    /**
-     * 좋아요/싫어요 개수 조회
-     */
-    @GetMapping("/{reviewId}/counts")
-    public ResponseEntity<?> getCounts(
-            @PathVariable String type,
-            @PathVariable Long reviewId)
-    {
-        var like = reviewLikeService.getLikeCount(reviewId);
-        var dislike = reviewLikeService.getDislikeCount(reviewId);
+                long likeCount = reviewLikeService.getLikeCount(reviewId);
+                long dislikeCount = reviewLikeService.getDislikeCount(reviewId);
 
-        return ResponseEntity.ok(
-                new ReviewLikeResponse("NONE", like, dislike)
-        );
-    }
-
+                return ResponseEntity.ok(
+                                new ReviewLikeResponse("NONE", likeCount, dislikeCount));
+        }
 }

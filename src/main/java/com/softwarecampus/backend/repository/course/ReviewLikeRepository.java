@@ -14,10 +14,6 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
     Optional<ReviewLike> findByReviewIdAndAccountId(Long reviewId, Long accountId);
 
     // LikeType 에 따라 좋아요/싫어요 수 조회
-    int countByReviewIdAndTypeAndIsDeletedFalse(Long reviewId, LikeType type);
-
-    Optional<ReviewLike> findByReviewIdAndAccountIdAndIsDeletedFalse(Long reviewId, Long accountId);
-
-
+    int countByReviewIdAndType(Long reviewId, LikeType type);
 
 }

@@ -2,6 +2,7 @@ package com.softwarecampus.backend.dto.course;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -13,6 +14,7 @@ public class CourseReviewResponse {
 
     private Long reviewId;
     private Long writerId;
+    private String writerName; // 추가: 작성자 이름
     private Long courseId;
 
     private String comment;
@@ -25,4 +27,6 @@ public class CourseReviewResponse {
 
     private int likeCount;
     private int dislikeCount;
+    
+    private LocalDateTime createdAt; // 추가: 작성일
 }

@@ -1,6 +1,5 @@
 package com.softwarecampus.backend.service.course;
 
-import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
 import com.softwarecampus.backend.domain.course.CourseQna;
 import com.softwarecampus.backend.domain.user.Account;
@@ -31,8 +30,8 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     private final AccountRepository accountRepository;
 
     @Override
-    public Page<QnaResponse> getQnaList(CategoryType type, Long courseId, String keyword, Pageable pageable) {
-        Course course = validateCourse(type, courseId);
+    public Page<QnaResponse> getQnaList(Long courseId, String keyword, Pageable pageable) {
+        Course course = validateCourse(courseId);
 
         Page<CourseQna> qnaPage;
         if (keyword != null && !keyword.isBlank()) {
@@ -45,15 +44,15 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     }
 
     @Override
-    public QnaResponse getQnaDetail(CategoryType type, Long qnaId) {
-        CourseQna qna = validateQna(type, qnaId);
+    public QnaResponse getQnaDetail(Long qnaId) {
+        CourseQna qna = validateQna(qnaId);
         return toDto(qna);
     }
 
     @Override
     @Transactional
-    public QnaResponse createQuestion(CategoryType type, Long courseId, Long writerId, QnaRequest request) {
-        Course course = validateCourse(type, courseId);
+    public QnaResponse createQuestion(Long courseId, Long writerId, QnaRequest request) {
+        Course course = validateCourse(courseId);
         Account writer = accountRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
@@ -69,8 +68,8 @@ public class CourseQnaServiceImpl implements CourseQnaService {
 
     @Override
     @Transactional
-    public QnaResponse updateQuestion(CategoryType type, Long qnaId, Long writerId, QnaRequest request) {
-        CourseQna qna = validateQna(type, qnaId);
+    public QnaResponse updateQuestion(Long qnaId, Long writerId, QnaRequest request) {
+        CourseQna qna = validateQna(qnaId);
         if (!qna.getAccount().getId().equals(writerId)) {
             throw new ForbiddenException("본인의 질문만 수정할 수 있습니다.");
         }
@@ -82,8 +81,8 @@ public class CourseQnaServiceImpl implements CourseQnaService {
 
     @Override
     @Transactional
-    public void deleteQuestion(CategoryType type, Long qnaId, Long writerId) {
-        CourseQna qna = validateQna(type, qnaId);
+    public void deleteQuestion(Long qnaId, Long writerId) {
+        CourseQna qna = validateQna(qnaId);
         if (!qna.getAccount().getId().equals(writerId)) {
             throw new ForbiddenException("본인의 질문만 삭제할 수 있습니다.");
         }
@@ -92,8 +91,8 @@ public class CourseQnaServiceImpl implements CourseQnaService {
 
     @Override
     @Transactional
-    public QnaResponse answerQuestion(CategoryType type, Long qnaId, Long adminId, QnaAnswerRequest request) {
-        CourseQna qna = validateQna(type, qnaId);
+    public QnaResponse answerQuestion(Long qnaId, Long adminId, QnaAnswerRequest request) {
+        CourseQna qna = validateQna(qnaId);
 
         if (qna.isAnswered()) {
             throw new ForbiddenException("이미 답변이 완료된 질문입니다.");
@@ -109,8 +108,8 @@ public class CourseQnaServiceImpl implements CourseQnaService {
 
     @Override
     @Transactional
-    public QnaResponse updateAnswer(CategoryType type, Long qnaId, Long adminId, QnaAnswerRequest request) {
-        CourseQna qna = validateQna(type, qnaId);
+    public QnaResponse updateAnswer(Long qnaId, Long adminId, QnaAnswerRequest request) {
+        CourseQna qna = validateQna(qnaId);
 
         if (request.getAnswerText() == null || request.getAnswerText().trim().isEmpty()) {
             throw new BadRequestException("답변 내용을 입력해야 합니다.");
@@ -133,8 +132,8 @@ public class CourseQnaServiceImpl implements CourseQnaService {
 
     @Override
     @Transactional
-    public void deleteAnswer(CategoryType type, Long qnaId, Long adminId) {
-        CourseQna qna = validateQna(type, qnaId);
+    public void deleteAnswer(Long qnaId, Long adminId) {
+        CourseQna qna = validateQna(qnaId);
 
         if (!qna.isAnswered()) {
             throw new NotFoundException("삭제할 답변이 존재하지 않습니다.");
@@ -148,29 +147,22 @@ public class CourseQnaServiceImpl implements CourseQnaService {
         qna.setAnswered(false);
     }
 
-    private Course validateCourse(CategoryType type, Long courseId) {
+    private Course validateCourse(Long courseId) {
         Objects.requireNonNull(courseId, "Course ID must not be null");
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new NotFoundException("과정을 찾을 수 없습니다."));
         if (course.getIsDeleted()) {
             throw new NotFoundException("과정을 찾을 수 없습니다.");
         }
-        if (course.getCategoryType() != type) {
-            throw new NotFoundException("잘못된 타입의 과정입니다.");
-        }
         return course;
     }
 
-    private CourseQna validateQna(CategoryType type, Long qnaId) {
+    private CourseQna validateQna(Long qnaId) {
         Objects.requireNonNull(qnaId, "QnA ID must not be null");
         CourseQna qna = qnaRepository.findWithDetailsById(qnaId)
                 .orElseThrow(() -> new NotFoundException("Q&A를 찾을 수 없습니다."));
         if (qna.getIsDeleted()) {
             throw new NotFoundException("Q&A를 찾을 수 없습니다.");
-        }
-        // Validate if QnA belongs to a course of the correct type
-        if (qna.getCourse().getCategoryType() != type) {
-            throw new NotFoundException("해당 카테고리의 Q&A가 아닙니다.");
         }
         return qna;
     }

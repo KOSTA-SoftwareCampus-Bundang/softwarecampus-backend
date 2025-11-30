@@ -12,6 +12,8 @@ import com.softwarecampus.backend.repository.course.CourseCategoryRepository;
 import com.softwarecampus.backend.repository.course.CourseRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,29 +29,29 @@ public class CourseServiceImpl implements CourseService {
         private final CourseCategoryRepository courseCategoryRepository;
 
         @Override
-        public List<CourseResponseDTO> getAllCourses(CategoryType type, Boolean isOffline) {
-                List<Course> courses;
-                if (isOffline != null) {
-                        courses = courseRepository.findByCategory_CategoryTypeAndIsOfflineAndDeletedAtIsNull(type,
-                                        isOffline);
-                } else {
-                        courses = courseRepository.findByCategory_CategoryTypeAndDeletedAtIsNull(type);
-                }
+        public Page<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline,
+                        String keyword, Pageable pageable) {
+                // 통합 검색 쿼리 사용 (모든 파라미터가 null 가능)
+                Page<Course> coursePage = courseRepository.searchCourses(categoryId, categoryType, isOffline, keyword,
+                                pageable);
+                return coursePage.map(CourseResponseDTO::fromEntity);
+        }
 
+        /**
+         * @deprecated This method fetches all courses without pagination, which can
+         *             cause performance issues.
+         *             Use
+         *             {@link #getCourses(Long, CategoryType, Boolean, String, Pageable)}
+         *             instead.
+         */
+        @Override
+        @Deprecated
+        public List<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline,
+                        String keyword) {
+                List<Course> courses = courseRepository.searchCoursesAll(categoryId, categoryType, isOffline, keyword);
                 return courses.stream()
                                 .map(CourseResponseDTO::fromEntity)
                                 .toList();
-        }
-
-        @Override
-        @Transactional(readOnly = true)
-        public List<CourseResponseDTO> searchCourses(CategoryType type, String keyword, Boolean isOffline) {
-                if (keyword == null || keyword.isBlank()) {
-                        return getAllCourses(type, isOffline);
-                }
-
-                return courseRepository.searchByName(type.name(), keyword, isOffline)
-                                .stream().map(CourseResponseDTO::fromEntity).toList();
         }
 
         /** 관리자 - 요청 승인 후 등록 */

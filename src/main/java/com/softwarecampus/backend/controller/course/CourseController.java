@@ -7,6 +7,9 @@ import com.softwarecampus.backend.dto.course.CourseResponseDTO;
 import com.softwarecampus.backend.service.course.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,43 +18,45 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/courses")
 public class CourseController {
 
     private final CourseService courseService;
 
-    /** 과정 목록 조회 */
-    @GetMapping("/{type}/course")
-    public ResponseEntity<List<CourseResponseDTO>> getAllCourses(
-            @PathVariable CategoryType type,
-            @RequestParam(required = false) Boolean isOffline) {
-        return ResponseEntity.ok(courseService.getAllCourses(type, isOffline));
+    /** 
+     * 과정 목록 조회 (다양한 필터 지원 + 페이지네이션)
+     * @param categoryId 카테고리 ID (예: 33=백엔드 개발)
+     * @param categoryType 카테고리 타입 (EMPLOYEE/JOB_SEEKER)
+     * @param isOffline 온/오프라인 필터
+     * @param keyword 검색 키워드
+     * @param pageable 페이지 정보 (page, size, sort)
+     */
+    @GetMapping
+    public ResponseEntity<Page<CourseResponseDTO>> getCourses(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) CategoryType categoryType,
+            @RequestParam(required = false) Boolean isOffline,
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(courseService.getCourses(categoryId, categoryType, isOffline, keyword, pageable));
     }
 
-    @GetMapping("/{type}/course/search")
-    public ResponseEntity<List<CourseResponseDTO>> searchCourses(
-            @PathVariable CategoryType type,
-            @RequestParam String keyword,
-            @RequestParam(required = false) Boolean isOffline) {
-        return ResponseEntity.ok(courseService.searchCourses(type, keyword, isOffline));
-    }
-
-    /** 과정 상세 조회 (신규 추가) */
-    @GetMapping("/courses/{courseId}")
+    /** 과정 상세 조회 */
+    @GetMapping("/{courseId}")
     public ResponseEntity<CourseDetailResponseDTO> getCourseDetail(
             @PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.getCourseDetail(courseId));
     }
 
     /** 관리자 - 과정 등록 승인 */
-    @PostMapping("/courses/{courseId}/approve")
+    @PostMapping("/{courseId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CourseResponseDTO> approveCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.approveCourse(courseId));
     }
 
     /** 과정 수정 */
-    @PutMapping("/courses/{courseId}")
+    @PutMapping("/{courseId}")
     @PreAuthorize("hasAnyRole('ADMIN','INSTITUTION')")
     public ResponseEntity<CourseResponseDTO> updateCourse(
             @PathVariable Long courseId,
@@ -60,7 +65,7 @@ public class CourseController {
     }
 
     /** 과정 삭제 */
-    @DeleteMapping("/courses/{courseId}")
+    @DeleteMapping("/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
         courseService.deleteCourse(courseId);
@@ -68,7 +73,7 @@ public class CourseController {
     }
 
     /** 기관유저 - 과정 등록 요청 */
-    @PostMapping("/courses/request")
+    @PostMapping("/request")
     @PreAuthorize("hasRole('INSTITUTION')")
     public ResponseEntity<CourseResponseDTO> requestCourse(@RequestBody @Valid CourseRequestDTO dto) {
         return ResponseEntity.ok(courseService.requestCourseRegistration(dto));

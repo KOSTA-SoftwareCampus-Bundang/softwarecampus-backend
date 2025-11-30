@@ -2,24 +2,25 @@ package com.softwarecampus.backend.service.course;
 
 import com.softwarecampus.backend.domain.course.ReviewLike;
 import com.softwarecampus.backend.domain.course.ReviewLike.LikeType;
+import com.softwarecampus.backend.dto.course.ReviewLikeResponse;
 
 public interface ReviewLikeService {
 
-    ReviewLike toggleLike(Long reviewId, Long accountId, LikeType type);
+    /**
+     * reviewId가 courseId에 속하는지 검증
+     * 
+     * @param courseId 코스 ID
+     * @param reviewId 리뷰 ID
+     * @throws com.softwarecampus.backend.exception.course.NotFoundException 리뷰를 찾을
+     *                                                                       수 없거나
+     *                                                                       삭제된 경우
+     */
+    void validateReviewBelongsToCourse(Long courseId, Long reviewId);
+
+    ReviewLikeResponse toggleLike(Long courseId, Long reviewId, Long accountId, LikeType type);
 
     long getLikeCount(Long reviewId);
 
     long getDislikeCount(Long reviewId);
 
-//    // 좋아요 / 싫어요 토글 (반환값: 최종 상태)
-//    void toggleLike(Long reviewId, Long accountId, LikeType type);
-//
-//    // 좋아요 개수
-//    int countLikes(Long reviewId);
-//
-//    // 싫어요 개수
-//    int countDislikes(Long reviewId);
-
-    // 해당 유저가 좋아요/싫어요 눌렀는지 조회
- //   LikeType getUserLikeType(Long reviewId, Long accountId);
 }
