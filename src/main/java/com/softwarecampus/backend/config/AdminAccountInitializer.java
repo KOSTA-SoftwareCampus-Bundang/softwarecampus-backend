@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 애플리케이션 시작 시 초기 ADMIN 계정 생성
@@ -50,6 +51,33 @@ public class AdminAccountInitializer implements ApplicationRunner {
         // ADMIN 계정이 이미 존재하는지 확인
         if (accountRepository.existsByEmailAndIsDeletedFalse(adminEmail)) {
             log.info("초기 ADMIN 계정이 이미 존재합니다: {}", adminEmail);
+            return;
+        }
+
+        // Soft Delete된 ADMIN 계정 복구 체크
+        Optional<Account> deletedAdmin = accountRepository.findByEmailAndIsDeletedTrue(adminEmail);
+        if (deletedAdmin.isPresent()) {
+            Account admin = deletedAdmin.get();
+            
+            // 복구: isDeleted=false로 설정
+            admin.restore();
+            
+            // 필요 시 필드 업데이트
+            admin.setPassword(passwordEncoder.encode(adminPassword));
+            if (adminName != null) {
+                admin.setUserName(adminName);
+            }
+            if (adminPhone != null) {
+                admin.setPhoneNumber(adminPhone);
+            }
+            
+            accountRepository.save(admin);
+            
+            log.warn("====================================================");
+            log.warn("삭제된 ADMIN 계정이 복구되었습니다!");
+            log.warn("이메일: {}", adminEmail);
+            log.warn("⚠️  최초 로그인 후 반드시 비밀번호를 변경하세요!");
+            log.warn("====================================================");
             return;
         }
 

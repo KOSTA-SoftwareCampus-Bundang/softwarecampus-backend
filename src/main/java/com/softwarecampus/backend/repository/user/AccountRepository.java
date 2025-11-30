@@ -35,6 +35,13 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     boolean existsByEmailAndIsDeletedFalse(String email);
 
     /**
+     * 삭제된 계정 조회 (Soft Delete 복구용)
+     * - ADMIN 계정 초기화 시 복구에 사용
+     * - 중복 생성 방지
+     */
+    Optional<Account> findByEmailAndIsDeletedTrue(String email);
+
+    /**
      * 활성 사용자명 중복 체크 (Soft Delete 고려)
      * - isDeleted=false인 계정 중에서만 중복 체크
      */
