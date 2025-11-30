@@ -210,34 +210,24 @@ class LoginServiceImplTest {
     }
 
     @Test
-    @DisplayName("로그인 실패 - 비활성화된 계정")
-    void login_Fail_InactiveAccount() {
+    @DisplayName("로그인 실패 - 삭제된 계정 (Soft Delete)")
+    void login_Fail_DeletedAccount() {
         // given
-        Account inactiveAccount = Account.builder()
-                .id(3L)
-                .email("inactive@example.com")
-                .password("$2a$10$encodedPassword")
-                .userName("비활성 사용자")
-                .phoneNumber("010-1111-2222")
-                .accountType(AccountType.USER)
-                .accountApproved(ApprovalStatus.APPROVED)
-                .build();
-        inactiveAccount.markDeleted(); // 소프트 삭제
-
-        LoginRequest inactiveRequest = new LoginRequest(
-                "inactive@example.com",
+        LoginRequest deletedRequest = new LoginRequest(
+                "deleted@example.com",
                 "Password123!");
 
-        when(accountRepository.findByEmailAndIsDeletedFalse(inactiveRequest.email()))
-                .thenReturn(Optional.of(inactiveAccount));
-        when(passwordEncoder.matches(inactiveRequest.password(), inactiveAccount.getPassword()))
-                .thenReturn(true);
+        // Repository는 삭제된 계정에 대해 Optional.empty() 반환
+        when(accountRepository.findByEmailAndIsDeletedFalse(deletedRequest.email()))
+                .thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> loginService.login(inactiveRequest))
+        assertThatThrownBy(() -> loginService.login(deletedRequest))
                 .isInstanceOf(InvalidCredentialsException.class)
-                .hasMessage("비활성화된 계정입니다");
+                .hasMessage("이메일 또는 비밀번호가 올바르지 않습니다");
 
+        // 비밀번호 체크 전에 예외 발생하므로 호출되지 않음
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
         verify(jwtTokenProvider, never()).generateToken(anyString(), anyString());
     }
 
