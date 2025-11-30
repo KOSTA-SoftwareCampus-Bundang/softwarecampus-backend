@@ -60,6 +60,7 @@ public class Account extends BaseSoftDeleteSupportEntity implements java.io.Seri
     private String position; // 직책/역할
 
     // ===== 새로 추가된 필드 =====
+    @Column(name = "address", length = 255)
     private String address; // 주소
 
     @Enumerated(EnumType.STRING)

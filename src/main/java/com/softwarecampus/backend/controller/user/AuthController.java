@@ -174,7 +174,7 @@ public class AuthController {
             return ResponseEntity.ok(VerifyPasswordResponse.success());
         } else {
             log.warn("비밀번호 확인 실패 - 불일치: email={}", EmailUtils.maskEmail(email));
-            return ResponseEntity.badRequest().body(VerifyPasswordResponse.failure());
+            return ResponseEntity.ok(VerifyPasswordResponse.failure());
         }
     }
 

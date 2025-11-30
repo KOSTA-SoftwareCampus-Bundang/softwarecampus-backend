@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.service.user.profile;
 
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 
@@ -87,6 +88,16 @@ public interface ProfileService {
     /**
      * 비밀번호 변경 (이메일 인증 코드 검증) - 로그인 사용자용
      * 
+     * 보안 요구사항:
+     * - 로그인 상태에서만 호출 가능 (JWT 토큰 필요)
+     * - 이메일 인증 코드 검증 필수 (PASSWORD_CHANGE 타입)
+     * - 이중 인증 방식: JWT + 이메일 인증
+     * 
+     * 사용 시나리오:
+     * 1. POST /api/auth/verify-password - 현재 비밀번호 확인
+     * 2. POST /api/auth/email/send-change-code - 이메일 인증 코드 발송
+     * 3. PATCH /api/mypage/password - 인증 코드 + 새 비밀번호로 변경 (이 메서드)
+     * 
      * @param email   이메일
      * @param request 인증 코드 및 새 비밀번호
      * @throws com.softwarecampus.backend.exception.user.AccountNotFoundException          계정이
@@ -107,5 +118,5 @@ public interface ProfileService {
      *                                                                                     횟수
      *                                                                                     초과
      */
-    void changePassword(String email, ResetPasswordRequest request);
+    void changePassword(String email, ChangePasswordRequest request);
 }

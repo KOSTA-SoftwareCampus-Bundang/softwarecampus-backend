@@ -3,6 +3,7 @@ package com.softwarecampus.backend.service.user.profile;
 import com.softwarecampus.backend.domain.common.VerificationType;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
+import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.EmailVerificationCodeRequest;
 import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
@@ -177,12 +178,23 @@ public class ProfileServiceImpl implements ProfileService {
 
     /**
      * 비밀번호 변경 (이메일 인증 코드 검증) - 로그인 사용자용
+     * 
+     * 보안 요구사항:
+     * - 로그인 상태에서만 호출 가능 (JWT 토큰 필요)
+     * - 이메일 인증 코드 검증 필수 (PASSWORD_CHANGE 타입)
+     * - 이중 인증 방식: JWT + 이메일 인증
+     * 
+     * 사용 시나리오:
+     * 1. POST /api/auth/verify-password - 현재 비밀번호 확인
+     * 2. POST /api/auth/email/send-change-code - 이메일 인증 코드 발송
+     * 3. PATCH /api/mypage/password - 인증 코드 + 새 비밀번호로 변경
+     * 
      * - EmailVerificationService.verifyChangeCode() 사용
      * - type: PASSWORD_CHANGE
      */
     @Override
     @Transactional
-    public void changePassword(String email, ResetPasswordRequest request) {
+    public void changePassword(String email, ChangePasswordRequest request) {
         // 1. 입력 검증
         validateEmailInput(email);
 
@@ -193,7 +205,7 @@ public class ProfileServiceImpl implements ProfileService {
                 .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
         // 3. 이메일 인증 코드 검증 (PASSWORD_CHANGE 타입)
-        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email, request.getCode());
+        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email, request.getVerificationCode());
         emailVerificationService.verifyChangeCode(codeRequest);
 
         // 4. 비밀번호 변경
