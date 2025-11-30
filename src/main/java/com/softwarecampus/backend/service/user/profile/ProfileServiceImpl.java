@@ -226,6 +226,9 @@ public class ProfileServiceImpl implements ProfileService {
         if (request.getPosition() != null) {
             account.setPosition(request.getPosition());
         }
+        if (request.getProfileImage() != null) {
+            account.setProfileImage(request.getProfileImage());
+        }
     }
 
     /**
@@ -241,6 +244,7 @@ public class ProfileServiceImpl implements ProfileService {
                 account.getAccountApproved(),
                 account.getAddress(),
                 account.getAffiliation(),
-                account.getPosition());
+                account.getPosition(),
+                account.getProfileImage());
     }
 }

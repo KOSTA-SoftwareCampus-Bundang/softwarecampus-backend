@@ -33,7 +33,7 @@ public class AccountAdminServiceImpl implements AccountAdminService {
     }
 
     /**
-     *  Account 엔티티를 기존 AccountResponse DTO 레코드 타입으로 변환
+     * Account 엔티티를 기존 AccountResponse DTO 레코드 타입으로 변환
      */
     private AccountResponse toResponse(Account account) {
         return new AccountResponse(
@@ -45,12 +45,12 @@ public class AccountAdminServiceImpl implements AccountAdminService {
                 account.getAccountApproved(),
                 account.getAddress(),
                 account.getAffiliation(),
-                account.getPosition()
-        );
+                account.getPosition(),
+                account.getProfileImage());
     }
 
     /**
-     *  전체 활성 회원 목록 조회
+     * 전체 활성 회원 목록 조회
      */
     @Override
     public Page<AccountResponse> getAllActiveAccounts(Pageable pageable) {
@@ -60,7 +60,7 @@ public class AccountAdminServiceImpl implements AccountAdminService {
     }
 
     /**
-     *  회원 목록 검색
+     * 회원 목록 검색
      */
     @Override
     public Page<AccountResponse> searchAccounts(String keyword, Pageable pageable) {
@@ -70,7 +70,7 @@ public class AccountAdminServiceImpl implements AccountAdminService {
     }
 
     /**
-     *  특정 회원 상세 정보 조회
+     * 특정 회원 상세 정보 조회
      */
     @Override
     public AccountResponse getAccountDetail(Long accountId) {
@@ -82,7 +82,7 @@ public class AccountAdminServiceImpl implements AccountAdminService {
     }
 
     /**
-     *  회원 정보 수정
+     * 회원 정보 수정
      */
     @Override
     @Transactional
@@ -115,7 +115,7 @@ public class AccountAdminServiceImpl implements AccountAdminService {
     }
 
     /**
-     *  회원 삭제
+     * 회원 삭제
      */
     @Override
     @Transactional
@@ -123,7 +123,7 @@ public class AccountAdminServiceImpl implements AccountAdminService {
         Account account = findAccount(accountId);
         accountRepository.delete(account);
     }
-    
+
     /**
      * 회원 승인
      * - 승인 상태 변경 및 승인 이메일 발송
@@ -133,34 +133,33 @@ public class AccountAdminServiceImpl implements AccountAdminService {
     @Transactional
     public AccountResponse approveAccount(Long accountId) {
         Account account = findAccount(accountId);
-        
+
         if (account.getIsDeleted()) {
             throw new NoSuchElementException("Account with id: " + accountId + " not found");
         }
-        
+
         account.setAccountApproved(ApprovalStatus.APPROVED);
         AccountResponse response = toResponse(account);
-        
+
         // 트랜잭션 커밋 후 이메일 발송 (이메일 실패해도 승인은 완료)
         String email = account.getEmail();
         String userName = account.getUserName();
         if (email != null) {
             TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        try {
-                            emailSendService.sendAccountApprovalEmail(email, userName);
-                        } catch (Exception e) {
-                            log.error("회원 승인 이메일 발송 실패 - 회원 ID: {}", accountId, e);
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            try {
+                                emailSendService.sendAccountApprovalEmail(email, userName);
+                            } catch (Exception e) {
+                                log.error("회원 승인 이메일 발송 실패 - 회원 ID: {}", accountId, e);
+                            }
                         }
-                    }
-                }
-            );
+                    });
         } else {
             log.warn("회원 ID {}는 이메일 주소가 없어 승인 이메일을 발송하지 않습니다", accountId);
         }
-        
+
         return response;
     }
 }

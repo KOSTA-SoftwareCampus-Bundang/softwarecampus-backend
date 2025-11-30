@@ -21,10 +21,7 @@ public class UpdateProfileRequest {
     @Size(min = 2, max = 50, message = "이름은 2-50자 사이여야 합니다")
     private String userName;
 
-    @Pattern(
-        regexp = "^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$",
-        message = "전화번호 형식이 올바르지 않습니다 (예: 010-1234-5678)"
-    )
+    @Pattern(regexp = "^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$", message = "전화번호 형식이 올바르지 않습니다 (예: 010-1234-5678)")
     private String phoneNumber;
 
     @Size(max = 200, message = "주소는 200자 이하여야 합니다")
@@ -35,4 +32,7 @@ public class UpdateProfileRequest {
 
     @Size(max = 50, message = "직책은 50자 이하여야 합니다")
     private String position;
+
+    @Size(max = 1000, message = "프로필 이미지 URL은 1000자 이하여야 합니다")
+    private String profileImage;
 }
