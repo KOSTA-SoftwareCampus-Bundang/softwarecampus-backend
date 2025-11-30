@@ -44,9 +44,11 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByUserNameAndIsDeletedFalse(String userName);
 
     /**
-     * 전화번호 중복 체크
+     * 활성 전화번호 중복 체크 (Soft Delete 고려)
+     * - isDeleted=false인 계정 중에서만 중복 체크
+     * - 삭제된 계정의 전화번호 재사용 허용
      */
-    boolean existsByPhoneNumber(String phoneNumber);
+    boolean existsByPhoneNumberAndIsDeletedFalse(String phoneNumber);
 
     /**
      * 계정 타입별 활성 계정 조회

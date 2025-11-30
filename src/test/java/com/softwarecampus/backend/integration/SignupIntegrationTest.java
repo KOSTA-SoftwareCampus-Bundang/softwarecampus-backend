@@ -195,7 +195,7 @@ class SignupIntegrationTest {
         }
 
         @Test
-        @DisplayName("전화번호 중복 확인 - existsByPhoneNumber() 검증")
+        @DisplayName("전화번호 중복 확인 - existsByPhoneNumberAndIsDeletedFalse() 검증")
         void 전화번호중복확인_Repository검증() throws Exception {
                 // given - 기존 계정 생성
                 Account existingAccount = Account.builder()
@@ -208,9 +208,9 @@ class SignupIntegrationTest {
                                 .build();
                 accountRepository.save(existingAccount);
 
-                // Repository 직접 검증
-                assertThat(accountRepository.existsByPhoneNumber("010-1234-5678")).isTrue();
-                assertThat(accountRepository.existsByPhoneNumber("010-9999-8888")).isFalse();
+                // Repository 직접 검증 (Soft Delete 고려)
+                assertThat(accountRepository.existsByPhoneNumberAndIsDeletedFalse("010-1234-5678")).isTrue();
+                assertThat(accountRepository.existsByPhoneNumberAndIsDeletedFalse("010-9999-8888")).isFalse();
 
                 // when & then - 중복 전화번호로 회원가입 시도
                 SignupRequest duplicateRequest = new SignupRequest(

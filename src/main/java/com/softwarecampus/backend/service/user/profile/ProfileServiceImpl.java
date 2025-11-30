@@ -109,7 +109,7 @@ public class ProfileServiceImpl implements ProfileService {
         if (request.getPhoneNumber() != null &&
                 !request.getPhoneNumber().equals(account.getPhoneNumber())) {
 
-            if (accountRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            if (accountRepository.existsByPhoneNumberAndIsDeletedFalse(request.getPhoneNumber())) {
                 log.warn("전화번호 중복: phoneNumber={}", request.getPhoneNumber());
                 throw new PhoneNumberAlreadyExistsException(request.getPhoneNumber());
             }
