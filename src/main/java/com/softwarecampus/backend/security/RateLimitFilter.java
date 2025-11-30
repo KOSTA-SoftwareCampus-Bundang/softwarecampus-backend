@@ -9,6 +9,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+
+import java.util.Objects;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -151,7 +153,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         
         String key = PASSWORD_VERIFY_RATE_LIMIT_PREFIX + clientIp + ":" + username;
-        Long requests = incrementCounter(key, 60); // 1분 TTL
+        long requests = incrementCounter(key, 60); // 1분 TTL
         
         if (requests > passwordVerificationRequestsPerMinute) {
             log.warn("Password verification rate limit exceeded - IP: {}, Username: {}, Count: {}", 
@@ -174,7 +176,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private boolean checkLoginLimit(HttpServletResponse response, String clientIp) 
             throws IOException {
         String key = LOGIN_RATE_LIMIT_PREFIX + clientIp;
-        Long requests = incrementCounter(key, 60); // 1분 TTL
+        long requests = incrementCounter(key, 60); // 1분 TTL
         
         if (requests > loginRequestsPerMinute) {
             log.warn("Login rate limit exceeded - IP: {}, Count: {}", clientIp, requests);
@@ -196,7 +198,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private boolean checkGlobalLimit(HttpServletResponse response, String clientIp) 
             throws IOException {
         String key = RATE_LIMIT_PREFIX + clientIp;
-        Long requests = incrementCounter(key, 60); // 1분 TTL
+        long requests = incrementCounter(key, 60); // 1분 TTL
         
         if (requests > requestsPerMinute) {
             log.warn("Global rate limit exceeded - IP: {}, Count: {}", clientIp, requests);
@@ -211,16 +213,20 @@ public class RateLimitFilter extends OncePerRequestFilter {
     /**
      * Redis 카운터 증가 (Lua Script로 원자적 실행)
      * 
+     * Redis 실행 실패 시 null을 반환할 수 있으므로,
+     * null-safe하게 0L로 변환하여 반환합니다.
+     * 
      * @param key        Redis 키
      * @param ttlSeconds TTL (초)
-     * @return 현재 카운트
+     * @return 현재 카운트 (실패 시 0L)
      */
-    private Long incrementCounter(String key, int ttlSeconds) {
-        return redisTemplate.execute(
+    private long incrementCounter(String key, int ttlSeconds) {
+        Long result = redisTemplate.execute(
                 new DefaultRedisScript<>(RedisScripts.INCR_WITH_EXPIRE, Long.class),
                 Collections.singletonList(key),
                 String.valueOf(ttlSeconds)
         );
+        return Objects.requireNonNullElse(result, 0L);
     }
     
     /**
