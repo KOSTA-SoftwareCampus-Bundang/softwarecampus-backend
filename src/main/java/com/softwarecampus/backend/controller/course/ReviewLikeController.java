@@ -4,6 +4,7 @@ import com.softwarecampus.backend.dto.course.ReviewLikeRequest;
 import com.softwarecampus.backend.dto.course.ReviewLikeResponse;
 import com.softwarecampus.backend.security.CustomUserDetails;
 import com.softwarecampus.backend.service.course.ReviewLikeService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,7 +27,7 @@ public class ReviewLikeController {
         public ResponseEntity<ReviewLikeResponse> toggleLike(
                         @PathVariable Long courseId,
                         @PathVariable Long reviewId,
-                        @RequestBody ReviewLikeRequest request,
+                        @Valid @RequestBody ReviewLikeRequest request,
                         @AuthenticationPrincipal CustomUserDetails userDetails) {
 
                 Long accountId = userDetails.getId();
