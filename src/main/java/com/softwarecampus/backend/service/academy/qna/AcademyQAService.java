@@ -4,14 +4,17 @@ import com.softwarecampus.backend.dto.academy.qna.QACreateRequest;
 import com.softwarecampus.backend.dto.academy.qna.QAResponse;
 import com.softwarecampus.backend.dto.academy.qna.QAUpdateRequest;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 public interface AcademyQAService {
 
     /**
-     * Q/A 조회(리스트 형식)
+     * Q/A 조회(페이징 및 검색 지원)
      */
-    List<QAResponse> getQAsByAcademyId(Long academyId);
+    Page<QAResponse> getQAsByAcademyId(Long academyId, String keyword, Pageable pageable);
 
     /**
      * Q/A 상세보기

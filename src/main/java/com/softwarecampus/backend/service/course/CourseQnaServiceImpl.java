@@ -14,12 +14,12 @@ import com.softwarecampus.backend.repository.course.CourseQnaRepository;
 import com.softwarecampus.backend.repository.course.CourseRepository;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,12 +31,17 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     private final AccountRepository accountRepository;
 
     @Override
-    public List<QnaResponse> getQnaList(CategoryType type, Long courseId) {
+    public Page<QnaResponse> getQnaList(CategoryType type, Long courseId, String keyword, Pageable pageable) {
         Course course = validateCourse(type, courseId);
-        return qnaRepository.findByCourseAndIsDeletedFalseOrderByIdDesc(course)
-                .stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+
+        Page<CourseQna> qnaPage;
+        if (keyword != null && !keyword.isBlank()) {
+            qnaPage = qnaRepository.searchByCourseIdAndKeyword(courseId, keyword, pageable);
+        } else {
+            qnaPage = qnaRepository.findByCourseId(courseId, pageable);
+        }
+
+        return qnaPage.map(this::toDto);
     }
 
     @Override
@@ -138,7 +143,6 @@ public class CourseQnaServiceImpl implements CourseQnaService {
         if (qna.getAnsweredBy() != null && !qna.getAnsweredBy().getId().equals(adminId)) {
             throw new ForbiddenException("본인의 답변만 삭제할 수 있습니다.");
         }
-
         qna.setAnswerText(null);
         qna.setAnsweredBy(null);
         qna.setAnswered(false);
@@ -159,7 +163,7 @@ public class CourseQnaServiceImpl implements CourseQnaService {
 
     private CourseQna validateQna(CategoryType type, Long qnaId) {
         Objects.requireNonNull(qnaId, "QnA ID must not be null");
-        CourseQna qna = qnaRepository.findById(qnaId)
+        CourseQna qna = qnaRepository.findWithDetailsById(qnaId)
                 .orElseThrow(() -> new NotFoundException("Q&A를 찾을 수 없습니다."));
         if (qna.getIsDeleted()) {
             throw new NotFoundException("Q&A를 찾을 수 없습니다.");

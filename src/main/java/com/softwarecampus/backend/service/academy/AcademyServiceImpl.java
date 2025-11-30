@@ -35,16 +35,16 @@ public class AcademyServiceImpl implements AcademyService {
     private final EmailSendService emailSendService;
 
     private Academy findAcademyOrThrow(Long id) {
-        return academyRepository.findById(id)
+        return academyRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new AcademyException(AcademyErrorCode.ACADEMY_NOT_FOUND));
     }
 
     /**
-     *  훈련기관 등록
-     *  수정자: GitHub Copilot
-     *  수정일: 2025-11-28
-     *  수정 내용: 파일 업로드 기능 추가 (재직증명서)
-     *  수정일: 2025-11-29 - 트랜잭션 롤백 시 S3 파일 정리 보상 로직 추가
+     * 훈련기관 등록
+     * 수정자: GitHub Copilot
+     * 수정일: 2025-11-28
+     * 수정 내용: 파일 업로드 기능 추가 (재직증명서)
+     * 수정일: 2025-11-29 - 트랜잭션 롤백 시 S3 파일 정리 보상 로직 추가
      */
     @Override
     @Transactional
@@ -59,7 +59,7 @@ public class AcademyServiceImpl implements AcademyService {
                 .build();
 
         Academy savedAcademy = academyRepository.save(academy);
-        
+
         // 2. 파일 업로드 (S3) - 트랜잭션 롤백 시 보상 로직 포함
         List<String> uploadedS3Urls = new ArrayList<>();
         if (request.getFiles() != null && !request.getFiles().isEmpty()) {
@@ -77,7 +77,7 @@ public class AcademyServiceImpl implements AcademyService {
                 throw e; // 예외 다시 던져서 트랜잭션 롤백 유도
             }
         }
-        
+
         return AcademyResponse.from(savedAcademy);
     }
 
@@ -105,11 +105,12 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     /**
-     *  훈련기관 상세 정보 조회
+     * 훈련기관 상세 정보 조회
      */
     @Override
     public AcademyResponse getAcademyDetails(Long id) {
-        Academy academy = findAcademyOrThrow(id);
+        Academy academy = academyRepository.findWithFilesByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new AcademyException(AcademyErrorCode.ACADEMY_NOT_FOUND));
         return AcademyResponse.from(academy);
     }
 
@@ -143,7 +144,7 @@ public class AcademyServiceImpl implements AcademyService {
     @Transactional
     public void deleteAcademy(Long id) {
         Academy academy = findAcademyOrThrow(id);
-        academyRepository.delete(academy);
+        academy.markDeleted();
     }
 
     /**
@@ -159,30 +160,29 @@ public class AcademyServiceImpl implements AcademyService {
         Academy academy = findAcademyOrThrow(id);
         academy.approve();
         AcademyResponse response = AcademyResponse.from(academy);
-        
+
         // 트랜잭션 커밋 후 이메일 발송 (이메일 실패해도 승인은 완료)
         String email = academy.getEmail();
         String name = academy.getName();
         if (email != null) {
             TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        try {
-                            emailSendService.sendAcademyApprovalEmail(email, name);
-                        } catch (Exception e) {
-                            log.error("기관 승인 이메일 발송 실패 - 기관 ID: {}", id, e);
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            try {
+                                emailSendService.sendAcademyApprovalEmail(email, name);
+                            } catch (Exception e) {
+                                log.error("기관 승인 이메일 발송 실패 - 기관 ID: {}", id, e);
+                            }
                         }
-                    }
-                }
-            );
+                    });
         } else {
             log.warn("기관 ID {}는 이메일 주소가 없어 승인 이메일을 발송하지 않습니다", id);
         }
-        
+
         return response;
     }
-    
+
     /**
      * 기관 거절 처리
      * 작성자: GitHub Copilot
@@ -195,27 +195,26 @@ public class AcademyServiceImpl implements AcademyService {
         Academy academy = findAcademyOrThrow(id);
         academy.reject(reason);
         AcademyResponse response = AcademyResponse.from(academy);
-        
+
         // 트랜잭션 커밋 후 이메일 발송 (이메일 실패해도 거절은 완료)
         String email = academy.getEmail();
         String name = academy.getName();
         if (email != null) {
             TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        try {
-                            emailSendService.sendAcademyRejectionEmail(email, name, reason);
-                        } catch (Exception e) {
-                            log.error("기관 거절 이메일 발송 실패 - 기관 ID: {}", id, e);
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            try {
+                                emailSendService.sendAcademyRejectionEmail(email, name, reason);
+                            } catch (Exception e) {
+                                log.error("기관 거절 이메일 발송 실패 - 기관 ID: {}", id, e);
+                            }
                         }
-                    }
-                }
-            );
+                    });
         } else {
             log.warn("기관 ID {}는 이메일 주소가 없어 거절 이메일을 발송하지 않습니다", id);
         }
-        
+
         return response;
     }
 

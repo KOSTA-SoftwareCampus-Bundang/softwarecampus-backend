@@ -19,6 +19,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
@@ -76,15 +81,19 @@ class AcademyQAServiceImplTest {
     void getQAByAcademyId_success() {
         // given
         List<AcademyQA> qaList = Arrays.asList(testQA, testQA);
-        when(qaRepository.findAllByAcademyId(academyId)).thenReturn(qaList);
+        Page<AcademyQA> qaPage = new PageImpl<>(qaList);
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // 검색어 없는 경우
+        when(qaRepository.findByAcademyId(eq(academyId), any(Pageable.class))).thenReturn(qaPage);
 
         // when
-        List<QAResponse> response = qaService.getQAsByAcademyId(academyId);
+        Page<QAResponse> response = qaService.getQAsByAcademyId(academyId, null, pageable);
 
         // then
-        assertEquals(2, response.size());
-        assertEquals(academyId, response.get(0).getAcademyId(), "첫 번째 Q/A의 Academy ID가 일치해야 합니다.");
-        verify(qaRepository, times(1)).findAllByAcademyId(academyId);
+        assertEquals(2, response.getContent().size());
+        assertEquals(academyId, response.getContent().get(0).getAcademyId(), "첫 번째 Q/A의 Academy ID가 일치해야 합니다.");
+        verify(qaRepository, times(1)).findByAcademyId(eq(academyId), any(Pageable.class));
     }
 
     // Q/A 상세 보기 성공
