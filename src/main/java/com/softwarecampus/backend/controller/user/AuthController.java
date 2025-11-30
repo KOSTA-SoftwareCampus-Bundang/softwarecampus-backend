@@ -10,9 +10,7 @@ import com.softwarecampus.backend.dto.user.VerifyPasswordRequest;
 import com.softwarecampus.backend.dto.user.VerifyPasswordResponse;
 import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.PasswordResetWithEmailRequest;
-import com.softwarecampus.backend.domain.user.Account;
-import com.softwarecampus.backend.repository.user.AccountRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
@@ -62,8 +60,6 @@ public class AuthController {
     private final LoginService loginService;
     private final TokenService tokenService;
     private final JwtTokenProvider jwtTokenProvider;
-    private final AccountRepository accountRepository;
-    private final PasswordEncoder passwordEncoder;
     private final ProfileService profileService;
 
     /**
@@ -158,13 +154,8 @@ public class AuthController {
         String email = userDetails.getUsername();
         log.info("현재 비밀번호 확인 요청");
 
-        // 계정 조회
-        Account account = accountRepository.findByEmail(email)
-                .orElseThrow(
-                        () -> new com.softwarecampus.backend.exception.user.AccountNotFoundException("계정을 찾을 수 없습니다."));
-
-        // 비밀번호 검증
-        boolean matches = passwordEncoder.matches(request.getCurrentPassword(), account.getPassword());
+        // 서비스 계층에서 비밀번호 검증
+        boolean matches = loginService.verifyPassword(email, request.getCurrentPassword());
 
         if (matches) {
             log.info("비밀번호 확인 성공");

@@ -79,6 +79,7 @@ public class EmailSendServiceImpl implements EmailSendService {
 
         Map<String, String> variables = new HashMap<>();
         variables.put("code", code);
+        variables.put("currentYear", String.valueOf(java.time.Year.now().getValue()));
 
         return templateLoader.loadAndReplace(templateName, variables);
     }

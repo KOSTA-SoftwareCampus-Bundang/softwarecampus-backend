@@ -9,13 +9,28 @@ import com.softwarecampus.backend.dto.user.LoginResponse;
  * @author 태윤
  */
 public interface LoginService {
-    
+
     /**
      * 로그인 처리
      * 
      * @param request 로그인 요청 (email, password)
      * @return 로그인 응답 (accessToken, refreshToken, account)
-     * @throws com.softwarecampus.backend.exception.user.InvalidCredentialsException 이메일 없음 또는 비밀번호 불일치
+     * @throws com.softwarecampus.backend.exception.user.InvalidCredentialsException 이메일
+     *                                                                               없음
+     *                                                                               또는
+     *                                                                               비밀번호
+     *                                                                               불일치
      */
     LoginResponse login(LoginRequest request);
+
+    /**
+     * 현재 비밀번호 검증 (마이페이지 비밀번호 변경 Step 1)
+     * 
+     * @param email           사용자 이메일
+     * @param currentPassword 현재 비밀번호
+     * @return 비밀번호 일치 여부
+     * @throws com.softwarecampus.backend.exception.user.AccountNotFoundException 계정
+     *                                                                            없음
+     */
+    boolean verifyPassword(String email, String currentPassword);
 }
