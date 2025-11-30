@@ -69,6 +69,10 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
     @Override
     @Transactional
     public void deleteReviewFile(Long courseId, Long reviewId, Long fileId, Long userId) {
+        // 0️⃣ 코스 정합성 검증
+        courseReviewRepository.findByIdAndCourseIdAndIsDeletedFalse(reviewId, courseId)
+                .orElseThrow(() -> new NotFoundException("해당 리뷰가 존재하지 않거나 코스/카테고리가 일치하지 않습니다."));
+
         // 1️⃣ 파일 조회
         CourseReviewFile file = reviewFileRepository.findById(fileId)
                 .orElseThrow(() -> new NotFoundException("삭제할 파일이 존재하지 않습니다."));
@@ -94,6 +98,10 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
         if (!isAdmin(adminId))
             throw new ForbiddenException("관리자만 복구할 수 있습니다.");
 
+        // 0️⃣ 코스 정합성 검증
+        courseReviewRepository.findByIdAndCourseIdAndIsDeletedFalse(reviewId, courseId)
+                .orElseThrow(() -> new NotFoundException("해당 리뷰가 존재하지 않거나 코스/카테고리가 일치하지 않습니다."));
+
         // 2️⃣ 파일 조회
         CourseReviewFile file = reviewFileRepository.findById(fileId)
                 .orElseThrow(() -> new NotFoundException("복구할 파일이 존재하지 않습니다."));
@@ -114,6 +122,10 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
         if (!isAdmin(adminId))
             throw new ForbiddenException("관리자만 첨부파일을 삭제할 수 있습니다.");
 
+        // 0️⃣ 코스 정합성 검증
+        courseReviewRepository.findByIdAndCourseIdAndIsDeletedFalse(reviewId, courseId)
+                .orElseThrow(() -> new NotFoundException("해당 리뷰가 존재하지 않거나 코스/카테고리가 일치하지 않습니다."));
+
         // 2️⃣ 파일 조회
         CourseReviewFile file = reviewFileRepository.findById(fileId)
                 .orElseThrow(() -> new NotFoundException("삭제할 파일이 존재하지 않습니다."));
@@ -123,8 +135,8 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
             throw new NotFoundException("요청한 리뷰에 속한 파일이 아닙니다.");
         }
 
-        // 4️⃣ 실제 삭제
-        reviewFileRepository.delete(file);
+        // 4️⃣ 소프트 삭제 (관리자도 Soft Delete 정책 준수)
+        file.markDeleted();
     }
 
     private boolean isAdmin(Long accountId) {
