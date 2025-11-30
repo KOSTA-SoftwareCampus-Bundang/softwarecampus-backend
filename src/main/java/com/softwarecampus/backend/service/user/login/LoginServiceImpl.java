@@ -82,14 +82,8 @@ public class LoginServiceImpl implements LoginService {
                     EmailUtils.maskEmail(request.email()),
                     account.getAccountApproved());
 
-            // 승인 상태별 메시지 구분
-            String message = switch (account.getAccountApproved()) {
-                case PENDING -> "승인 대기 중인 계정입니다";
-                case REJECTED -> "승인이 거부된 계정입니다";
-                default -> "승인되지 않은 계정입니다";
-            };
-
-            throw new InvalidCredentialsException(message);
+            // 보안: 승인 상태 구분 없이 통일된 메시지 반환 (정보 누출 방지)
+            throw new InvalidCredentialsException("계정 승인이 필요합니다");
         }
 
         // 4. JWT 토큰 생성 (TokenService 활용)
