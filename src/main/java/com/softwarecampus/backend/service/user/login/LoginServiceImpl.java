@@ -1,5 +1,7 @@
 package com.softwarecampus.backend.service.user.login;
 
+import com.softwarecampus.backend.domain.common.AccountType;
+import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.LoginRequest;
@@ -76,8 +78,8 @@ public class LoginServiceImpl implements LoginService {
         }
 
         // ACADEMY 계정은 관리자 승인 필요
-        if (account.getAccountType().name().equals("ACADEMY") &&
-                !account.getAccountApproved().name().equals("APPROVED")) {
+        if (account.getAccountType() == AccountType.ACADEMY &&
+                account.getAccountApproved() != ApprovalStatus.APPROVED) {
             log.warn("로그인 실패 - 미승인 ACADEMY 계정: {}, status={}",
                     EmailUtils.maskEmail(request.email()),
                     account.getAccountApproved());
