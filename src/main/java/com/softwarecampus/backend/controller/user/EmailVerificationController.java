@@ -8,7 +8,10 @@ import com.softwarecampus.backend.service.user.email.EmailVerificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -81,6 +84,33 @@ public class EmailVerificationController {
         log.info("비밀번호 재설정 인증 코드 검증 요청 - type: {}", VerificationType.PASSWORD_RESET);
         
         EmailVerificationResponse response = verificationService.verifyResetCode(request);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 5. 비밀번호 변경용 인증 코드 발송 (로그인 상태)
+     * POST /api/auth/email/send-change-code
+     * 
+     * 보안: JWT 토큰 필수, 현재 비밀번호 검증 후 호출 권장
+     */
+    @PostMapping("/send-change-code")
+    public ResponseEntity<EmailVerificationResponse> sendPasswordChangeCode(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody EmailVerificationRequest request) {
+        
+        String authenticatedEmail = userDetails.getUsername();
+        log.info("비밀번호 변경 인증 코드 발송 요청 - type: {}", VerificationType.PASSWORD_CHANGE);
+        
+        // JWT 이메일과 요청 이메일 일치 확인 (보안)
+        if (!authenticatedEmail.equals(request.getEmail())) {
+            log.warn("이메일 불일치 - 인증: {}, 요청: {}", authenticatedEmail, request.getEmail());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        // 강제로 PASSWORD_CHANGE 타입 설정
+        request.setType(VerificationType.PASSWORD_CHANGE);
+        
+        EmailVerificationResponse response = verificationService.sendVerificationCode(request);
         return ResponseEntity.ok(response);
     }
 }

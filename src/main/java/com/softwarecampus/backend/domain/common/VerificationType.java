@@ -5,7 +5,8 @@ package com.softwarecampus.backend.domain.common;
  */
 public enum VerificationType {
     SIGNUP("회원가입"),
-    PASSWORD_RESET("비밀번호 재설정");
+    PASSWORD_RESET("비밀번호 재설정"),
+    PASSWORD_CHANGE("비밀번호 변경");
     
     private final String description;
     

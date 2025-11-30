@@ -4,7 +4,9 @@ import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.LoginRequest;
 import com.softwarecampus.backend.dto.user.LoginResponse;
+import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.InvalidCredentialsException;
+import com.softwarecampus.backend.exception.user.InvalidPasswordException;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
 import com.softwarecampus.backend.util.EmailUtils;
@@ -117,7 +119,8 @@ public class LoginServiceImpl implements LoginService {
             account.getAccountApproved(),
             account.getAddress(),
             account.getAffiliation(),
-            account.getPosition()
+            account.getPosition(),
+            account.getProfileImage()
         );
         Long expiresIn = jwtTokenProvider.getExpiration() / 1000;  // 밀리초 → 초 변환
         
@@ -126,5 +129,31 @@ public class LoginServiceImpl implements LoginService {
             account.getAccountType());
         
         return LoginResponse.of(accessToken, refreshToken, expiresIn, accountResponse);
+    }
+    
+    /**
+     * 현재 비밀번호 검증 (비밀번호 변경 전 본인 확인용)
+     * 
+     * 보안 원칙:
+     * - 세션 탈취 공격 방어
+     * - JWT 토큰만으로는 비밀번호 변경 불가
+     */
+    @Override
+    public boolean verifyPassword(String email, String currentPassword) {
+        log.info("현재 비밀번호 검증 시도: email={}", EmailUtils.maskEmail(email));
+        
+        Account account = accountRepository.findByEmail(email)
+            .orElseThrow(() -> {
+                log.warn("비밀번호 검증 실패 - 계정 없음: {}", EmailUtils.maskEmail(email));
+                return new AccountNotFoundException("계정을 찾을 수 없습니다.");
+            });
+        
+        if (!passwordEncoder.matches(currentPassword, account.getPassword())) {
+            log.warn("비밀번호 검증 실패 - 비밀번호 불일치: {}", EmailUtils.maskEmail(email));
+            throw new InvalidPasswordException("현재 비밀번호가 일치하지 않습니다.");
+        }
+        
+        log.info("비밀번호 검증 성공: email={}", EmailUtils.maskEmail(email));
+        return true;
     }
 }

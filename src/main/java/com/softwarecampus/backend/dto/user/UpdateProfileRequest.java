@@ -35,4 +35,6 @@ public class UpdateProfileRequest {
 
     @Size(max = 50, message = "직책은 50자 이하여야 합니다")
     private String position;
+
+    private String profileImage;
 }

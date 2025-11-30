@@ -35,6 +35,14 @@ public interface EmailVerificationService {
     EmailVerificationResponse verifyResetCode(EmailVerificationCodeRequest request);
     
     /**
+     * 비밀번호 변경 인증 코드 검증 (로그인 상태)
+     * 
+     * @param request 이메일 및 인증 코드
+     * @return 검증 결과
+     */
+    EmailVerificationResponse verifyChangeCode(EmailVerificationCodeRequest request);
+    
+    /**
      * 이메일 인증 완료 여부 확인
      * 
      * @param email 확인할 이메일

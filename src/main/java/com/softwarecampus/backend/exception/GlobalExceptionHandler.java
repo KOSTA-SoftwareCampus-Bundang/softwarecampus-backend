@@ -11,6 +11,7 @@ import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.DuplicateEmailException;
 import com.softwarecampus.backend.exception.user.InvalidCredentialsException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
+import com.softwarecampus.backend.exception.user.InvalidPasswordException;
 import com.softwarecampus.backend.exception.user.PhoneNumberAlreadyExistsException;
 import com.softwarecampus.backend.exception.user.UnauthorizedException;
 import jakarta.validation.ConstraintViolationException;
@@ -276,6 +277,23 @@ public class GlobalExceptionHandler {
         problemDetail.setType(URI.create("https://api.softwarecampus.com/problems/invalid-credentials"));
         problemDetail.setTitle("Unauthorized");
 
+        return problemDetail;
+    }
+
+    /**
+     * 현재 비밀번호 불일치 예외 처리
+     * HTTP 400 Bad Request
+     */
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ProblemDetail handleInvalidPasswordException(InvalidPasswordException ex) {
+        log.warn("비밀번호 검증 실패: {}", ex.getMessage());
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage());
+
+        problemDetail.setType(URI.create(problemBaseUri + "/invalid-password"));
+        problemDetail.setTitle("Invalid Password");
         return problemDetail;
     }
 
@@ -547,8 +565,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.NOT_FOUND,
-                ex.getMessage()
-        );
+                ex.getMessage());
         problemDetail.setType(URI.create(problemBaseUri + "/course-not-found"));
         problemDetail.setTitle("Course Resource Not Found");
 
@@ -564,8 +581,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                ex.getMessage()
-        );
+                ex.getMessage());
         problemDetail.setType(URI.create(problemBaseUri + "/course-bad-request"));
         problemDetail.setTitle("Invalid Course Request");
 

@@ -24,10 +24,10 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class EmailSendServiceImpl implements EmailSendService {
-    
+
     private final JavaMailSender mailSender;
     private final EmailTemplateLoader templateLoader;
-    
+
     @Override
     public void sendVerificationCode(String to, String code, VerificationType type) {
         try {
@@ -39,22 +39,23 @@ public class EmailSendServiceImpl implements EmailSendService {
             throw new EmailSendException("이메일 발송에 실패했습니다", e);
         }
     }
-    
+
     /**
      * MIME 메시지 생성
      */
-    private MimeMessage createMessage(String to, String code, VerificationType type) throws MessagingException, IOException {
+    private MimeMessage createMessage(String to, String code, VerificationType type)
+            throws MessagingException, IOException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-        
+
         helper.setFrom(EmailConstants.SENDER_EMAIL, EmailConstants.SENDER_NAME);
         helper.setTo(to);
         helper.setSubject(getSubject(type));
         helper.setText(getHtmlContent(code, type), true); // HTML 모드
-        
+
         return message;
     }
-    
+
     /**
      * 이메일 제목 가져오기
      */
@@ -62,24 +63,25 @@ public class EmailSendServiceImpl implements EmailSendService {
         return switch (type) {
             case SIGNUP -> EmailConstants.SUBJECT_SIGNUP;
             case PASSWORD_RESET -> EmailConstants.SUBJECT_PASSWORD_RESET;
+            case PASSWORD_CHANGE -> EmailConstants.SUBJECT_PASSWORD_CHANGE;
         };
     }
-    
+
     /**
      * HTML 본문 생성
      */
     private String getHtmlContent(String code, VerificationType type) throws IOException {
         String templateName = switch (type) {
             case SIGNUP -> "signup-verification.html";
-            case PASSWORD_RESET -> "password-reset-verification.html";
+            case PASSWORD_RESET, PASSWORD_CHANGE -> "password-reset-verification.html";
         };
-        
+
         Map<String, String> variables = new HashMap<>();
         variables.put("code", code);
-        
+
         return templateLoader.loadAndReplace(templateName, variables);
     }
-    
+
     /**
      * 기관 승인 완료 이메일 발송
      * 작성자: GitHub Copilot
@@ -92,22 +94,22 @@ public class EmailSendServiceImpl implements EmailSendService {
         try {
             // HTML 템플릿 로드
             String template = templateLoader.loadTemplate("academy-approval.html");
-            
+
             // 템플릿 변수 치환 (XSS 방지를 위한 HTML 이스케이프 적용)
             Map<String, String> variables = new HashMap<>();
             variables.put("academyName", HtmlUtils.htmlEscape(academyName));
             variables.put("loginUrl", "https://softwarecampus.com/login");
             String htmlContent = templateLoader.replaceVariables(template, variables);
-            
+
             // 이메일 발송
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
+
             helper.setFrom(EmailConstants.SENDER_EMAIL, EmailConstants.SENDER_NAME);
             helper.setTo(toEmail);
             helper.setSubject("[소프트웨어캠퍼스] 기관 등록이 승인되었습니다");
             helper.setText(htmlContent, true);
-            
+
             mailSender.send(message);
             log.info("기관 승인 이메일 발송 성공 - academyName: {}", academyName);
         } catch (IOException | MessagingException e) {
@@ -115,7 +117,7 @@ public class EmailSendServiceImpl implements EmailSendService {
             throw new EmailSendException("기관 승인 이메일 발송에 실패했습니다", e);
         }
     }
-    
+
     /**
      * 기관 거절 이메일 발송
      * 작성자: GitHub Copilot
@@ -128,23 +130,23 @@ public class EmailSendServiceImpl implements EmailSendService {
         try {
             // HTML 템플릿 로드
             String template = templateLoader.loadTemplate("academy-rejection.html");
-            
+
             // 템플릿 변수 치환 (XSS 방지를 위한 HTML 이스케이프 적용)
             Map<String, String> variables = new HashMap<>();
             variables.put("academyName", HtmlUtils.htmlEscape(academyName));
             variables.put("reason", HtmlUtils.htmlEscape(reason));
             variables.put("registrationUrl", "https://softwarecampus.com/signup");
             String htmlContent = templateLoader.replaceVariables(template, variables);
-            
+
             // 이메일 발송
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
+
             helper.setFrom(EmailConstants.SENDER_EMAIL, EmailConstants.SENDER_NAME);
             helper.setTo(toEmail);
             helper.setSubject("[소프트웨어캠퍼스] 기관 등록 검토 결과 안내");
             helper.setText(htmlContent, true);
-            
+
             mailSender.send(message);
             log.info("기관 거절 이메일 발송 성공 - academyName: {}", academyName);
         } catch (IOException | MessagingException e) {
@@ -152,7 +154,7 @@ public class EmailSendServiceImpl implements EmailSendService {
             throw new EmailSendException("기관 거절 이메일 발송에 실패했습니다", e);
         }
     }
-    
+
     /**
      * 회원 승인 완료 이메일 발송
      * 작성자: GitHub Copilot
@@ -164,25 +166,25 @@ public class EmailSendServiceImpl implements EmailSendService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
+
             helper.setFrom(EmailConstants.SENDER_EMAIL, EmailConstants.SENDER_NAME);
             helper.setTo(toEmail);
             helper.setSubject("[소프트웨어캠퍼스] 회원가입이 승인되었습니다");
-            
+
             // XSS 방지를 위한 HTML 이스케이프 적용
             String escapedUserName = HtmlUtils.htmlEscape(userName);
             String htmlContent = String.format("""
-                <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-                    <h2>회원가입 승인 완료</h2>
-                    <p>안녕하세요, <strong>%s</strong>님</p>
-                    <p>코스타 소프트웨어 아카데미 회원가입이 승인되었습니다.</p>
-                    <p>이제 로그인하여 서비스를 이용하실 수 있습니다.</p>
-                    <p>감사합니다.</p>
-                </body>
-                </html>
-                """, escapedUserName);
-            
+                    <html>
+                    <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+                        <h2>회원가입 승인 완료</h2>
+                        <p>안녕하세요, <strong>%s</strong>님</p>
+                        <p>코스타 소프트웨어 아카데미 회원가입이 승인되었습니다.</p>
+                        <p>이제 로그인하여 서비스를 이용하실 수 있습니다.</p>
+                        <p>감사합니다.</p>
+                    </body>
+                    </html>
+                    """, escapedUserName);
+
             helper.setText(htmlContent, true);
             mailSender.send(message);
             log.info("회원 승인 이메일 발송 성공 - userName: {}", userName);
