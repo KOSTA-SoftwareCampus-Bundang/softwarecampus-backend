@@ -7,10 +7,14 @@ import com.softwarecampus.backend.dto.user.LoginResponse;
 import com.softwarecampus.backend.dto.user.MessageResponse;
 import com.softwarecampus.backend.dto.user.SignupRequest;
 import com.softwarecampus.backend.dto.user.VerifyPasswordRequest;
+import com.softwarecampus.backend.dto.user.VerifyPasswordResponse;
+import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
+import com.softwarecampus.backend.dto.user.PasswordResetWithEmailRequest;
 import com.softwarecampus.backend.security.jwt.JwtTokenProvider;
 import com.softwarecampus.backend.service.auth.TokenService;
 import com.softwarecampus.backend.service.user.login.LoginService;
 import com.softwarecampus.backend.service.user.signup.SignupService;
+import com.softwarecampus.backend.service.user.profile.ProfileService;
 import com.softwarecampus.backend.util.EmailUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -21,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -55,6 +60,7 @@ public class AuthController {
     private final LoginService loginService;
     private final TokenService tokenService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final ProfileService profileService;
 
     /**
      * 회원가입 API
@@ -128,6 +134,50 @@ public class AuthController {
     }
 
     /**
+     * 현재 비밀번호 확인 API
+     * 
+     * 용도: 마이페이지 비밀번호 변경 Step 1
+     * - 현재 비밀번호를 확인하여 본인 인증
+     * - 성공 시 이메일 인증 코드 발송 진행 가능
+     * 
+     * 보안 고려사항:
+     * - 로그인 상태(JWT 토큰)에서만 호출 가능
+     * - 세션 탈취 공격 방어를 위한 현재 비밀번호 확인
+     * 
+     * @param userDetails Spring Security 인증 정보 (JWT에서 추출)
+     * @param request     현재 비밀번호
+     * @return 200 OK - 확인 결과
+     * 
+     * @throws AccountNotFoundException 404 - 계정 없음
+     */
+    @PostMapping("/verify-password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<VerifyPasswordResponse> verifyPassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody VerifyPasswordRequest request) {
+
+        // 방어적 프로그래밍: 인증 정보 null 체크
+        if (userDetails == null) {
+            log.warn("인증 정보 없이 현재 비밀번호 검증 요청이 들어왔습니다.");
+            return ResponseEntity.ok(VerifyPasswordResponse.failure());
+        }
+
+        String email = userDetails.getUsername();
+        log.info("현재 비밀번호 확인 요청: email={}", EmailUtils.maskEmail(email));
+
+        // 서비스 계층에서 비밀번호 검증
+        boolean matches = loginService.verifyPassword(email, request.getCurrentPassword());
+
+        if (matches) {
+            log.info("비밀번호 확인 성공: email={}", EmailUtils.maskEmail(email));
+            return ResponseEntity.ok(VerifyPasswordResponse.success());
+        } else {
+            log.warn("비밀번호 확인 실패 - 불일치: email={}", EmailUtils.maskEmail(email));
+            return ResponseEntity.ok(VerifyPasswordResponse.failure());
+        }
+    }
+
+    /**
      * 로그인 API
      * 
      * @param request 로그인 요청 (email, password)
@@ -159,50 +209,6 @@ public class AuthController {
         log.info("로그인 성공 - accountType: {}", response.account().accountType());
 
         return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 현재 비밀번호 검증 API (비밀번호 변경 전 본인 확인)
-     * 
-     * 보안 고려사항:
-     * - 로그인 상태(JWT 토큰)에서만 호출 가능
-     * - 세션 탈취 공격 방어를 위한 현재 비밀번호 확인
-     * 
-     * @param userDetails Spring Security 인증 정보
-     * @param request     현재 비밀번호
-     * @return 200 OK - 검증 성공
-     * 
-     * @throws com.softwarecampus.backend.exception.user.AccountNotFoundException 404
-     *                                                                            -
-     *                                                                            계정
-     *                                                                            없음
-     * @throws com.softwarecampus.backend.exception.user.InvalidPasswordException 400
-     *                                                                            -
-     *                                                                            비밀번호
-     *                                                                            불일치
-     */
-    @PostMapping("/verify-password")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> verifyPassword(
-            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
-            @Valid @RequestBody VerifyPasswordRequest request) {
-
-        // 방어적 프로그래밍: 인증 정보 null 체크
-        if (userDetails == null) {
-            log.warn("인증 정보 없이 현재 비밀번호 검증 요청이 들어왔습니다.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        String email = userDetails.getUsername();
-        log.info("현재 비밀번호 검증 요청: email={}", EmailUtils.maskEmail(email));
-
-        loginService.verifyPassword(email, request.getCurrentPassword());
-
-        log.info("현재 비밀번호 검증 성공: email={}", EmailUtils.maskEmail(email));
-
-        return ResponseEntity.ok(Map.of(
-                "verified", true,
-                "message", "비밀번호가 확인되었습니다."));
     }
 
     /**
@@ -243,8 +249,7 @@ public class AuthController {
                 log.warn("Email mismatch - authenticated: {}, requested: {}",
                         EmailUtils.maskEmail(authenticatedEmail),
                         EmailUtils.maskEmail(request.email()));
-                throw new org.springframework.security.access.AccessDeniedException(
-                        "요청 이메일이 인증된 사용자와 일치하지 않습니다");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 
             // Refresh Token으로 새 Access Token 발급
@@ -266,5 +271,32 @@ public class AuthController {
             log.warn("Invalid refresh token for user: {}", EmailUtils.maskEmail(request.email()));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    /**
+     * 비밀번호 재설정 API (비로그인 상태)
+     * 
+     * 사용 시나리오 (비밀번호 찾기):
+     * 1. 사용자가 이메일 입력 후 인증 코드 발송 (POST /api/auth/email/send-reset-code)
+     * 2. 이메일로 받은 인증 코드 확인 (POST /api/auth/email/verify-reset)
+     * 3. 인증 코드 + 새 비밀번호로 비밀번호 재설정 (이 API)
+     * 
+     * @param request email, code, newPassword
+     * @return 200 OK - 비밀번호 재설정 성공
+     * 
+     * @throws AccountNotFoundException 404 - 계정 없음
+     * @throws InvalidInputException    400 - 인증 코드 불일치/만료
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<MessageResponse> resetPassword(
+            @Valid @RequestBody PasswordResetWithEmailRequest request) {
+        log.info("비밀번호 재설정 요청 (비로그인): email={}", EmailUtils.maskEmail(request.email()));
+
+        ResetPasswordRequest resetRequest = new ResetPasswordRequest(request.code(), request.newPassword());
+        profileService.resetPassword(request.email(), resetRequest);
+
+        log.info("비밀번호 재설정 완료: email={}", EmailUtils.maskEmail(request.email()));
+
+        return ResponseEntity.ok(MessageResponse.of("비밀번호가 성공적으로 변경되었습니다."));
     }
 }

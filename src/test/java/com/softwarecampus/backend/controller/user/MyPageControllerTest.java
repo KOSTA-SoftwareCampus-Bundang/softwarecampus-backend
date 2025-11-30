@@ -74,27 +74,27 @@ class MyPageControllerTest {
     void getProfile_Success() throws Exception {
         // Given
         AccountResponse response = new AccountResponse(
-            1L,
-            "user@test.com",
-            "홍길동",
-            "010-1234-5678",
-            AccountType.USER,
-            ApprovalStatus.APPROVED,
-            "서울시 강남구",
-            "소프트캠퍼스",
-            "개발자"
-        );
+                1L,
+                "user@test.com",
+                "홍길동",
+                "010-1234-5678",
+                AccountType.USER,
+                ApprovalStatus.APPROVED,
+                "서울시 강남구",
+                "소프트캔퍼스",
+                "개발자",
+                null);
 
         when(profileService.getAccountByEmail("user@test.com")).thenReturn(response);
 
         // When & Then
         mockMvc.perform(get("/api/mypage/profile"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.email").value("user@test.com"))
-            .andExpect(jsonPath("$.userName").value("홍길동"))
-            .andExpect(jsonPath("$.phoneNumber").value("010-1234-5678"))
-            .andExpect(jsonPath("$.accountType").value("USER"))
-            .andExpect(jsonPath("$.approvalStatus").value("APPROVED"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("user@test.com"))
+                .andExpect(jsonPath("$.userName").value("홍길동"))
+                .andExpect(jsonPath("$.phoneNumber").value("010-1234-5678"))
+                .andExpect(jsonPath("$.accountType").value("USER"))
+                .andExpect(jsonPath("$.approvalStatus").value("APPROVED"));
 
         verify(profileService, times(1)).getAccountByEmail("user@test.com");
     }
@@ -105,7 +105,7 @@ class MyPageControllerTest {
     void getProfile_Unauthorized() throws Exception {
         // When & Then
         mockMvc.perform(get("/api/mypage/profile"))
-            .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized());
 
         verify(profileService, never()).getAccountByEmail(anyString());
     }
@@ -116,11 +116,11 @@ class MyPageControllerTest {
     void getProfile_AccountNotFound() throws Exception {
         // Given
         when(profileService.getAccountByEmail("unknown@test.com"))
-            .thenThrow(new AccountNotFoundException("계정을 찾을 수 없습니다."));
+                .thenThrow(new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
         // When & Then
         mockMvc.perform(get("/api/mypage/profile"))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
 
         verify(profileService, times(1)).getAccountByEmail("unknown@test.com");
     }
@@ -135,38 +135,38 @@ class MyPageControllerTest {
     void updateProfile_Success_AllFields() throws Exception {
         // Given
         UpdateProfileRequest request = UpdateProfileRequest.builder()
-            .userName("김철수")
-            .phoneNumber("010-9999-8888")
-            .address("부산시 해운대구")
-            .affiliation("부산대학교")
-            .position("교수")
-            .build();
+                .userName("김철수")
+                .phoneNumber("010-9999-8888")
+                .address("부산시 해운대구")
+                .affiliation("부산대학교")
+                .position("교수")
+                .build();
 
         AccountResponse response = new AccountResponse(
-            1L,
-            "user@test.com",
-            "김철수",
-            "010-9999-8888",
-            AccountType.USER,
-            ApprovalStatus.APPROVED,
-            "부산시 해운대구",
-            "부산대학교",
-            "교수"
-        );
+                1L,
+                "user@test.com",
+                "김철수",
+                "010-9999-8888",
+                AccountType.USER,
+                ApprovalStatus.APPROVED,
+                "부산시 해운대구",
+                "부산대학교",
+                "교수",
+                null);
 
         when(profileService.updateProfile(eq("user@test.com"), any(UpdateProfileRequest.class)))
-            .thenReturn(response);
+                .thenReturn(response);
 
         // When & Then
         mockMvc.perform(patch("/api/mypage/profile")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.userName").value("김철수"))
-            .andExpect(jsonPath("$.phoneNumber").value("010-9999-8888"))
-            .andExpect(jsonPath("$.address").value("부산시 해운대구"))
-            .andExpect(jsonPath("$.affiliation").value("부산대학교"))
-            .andExpect(jsonPath("$.position").value("교수"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userName").value("김철수"))
+                .andExpect(jsonPath("$.phoneNumber").value("010-9999-8888"))
+                .andExpect(jsonPath("$.address").value("부산시 해운대구"))
+                .andExpect(jsonPath("$.affiliation").value("부산대학교"))
+                .andExpect(jsonPath("$.position").value("교수"));
 
         verify(profileService, times(1)).updateProfile(eq("user@test.com"), any(UpdateProfileRequest.class));
     }
@@ -177,30 +177,30 @@ class MyPageControllerTest {
     void updateProfile_Success_PartialUpdate() throws Exception {
         // Given
         UpdateProfileRequest request = UpdateProfileRequest.builder()
-            .userName("이영희")
-            .build();
+                .userName("이영희")
+                .build();
 
         AccountResponse response = new AccountResponse(
-            1L,
-            "user@test.com",
-            "이영희",
-            "010-1234-5678",
-            AccountType.USER,
-            ApprovalStatus.APPROVED,
-            null,
-            null,
-            null
-        );
+                1L,
+                "user@test.com",
+                "이영희",
+                "010-1234-5678",
+                AccountType.USER,
+                ApprovalStatus.APPROVED,
+                null,
+                null,
+                null,
+                null);
 
         when(profileService.updateProfile(eq("user@test.com"), any(UpdateProfileRequest.class)))
-            .thenReturn(response);
+                .thenReturn(response);
 
         // When & Then
         mockMvc.perform(patch("/api/mypage/profile")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.userName").value("이영희"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userName").value("이영희"));
 
         verify(profileService, times(1)).updateProfile(eq("user@test.com"), any(UpdateProfileRequest.class));
     }
@@ -211,14 +211,14 @@ class MyPageControllerTest {
     void updateProfile_ValidationFail_UserNameTooLong() throws Exception {
         // Given
         UpdateProfileRequest request = UpdateProfileRequest.builder()
-            .userName("가".repeat(51))  // 51자 (최대 50자)
-            .build();
+                .userName("가".repeat(51)) // 51자 (최대 50자)
+                .build();
 
         // When & Then
         mockMvc.perform(patch("/api/mypage/profile")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest());
 
         verify(profileService, never()).updateProfile(anyString(), any(UpdateProfileRequest.class));
     }
@@ -229,14 +229,14 @@ class MyPageControllerTest {
     void updateProfile_ValidationFail_InvalidPhoneNumber() throws Exception {
         // Given
         UpdateProfileRequest request = UpdateProfileRequest.builder()
-            .phoneNumber("02-1234-5678")  // 지역번호 불가
-            .build();
+                .phoneNumber("02-1234-5678") // 지역번호 불가
+                .build();
 
         // When & Then
         mockMvc.perform(patch("/api/mypage/profile")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest());
 
         verify(profileService, never()).updateProfile(anyString(), any(UpdateProfileRequest.class));
     }
@@ -247,17 +247,17 @@ class MyPageControllerTest {
     void updateProfile_PhoneNumberDuplicate() throws Exception {
         // Given
         UpdateProfileRequest request = UpdateProfileRequest.builder()
-            .phoneNumber("010-9999-8888")
-            .build();
+                .phoneNumber("010-9999-8888")
+                .build();
 
         when(profileService.updateProfile(eq("user@test.com"), any(UpdateProfileRequest.class)))
-            .thenThrow(new PhoneNumberAlreadyExistsException("010-9999-8888"));
+                .thenThrow(new PhoneNumberAlreadyExistsException("010-9999-8888"));
 
         // When & Then
         mockMvc.perform(patch("/api/mypage/profile")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isConflict());
+                .andExpect(status().isConflict());
 
         verify(profileService, times(1)).updateProfile(eq("user@test.com"), any(UpdateProfileRequest.class));
     }
@@ -275,7 +275,7 @@ class MyPageControllerTest {
 
         // When & Then
         mockMvc.perform(delete("/api/mypage/account"))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         verify(profileService, times(1)).deleteAccount("user@test.com");
     }
@@ -286,7 +286,7 @@ class MyPageControllerTest {
     void deleteAccount_Unauthorized() throws Exception {
         // When & Then
         mockMvc.perform(delete("/api/mypage/account"))
-            .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized());
 
         verify(profileService, never()).deleteAccount(anyString());
     }

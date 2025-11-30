@@ -91,7 +91,8 @@ spring.log
 # 🔒 Env / Secrets / Config
 # ---------------------------------------------
 .env
-.env.*
+.env.local
+.env.*.local
 *.pem
 application-*.yml
 application-*.yaml
@@ -99,6 +100,9 @@ application-*.properties
 !application.yml
 !application.yaml
 !application.properties
+
+# 환경변수 예시 파일은 Git에 포함 (2025-12-01 추가)
+!.env.example
 
 # ---------------------------------------------
 # ⚙️ Build Cache / Tooling

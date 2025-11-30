@@ -291,14 +291,14 @@ public boolean isEmailAvailable(String email) {
         throw new InvalidInputException("올바른 이메일 형식이 아닙니다.");
     }
     
-    // 중복 확인
-    return !accountRepository.existsByEmail(email);
+    // 중복 확인 (✅ 2025-12-01 업데이트: Soft Delete 고려)
+    return !accountRepository.existsByEmailAndIsDeletedFalse(email);
 }
 ```
 
 **설계 포인트:**
 - 이메일 형식 검증 (RFC 5322, RFC 1035)
-- `existsByEmail()` 호출 (Repository)
+- `existsByEmailAndIsDeletedFalse()` 호출 (Repository) - 활성 계정만 체크
 - 반환: `true` (사용 가능), `false` (중복)
 
 **보안 참고:**

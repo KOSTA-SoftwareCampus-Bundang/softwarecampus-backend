@@ -12,8 +12,10 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 애플리케이션 시작 시 초기 ADMIN 계정 생성
@@ -47,9 +49,52 @@ public class AdminAccountInitializer implements ApplicationRunner {
             throw new IllegalStateException("ADMIN_PASSWORD 환경 변수를 반드시 설정해야 합니다.");
         }
 
-        // ADMIN 계정이 이미 존재하는지 확인
-        if (accountRepository.existsByEmail(adminEmail)) {
-            log.info("초기 ADMIN 계정이 이미 존재합니다: {}", adminEmail);
+        // 1. 활성 ADMIN 계정이 하나라도 존재하는지 확인
+        if (accountRepository.existsByAccountTypeAndIsDeletedFalse(AccountType.ADMIN)) {
+            log.info("활성 ADMIN 계정이 존재합니다. 초기화를 건너뜁니다.");
+            return;
+        }
+
+        // 2. 활성 ADMIN이 없음 → 삭제된 ADMIN 계정 복구 시도
+        log.warn("활성 ADMIN 계정이 없습니다. 삭제된 ADMIN 계정을 확인합니다.");
+        
+        Optional<Account> deletedAdmin = accountRepository.findByEmailAndAccountTypeAndIsDeletedTrue(
+            adminEmail, 
+            AccountType.ADMIN
+        );
+        
+        if (deletedAdmin.isPresent()) {
+            // 환경변수 확인: ADMIN_ALLOW_RESTORE가 true인 경우에만 복구
+            String allowRestore = env.getProperty("ADMIN_ALLOW_RESTORE");
+            boolean shouldRestore = "true".equalsIgnoreCase(allowRestore);
+            
+            if (!shouldRestore) {
+                log.warn("====================================================");
+                log.warn("삭제된 ADMIN 계정이 발견되었으나 자동 복구가 비활성화되어 있습니다.");
+                log.warn("이메일: {}", adminEmail);
+                log.warn("복구를 원하시면 ADMIN_ALLOW_RESTORE=true 환경변수를 설정하세요.");
+                log.warn("====================================================");
+                return;
+            }
+            
+            Account admin = deletedAdmin.get();
+            
+            // 복구: isDeleted=false로 설정
+            admin.restore();
+            
+            // 환경변수 초기값으로 리셋
+            admin.setPassword(passwordEncoder.encode(adminPassword));
+            admin.setUserName(StringUtils.hasText(adminName) ? adminName : "시스템 관리자");
+            admin.setPhoneNumber(StringUtils.hasText(adminPhone) ? adminPhone : "010-0000-0000");
+            admin.setAccountApproved(ApprovalStatus.APPROVED);
+            
+            accountRepository.save(admin);
+            
+            log.warn("====================================================");
+            log.warn("ADMIN 계정이 하나도 없습니다. 기본 ADMIN 계정을 복구합니다.");
+            log.warn("이메일: {}", adminEmail);
+            log.warn("⚠️  최초 로그인 후 반드시 비밀번호를 변경하세요!");
+            log.warn("====================================================");
             return;
         }
 

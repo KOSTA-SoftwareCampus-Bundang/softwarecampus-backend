@@ -98,6 +98,7 @@ class AuthControllerTest {
                                 ApprovalStatus.APPROVED,
                                 "서울시 강남구",
                                 null,
+                                null,
                                 null);
 
                 when(signupService.signup(any(SignupRequest.class))).thenReturn(response);
@@ -144,7 +145,8 @@ class AuthControllerTest {
                                 ApprovalStatus.PENDING,
                                 "서울시 서초구",
                                 "ABC학원",
-                                "수학 강사");
+                                "수학 강사",
+                                null);
 
                 when(signupService.signup(any(SignupRequest.class))).thenReturn(response);
 
@@ -399,7 +401,7 @@ class AuthControllerTest {
                                 "010-1234-5678",
                                 AccountType.USER,
                                 ApprovalStatus.APPROVED,
-                                null, null, null);
+                                null, null, null, null);
 
                 when(signupService.signup(any(SignupRequest.class))).thenReturn(response);
 
@@ -431,6 +433,7 @@ class AuthControllerTest {
                                 AccountType.USER,
                                 ApprovalStatus.APPROVED,
                                 "서울시 강남구",
+                                null,
                                 null,
                                 null);
 

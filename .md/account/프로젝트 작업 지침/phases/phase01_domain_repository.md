@@ -42,7 +42,7 @@ repository/
 ### ✅ `repository/user/AccountRepository.java`
 7개 쿼리 메서드:
 - `findByEmail(String email)`
-- `existsByEmail(String email)`
+- `existsByEmailAndIsDeletedFalse(String email)` // ✅ 2025-12-01 업데이트
 - `findByUserName(String userName)`
 - `findByAccountType(AccountType type)`
 - `findByApprovalStatus(ApprovalStatus status)`

@@ -134,8 +134,8 @@ class SignupIntegrationTest {
         assertThat(savedAccount.getAccountType()).isEqualTo(AccountType.USER);
         assertThat(savedAccount.getAccountApproved()).isEqualTo(ApprovalStatus.APPROVED);
         
-        // Repository.existsByEmail() 검증
-        assertThat(accountRepository.existsByEmail("user@example.com")).isTrue();
+        // Repository.existsByEmailAndIsDeletedFalse() 검증 (✅ 2025-12-01)
+        assertThat(accountRepository.existsByEmailAndIsDeletedFalse("user@example.com")).isTrue();
         
         // Repository.findByEmail() 검증
         Account foundAccount = accountRepository.findByEmail("user@example.com").orElseThrow();
@@ -184,7 +184,7 @@ class SignupIntegrationTest {
     
     /**
      * 테스트 3: 이메일 중복 - 409 Conflict
-     * - Repository.existsByEmail() 동작 확인
+     * - Repository.existsByEmailAndIsDeletedFalse() 동작 확인 (✅ 2025-12-01)
      */
     @Test
     @DisplayName("이메일 중복 시 409 Conflict")
@@ -205,8 +205,8 @@ class SignupIntegrationTest {
             .content(objectMapper.writeValueAsString(firstRequest)))
             .andExpect(status().isCreated());
         
-        // Repository 확인
-        assertThat(accountRepository.existsByEmail("duplicate@example.com")).isTrue();
+        // Repository 확인 (✅ 2025-12-01)
+        assertThat(accountRepository.existsByEmailAndIsDeletedFalse("duplicate@example.com")).isTrue();
         
         // When - 중복 이메일로 두 번째 회원가입 시도
         SignupRequest duplicateRequest = new SignupRequest(
@@ -230,7 +230,7 @@ class SignupIntegrationTest {
     
     /**
      * 테스트 4: 전화번호 중복 - 400 Bad Request
-     * - Repository.existsByPhoneNumber() 동작 확인 (간접)
+     * - Repository.existsByPhoneNumberAndIsDeletedFalse() 동작 확인 (간접) (✅ 2025-12-01)
      */
     @Test
     @DisplayName("전화번호 중복 시 400 Bad Request")
@@ -284,8 +284,8 @@ class SignupIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("사용 가능한 이메일입니다."));
         
-        // Repository 확인
-        assertThat(accountRepository.existsByEmail("newuser@example.com")).isFalse();
+        // Repository 확인 (✅ 2025-12-01)
+        assertThat(accountRepository.existsByEmailAndIsDeletedFalse("newuser@example.com")).isFalse();
     }
     
     /**
@@ -316,8 +316,8 @@ class SignupIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("이미 사용 중인 이메일입니다."));
         
-        // Repository 확인
-        assertThat(accountRepository.existsByEmail("existing@example.com")).isTrue();
+        // Repository 확인 (✅ 2025-12-01)
+        assertThat(accountRepository.existsByEmailAndIsDeletedFalse("existing@example.com")).isTrue();
     }
     
     /**
@@ -415,7 +415,7 @@ class SignupIntegrationTest {
 ### Repository Layer
 - [x] `save()` - DB 저장
 - [x] `findById()` - ID로 조회
-- [x] `existsByEmail()` - 이메일 중복 확인
+- [x] `existsByEmailAndIsDeletedFalse()` - 이메일 중복 확인 (✅ 2025-12-01)
 - [x] `findByEmail()` - 이메일로 조회
 - [x] UNIQUE 제약 조건 (이메일, 전화번호)
 - [x] `deleteAll()` - 테스트 초기화

@@ -109,6 +109,21 @@ src/
 - DB 설정은 `SPRING_DATASOURCE_*` 또는 프로필 파일 사용
 - 외부 입력은 검증/정규화, PII는 로깅 금지
 
+### 운영 환경 필수 설정 (2025-12-01 업데이트)
+
+**Redis 보안 설정:**
+- 운영 환경에서는 반드시 `REDIS_PASSWORD` 환경변수를 설정하세요
+- 예시: `REDIS_PASSWORD=your-strong-redis-password`
+- 로컬 개발: 비밀번호 없이 실행 가능 (기본값: 빈 문자열)
+
+**데이터베이스 SSL/TLS:**
+- 운영 환경: `DB_USE_SSL=true` (기본값, TLS 암호화 활성화)
+- 로컬 개발: `DB_USE_SSL=false` (자체 서명 인증서 문제 회피)
+
+**환경변수 템플릿:**
+- `.env.example` 파일을 복사하여 `.env` 생성
+- 모든 환경변수 설명 및 예시 포함
+
 ---
 
 ## 문서 모음 📚

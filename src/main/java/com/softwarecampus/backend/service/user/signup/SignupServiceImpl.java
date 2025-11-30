@@ -49,7 +49,7 @@ public class SignupServiceImpl implements SignupService {
     public AccountResponse signup(SignupRequest request) {
         // 0. 요청 null 검증
         Objects.requireNonNull(request, "SignupRequest must not be null");
-        
+
         log.info("회원가입 시도 시작: accountType={}", request.accountType());
 
         // 1. 이메일 인증 확인
@@ -89,7 +89,7 @@ public class SignupServiceImpl implements SignupService {
             if (message != null) {
                 // 대소문자 무시 비교를 위해 소문자로 정규화
                 String normalizedMessage = message.toLowerCase(Locale.ROOT);
-                
+
                 // 이메일 중복 확인 (제약 조건 이름: uk_account_email)
                 if (normalizedMessage.contains("uk_account_email")) {
                     log.warn("Email duplicate detected during database insert");
@@ -135,7 +135,7 @@ public class SignupServiceImpl implements SignupService {
             log.warn("ADMIN type signup attempt blocked");
             throw new InvalidInputException("관리자 계정은 회원가입으로 생성할 수 없습니다.");
         }
-        
+
         if (request.accountType() == AccountType.ACADEMY) {
             if (request.academyId() == null) {
                 log.warn("ACADEMY type signup without academyId");
@@ -161,11 +161,10 @@ public class SignupServiceImpl implements SignupService {
     private Account createAccount(SignupRequest request, String encodedPassword) {
         // 계정 타입별 승인 상태 결정
         ApprovalStatus approvalStatus = switch (request.accountType()) {
-            case USER -> ApprovalStatus.APPROVED;      // 일반 사용자: 즉시 승인
-            case ACADEMY -> ApprovalStatus.PENDING;    // 기관: 관리자 승인 대기
+            case USER -> ApprovalStatus.APPROVED; // 일반 사용자: 즉시 승인
+            case ACADEMY -> ApprovalStatus.PENDING; // 기관: 관리자 승인 대기
             case ADMIN -> throw new IllegalStateException(
-                "ADMIN 계정은 validateAccountTypeRequirements()에서 차단되어야 합니다."
-            );
+                    "ADMIN 계정은 validateAccountTypeRequirements()에서 차단되어야 합니다.");
         };
 
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
@@ -207,7 +206,7 @@ public class SignupServiceImpl implements SignupService {
                 account.getPosition(),
                 account.getProfileImage());
     }
-    
+
     /**
      * 이메일 중복 확인
      */
@@ -215,8 +214,8 @@ public class SignupServiceImpl implements SignupService {
     public boolean isEmailAvailable(String email) {
         // 이메일 형식 검증 (기존 메서드 재사용)
         validateEmailFormat(email);
-        
+
         // 중복 확인
-        return !accountRepository.existsByEmail(email);
+        return !accountRepository.existsByEmailAndIsDeletedFalse(email);
     }
 }

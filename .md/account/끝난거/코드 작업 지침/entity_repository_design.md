@@ -5,6 +5,36 @@
 
 ---
 
+## 📋 문서 메타데이터
+
+| 항목 | 값 |
+|------|------|
+| **문서 상태** | 🗂️ **SUPERSEDED** (대체됨) |
+| **최초 작성일** | 2025-10-29 |
+| **마지막 수정일** | 2025-12-01 |
+| **보관 위치** | `.md/account/끝난거/` (아카이브) |
+| **대체 문서** | `soft_delete_username_strategy.md` (2025-12-01) |
+| **보존 이유** | 초기 설계 기록 및 변경 이력 추적 |
+
+### ⚠️ 중요 공지
+
+**이 문서는 2025-12-01부로 공식 참조 문서에서 제외되었습니다.**
+
+- ✅ **초기 설계 (2025-10-29)**: userName만 Soft Delete 후 재사용 가능
+- 🔄 **변경된 정책 (2025-12-01)**: 모든 개인정보(email, phoneNumber, userName) 재사용 가능
+- 📘 **최신 문서**: `코드 작업 지침/참고사항/soft_delete_username_strategy.md`
+
+**이 문서의 용도:**
+- 초기 설계 과정 이해
+- 변경 전후 비교
+- 히스토리 추적
+
+**실제 구현 참조 시:**
+- 반드시 `soft_delete_username_strategy.md` 참조
+- 본 문서는 참고용으로만 사용
+
+---
+
 ## 1. 현재 Account 엔티티 구조
 
 ### 1.1 최종 수정된 필드 구조
@@ -265,7 +295,21 @@ List<Account> findByAccountApproved(ApprovalStatus approved);
 
 ## 4. AccountRepository 설계
 
-### 4.1 현재 구현 (최종)
+### 4.1 현재 구현 (초기 버전 - 2025-10-29)
+
+> ⚠️ **주의**: 이 코드는 초기 설계 시점(2025-10-29)의 내용입니다.  
+> 2025-12-01에 정책이 변경되어 실제 구현과 다릅니다.  
+> 실제 구현 코드는 `soft_delete_username_strategy.md`를 참조하세요.
+
+**이 섹션의 용도:**
+- 초기 설계 당시 Repository 메서드 이해
+- 변경 전후 비교
+- 히스토리 추적
+
+**실제 구현 (2025-12-01 이후):**
+- `findByEmail` → `findByEmailAndIsDeletedFalse`
+- `existsByEmail` → `existsByEmailAndIsDeletedFalse`
+- `existsByPhoneNumber` → `existsByPhoneNumberAndIsDeletedFalse`
 
 ```java
 package com.softwarecampus.backend.repository.user;
@@ -280,46 +324,102 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Account 엔티티에 대한 Repository
+ * Account 엔티티에 대한 Repository (초기 버전 - 2025-10-29)
  * - 사용자 계정 CRUD 및 조회 기능
+ * 
+ * ⚠️ 주의: 이 코드는 초기 설계이며, 2025-12-01에 변경되었습니다.
  */
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
     
     /**
      * 이메일로 계정 조회 (로그인)
+     * 
+     * ⚠️ 변경됨 (2025-12-01): findByEmailAndIsDeletedFalse로 변경
      */
     Optional<Account> findByEmail(String email);
     
     /**
      * 이메일 중복 체크
+     * 
+     * ⚠️ 변경됨 (2025-12-01): existsByEmailAndIsDeletedFalse로 변경
+     * - 초기: 삭제된 계정도 포함 (재가입 불가)
+     * - 변경 후: 활성 계정만 체크 (재가입 가능)
      */
     boolean existsByEmail(String email);
     
     /**
      * 활성 사용자명 중복 체크 (Soft Delete 고려)
      * - isDeleted=false인 계정 중에서만 중복 체크
+     * 
+     * ✅ 유지됨: 변경 없음
      */
     boolean existsByUserNameAndIsDeletedFalse(String userName);
     
     /**
      * 사용자명으로 활성 계정 조회 (Soft Delete 고려)
+     * 
+     * ✅ 유지됨: 변경 없음
      */
     Optional<Account> findByUserNameAndIsDeletedFalse(String userName);
     
     /**
      * 전화번호 중복 체크
+     * 
+     * ⚠️ 변경됨 (2025-12-01): existsByPhoneNumberAndIsDeletedFalse로 변경
+     * - 초기: 삭제된 계정도 포함 (재가입 불가)
+     * - 변경 후: 활성 계정만 체크 (재가입 가능)
      */
     boolean existsByPhoneNumber(String phoneNumber);
     
     /**
      * 계정 타입별 활성 계정 조회
+     * 
+     * ✅ 유지됨: 변경 없음
      */
     List<Account> findByAccountTypeAndIsDeletedFalse(AccountType accountType);
     
     /**
      * 계정 타입 및 승인 상태별 활성 계정 조회
+     * 
+     * ✅ 유지됨: 변경 없음
      */
+    List<Account> findByAccountTypeAndAccountApprovedAndIsDeletedFalse(
+        AccountType accountType, 
+        ApprovalStatus accountApproved
+    );
+}
+```
+
+#### 변경된 메서드 (2025-12-01 적용)
+
+**실제 구현 코드 (최신):**
+```java
+/**
+ * Account 엔티티에 대한 Repository (최신 버전 - 2025-12-01)
+ */
+@Repository
+public interface AccountRepository extends JpaRepository<Account, Long> {
+    
+    // ✅ 변경됨: 활성 계정만 조회
+    Optional<Account> findByEmailAndIsDeletedFalse(String email);
+    
+    // ✅ 변경됨: 활성 계정만 중복 체크
+    boolean existsByEmailAndIsDeletedFalse(String email);
+    
+    // ✅ 유지됨
+    boolean existsByUserNameAndIsDeletedFalse(String userName);
+    
+    // ✅ 유지됨
+    Optional<Account> findByUserNameAndIsDeletedFalse(String userName);
+    
+    // ✅ 변경됨: 활성 계정만 중복 체크
+    boolean existsByPhoneNumberAndIsDeletedFalse(String phoneNumber);
+    
+    // ✅ 유지됨
+    List<Account> findByAccountTypeAndIsDeletedFalse(AccountType accountType);
+    
+    // ✅ 유지됨
     List<Account> findByAccountTypeAndAccountApprovedAndIsDeletedFalse(
         AccountType accountType, 
         ApprovalStatus accountApproved
@@ -329,28 +429,85 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
 ### 4.2 메소드 설명
 
-| 메소드명 | 반환 타입 | 용도 | 비고 |
-|----------|-----------|------|------|
-| `findByEmail(String)` | `Optional<Account>` | 로그인 시 이메일로 계정 조회 | Soft Delete 미고려 |
-| `existsByEmail(String)` | `boolean` | 회원가입 시 이메일 중복 체크 | Soft Delete 미고려 |
+> ⚠️ **변경 이력 (2025-12-01)**: 이 섹션은 변경 전후 비교를 위해 보존되었습니다.  
+> 아래 내용은 **2025-12-01 업데이트 사항을 요약**한 것이며, **본 문서에는 반영되지 않았습니다**.  
+> 실제 구현 시에는 `soft_delete_username_strategy.md`를 참조하세요.
+
+#### 변경 요약 (2025-12-01 커밋 기록)
+
+**변경 전 (본 문서 작성 시점, 2025-10-29):**
+- `existsByEmail(String)` - 삭제된 계정도 포함 체크
+- `existsByPhoneNumber(String)` - 삭제된 계정도 포함 체크
+- `existsByUserNameAndIsDeletedFalse(String)` - 활성 계정만 체크
+
+**변경 후 (2025-12-01 적용됨):**
+- `existsByEmailAndIsDeletedFalse(String)` - 활성 계정만 체크 ✅
+- `existsByPhoneNumberAndIsDeletedFalse(String)` - 활성 계정만 체크 ✅
+- `existsByUserNameAndIsDeletedFalse(String)` - 활성 계정만 체크 (유지)
+
+**관련 커밋:**
+- `303fb42` (2025-12-01) - Allow email reuse after soft delete
+- `e284efe` (2025-12-01) - Allow phone number reuse after soft delete
+- `49d982e` (2025-12-01) - Correct soft-deleted account test mock
+- `cb047ff` (2025-12-01) - Update documentation for Soft Delete policy
+
+#### 아래 표는 변경 후 상태 (참고용)
+
+| 메소드명 | 반환 타입 | 용도 | 변경 상태 |
+|----------|-----------|------|-----------|
+| `findByEmailAndIsDeletedFalse(String)` | `Optional<Account>` | 로그인 시 이메일로 활성 계정 조회 | ✅ 변경됨 (2025-12-01) |
+| `existsByEmailAndIsDeletedFalse(String)` | `boolean` | 회원가입 시 이메일 중복 체크 (활성만) | ✅ 변경됨 (2025-12-01) |
 | `existsByUserNameAndIsDeletedFalse(String)` | `boolean` | 활성 사용자명 중복 체크 | ✅ Soft Delete 고려 |
 | `findByUserNameAndIsDeletedFalse(String)` | `Optional<Account>` | 활성 계정 조회 (사용자명) | ✅ Soft Delete 고려 |
-| `existsByPhoneNumber(String)` | `boolean` | 회원가입 시 전화번호 중복 체크 | Soft Delete 미고려 |
+| `existsByPhoneNumberAndIsDeletedFalse(String)` | `boolean` | 회원가입 시 전화번호 중복 체크 (활성만) | ✅ 변경됨 (2025-12-01) |
 | `findByAccountTypeAndIsDeletedFalse(AccountType)` | `List<Account>` | 계정 타입별 활성 계정 조회 | ✅ Soft Delete 고려 |
 | `findByAccountTypeAndAccountApprovedAndIsDeletedFalse(...)` | `List<Account>` | 타입+승인 상태별 활성 계정 조회 | ✅ Soft Delete 고려 |
 
-### 4.3 Soft Delete 처리 전략
+### 4.3 Soft Delete 처리 전략 (⚠️ 본 문서 작성 시점 - 2025-10-29)
 
-**userName**: Soft Delete 고려 (재가입 가능)
-- ✅ `existsByUserNameAndIsDeletedFalse()` - 활성 계정만 중복 체크
-- ✅ `findByUserNameAndIsDeletedFalse()` - 활성 계정만 조회
+> ⚠️ **주의**: 이 섹션은 초기 설계 내용이며, 2025-12-01에 정책이 변경되었습니다.  
+> 변경된 정책은 아래 "변경된 정책" 섹션을 참조하세요.
 
-**email, phoneNumber**: Soft Delete 미고려 (unique 제약 유지)
-- ⚠️ `existsByEmail()` - 삭제된 계정도 포함 (재가입 불가)
-- ⚠️ `existsByPhoneNumber()` - 삭제된 계정도 포함 (재가입 불가)
+**[본 문서 작성 시점] 초기 설계 (2025-10-29)**:
+- ✅ userName: Soft Delete 고려 (재가입 가능)
+- ❌ email, phoneNumber: Soft Delete 미고려 (재가입 불가)
 
-> 💡 **참고**: userName만 Soft Delete 후 재사용 가능. email/phoneNumber는 unique 제약으로 재가입 불가.
-> 자세한 내용은 `soft_delete_username_strategy.md` 참고.
+**Repository 메서드 (초기 설계):**
+```java
+// userName만 Soft Delete 고려
+boolean existsByUserNameAndIsDeletedFalse(String userName);
+
+// email, phoneNumber는 Soft Delete 미고려
+boolean existsByEmail(String email);
+boolean existsByPhoneNumber(String phoneNumber);
+```
+
+### 4.4 변경된 정책 (2025-12-01 적용) - 요약
+
+> 📘 **최신 정보**: 아래 내용은 변경 사항을 요약한 것입니다.  
+> 전체 내용은 `soft_delete_username_strategy.md` (2025-12-01 업데이트)를 참조하세요.
+
+**[신버전] 변경된 정책 (2025-12-01 적용)**:
+- ✅ **email**: Soft Delete 고려 → 재사용 가능
+- ✅ **userName**: Soft Delete 고려 → 재사용 가능 (유지)
+- ✅ **phoneNumber**: Soft Delete 고려 → 재사용 가능
+
+**변경된 Repository 메서드:**
+```java
+// 모든 개인정보 필드가 Soft Delete 고려
+boolean existsByEmailAndIsDeletedFalse(String email);
+boolean existsByUserNameAndIsDeletedFalse(String userName);
+boolean existsByPhoneNumberAndIsDeletedFalse(String phoneNumber);
+```
+
+**변경 이유:**
+1. 사용자 편의성 향상 (탈퇴 후 재가입 시 동일 정보 사용)
+2. Soft Delete 정책 일관성 유지
+3. GDPR 등 개인정보 보호 규정 준수
+
+**상세 문서:**
+- `코드 작업 지침/참고사항/soft_delete_username_strategy.md`
+- 마이그레이션 절차, Partial Index 적용, Fallback 전략 포함
 
 ---
 
@@ -512,11 +669,34 @@ public abstract class BaseSoftDeleteSupportEntity extends BaseTimeEntity {
 - **JPA 가이드**: `.md/JPA_GUIDELINE.md`
 - **API 가이드**: `.md/API_GUIDELINES.md`
 - **SQL 참고**: `sql/softcampus.sql` (line 172-188)
+- **📘 최신 Soft Delete 전략**: `코드 작업 지침/참고사항/soft_delete_username_strategy.md` (2025-12-01)
 
 ---
 
-**작성일**: 2025-10-29  
-**최종 수정일**: 2025-10-29  
+## 📝 문서 이력
+
+### 버전 1.0 (2025-10-29)
+- **상태**: 초기 작성
+- **내용**: Account Entity 및 Repository 설계
+- **Soft Delete 정책**: userName만 재사용 가능
+
+### 버전 1.1 (2025-12-01) - 변경 요약 추가
+- **상태**: 🗂️ SUPERSEDED (대체됨)
+- **변경**: 2025-12-01 정책 변경 사항 요약 추가
+- **주의**: 본 문서는 업데이트되지 않음, 요약만 추가
+- **대체 문서**: `soft_delete_username_strategy.md`
+
+### 관련 커밋
+- `303fb42` (2025-12-01) - Allow email reuse after soft delete
+- `e284efe` (2025-12-01) - Allow phone number reuse after soft delete
+- `49d982e` (2025-12-01) - Correct soft-deleted account test mock
+- `cb047ff` (2025-12-01) - Update documentation for Soft Delete policy
+
+---
+
+**최초 작성일**: 2025-10-29  
+**마지막 수정일**: 2025-12-01 (변경 요약 추가, 본문 미변경)  
 **작성 방식**: Entity-First (엔티티 코드 우선, SQL은 참고용)  
+**문서 상태**: 🗂️ **SUPERSEDED** - 아카이브 (참고용)  
 **현재 상태**: Domain Layer 완료 (필드 변환 완료: role→accountType, company→affiliation, department→position)  
-**다음 단계**: Service Layer 구현 예정
+**다음 단계**: ~~Service Layer 구현 예정~~ (완료됨, 최신 정보는 다른 문서 참조)

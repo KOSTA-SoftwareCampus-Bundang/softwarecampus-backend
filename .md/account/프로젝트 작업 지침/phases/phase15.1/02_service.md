@@ -73,7 +73,8 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional(readOnly = true)
     public AccountResponse getProfile(String email) {
-        Account account = accountRepository.findByEmail(email)
+        // ✅ 2025-12-01 업데이트: Soft Delete 고려
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
             .orElseThrow(() -> new AccountNotFoundException(email));
         
         return AccountResponse.from(account);
@@ -83,14 +84,16 @@ public class ProfileServiceImpl implements ProfileService {
     @Transactional
     public AccountResponse updateProfile(String email, UpdateProfileRequest request) {
         // 1. Account 조회
-        Account account = accountRepository.findByEmail(email)
+        // ✅ 2025-12-01 업데이트: Soft Delete 고려
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
             .orElseThrow(() -> new AccountNotFoundException(email));
 
         // 2. 전화번호 중복 검증 (변경하는 경우에만)
         if (request.getPhoneNumber() != null && 
             !request.getPhoneNumber().equals(account.getPhoneNumber())) {
             
-            if (accountRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            // ✅ 2025-12-01 업데이트: Soft Delete 고려
+            if (accountRepository.existsByPhoneNumberAndIsDeletedFalse(request.getPhoneNumber())) {
                 throw new PhoneNumberAlreadyExistsException(request.getPhoneNumber());
             }
         }
@@ -106,7 +109,8 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public void deleteAccount(String email) {
-        Account account = accountRepository.findByEmail(email)
+        // ✅ 2025-12-01 업데이트: Soft Delete 고려
+        Account account = accountRepository.findByEmailAndIsDeletedFalse(email)
             .orElseThrow(() -> new AccountNotFoundException(email));
 
         // 소프트 삭제

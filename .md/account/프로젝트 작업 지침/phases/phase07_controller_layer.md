@@ -70,7 +70,14 @@ SignupService (인터페이스)
     ↓
 SignupServiceImpl (구현체)
     ↓
-    ├─ AccountRepository.existsByEmail(String)
+    ├─ AccountRepository.existsByEmailAndIsDeletedFalse(String)  // ✅ 2025-11-30 업데이트
+    │   // Soft Delete 정책: 논리 삭제된 계정(isDeleted=true)은 "존재하지 않음"으로 간주
+    │   // 재가입 허용: 탈퇴 후 동일 이메일로 재가입 가능
+    │   // 비즈니스 시나리오:
+    │   //   1. 정상 회원가입: 활성 계정 중 이메일 중복 체크
+    │   //   2. 재가입: 과거 탈퇴 계정(isDeleted=true)은 무시, 신규 계정 생성 허용
+    │   //   3. 복구 불가: 탈퇴 계정 자동 복구 없음, 새 계정으로 처리
+    │   // 참고 문서: .md/account/코드 작업 지침/참고사항/soft_delete_username_strategy.md
     ├─ AccountRepository.save(Account)
     └─ PasswordEncoder.encode(String)
 
