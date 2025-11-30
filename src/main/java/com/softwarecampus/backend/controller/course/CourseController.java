@@ -8,6 +8,7 @@ import com.softwarecampus.backend.service.course.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,12 +45,14 @@ public class CourseController {
 
     /** 관리자 - 과정 등록 승인 */
     @PostMapping("/courses/{courseId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CourseResponseDTO> approveCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.approveCourse(courseId));
     }
 
     /** 과정 수정 */
     @PutMapping("/courses/{courseId}")
+    @PreAuthorize("hasAnyRole('ADMIN','INSTITUTION')")
     public ResponseEntity<CourseResponseDTO> updateCourse(
             @PathVariable Long courseId,
             @RequestBody @Valid CourseRequestDTO dto) {
@@ -58,6 +61,7 @@ public class CourseController {
 
     /** 과정 삭제 */
     @DeleteMapping("/courses/{courseId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
         courseService.deleteCourse(courseId);
         return ResponseEntity.noContent().build();
@@ -65,6 +69,7 @@ public class CourseController {
 
     /** 기관유저 - 과정 등록 요청 */
     @PostMapping("/courses/request")
+    @PreAuthorize("hasRole('INSTITUTION')")
     public ResponseEntity<CourseResponseDTO> requestCourse(@RequestBody @Valid CourseRequestDTO dto) {
         return ResponseEntity.ok(courseService.requestCourseRegistration(dto));
     }

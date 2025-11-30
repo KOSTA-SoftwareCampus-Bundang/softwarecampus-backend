@@ -87,7 +87,7 @@ public class CourseServiceImpl implements CourseService {
         @Override
         @Transactional
         public CourseResponseDTO updateCourse(Long courseId, CourseRequestDTO dto) {
-                Course course = courseRepository.findById(courseId)
+                Course course = courseRepository.findByIdAndDeletedAtIsNull(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다."));
 
                 course.setName(dto.getName());
@@ -106,7 +106,7 @@ public class CourseServiceImpl implements CourseService {
         @Override
         @Transactional
         public void deleteCourse(Long courseId) {
-                Course course = courseRepository.findById(courseId)
+                Course course = courseRepository.findByIdAndDeletedAtIsNull(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다."));
                 course.markDeleted();
         }

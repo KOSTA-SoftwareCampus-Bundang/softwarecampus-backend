@@ -24,7 +24,7 @@ public interface CourseQnaRepository extends JpaRepository<CourseQna, Long> {
     Page<CourseQna> findByCourseId(@Param("courseId") Long courseId, Pageable pageable);
 
     // 단건 상세 조회 (연관 엔티티 함께 로딩)
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "account", "answeredBy" })
-    java.util.Optional<CourseQna> findWithDetailsById(Long id);
+    @Query("SELECT q FROM CourseQna q LEFT JOIN FETCH q.account LEFT JOIN FETCH q.answeredBy WHERE q.id = :id AND q.isDeleted = false")
+    java.util.Optional<CourseQna> findWithDetailsById(@Param("id") Long id);
 
 }
