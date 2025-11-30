@@ -3,6 +3,8 @@ package com.softwarecampus.backend.repository.course;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.CourseReview;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +16,9 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
 
     // 과정별 리뷰 목록
     List<CourseReview> findByCourseIdAndIsDeletedFalse(Long courseId);
+    
+    // 과정별 리뷰 목록 (Pageable)
+    Page<CourseReview> findByCourseIdAndIsDeletedFalse(Long courseId, Pageable pageable);
 
     // 승인된 리뷰만 조회
     List<CourseReview> findByCourseIdAndApprovalStatusAndIsDeletedFalse(Long courseId, ApprovalStatus status);
