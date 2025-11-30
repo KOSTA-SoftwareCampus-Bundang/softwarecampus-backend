@@ -117,12 +117,10 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                                                 .map(ReviewAttachmentResponse::fromEntity)
                                                 .toList())
                                 .likeCount((int) review.getLikes().stream()
-                                                .filter(l -> !l.getIsDeleted()
-                                                                && l.getType() == ReviewLike.LikeType.LIKE)
+                                                .filter(l -> l.getType() == ReviewLike.LikeType.LIKE)
                                                 .count())
                                 .dislikeCount((int) review.getLikes().stream()
-                                                .filter(l -> !l.getIsDeleted()
-                                                                && l.getType() == ReviewLike.LikeType.DISLIKE)
+                                                .filter(l -> l.getType() == ReviewLike.LikeType.DISLIKE)
                                                 .count())
                                 .createdAt(review.getCreatedAt()) // 추가
                                 .build();
