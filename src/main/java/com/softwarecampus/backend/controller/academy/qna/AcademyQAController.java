@@ -11,6 +11,10 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -43,11 +47,17 @@ public class AcademyQAController {
     }
 
     /**
-     * Q/A 조회
+     * Q/A 조회 (페이징 및 검색 지원)
      */
     @GetMapping
-    public ResponseEntity<List<QAResponse>> getQAsByAcademyId(@PathVariable Long academyId) {
-        List<QAResponse> response = academyQAService.getQAsByAcademyId(academyId);
+    public ResponseEntity<Page<QAResponse>> getQAsByAcademyId(
+            @PathVariable Long academyId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<QAResponse> response = academyQAService.getQAsByAcademyId(academyId, keyword, pageable);
         return ResponseEntity.ok(response);
     }
 

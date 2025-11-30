@@ -16,6 +16,8 @@ import com.softwarecampus.backend.repository.academy.academyQA.AcademyQAReposito
 import com.softwarecampus.backend.repository.academy.academyQA.AttachmentRepository;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,13 +53,19 @@ public class AcademyQAServiceImpl implements AcademyQAService {
     }
 
     /**
-     * 훈련기관 Q/A 조회(리스트 형식)
+     * 훈련기관 Q/A 조회(페이징 및 검색 지원)
      */
     @Override
-    public List<QAResponse> getQAsByAcademyId(Long academyId) {
-        return academyQARepository.findAllByAcademyId(academyId).stream()
-                .map(QAResponse::from)
-                .collect(Collectors.toList());
+    public Page<QAResponse> getQAsByAcademyId(Long academyId, String keyword, Pageable pageable) {
+        Page<AcademyQA> qaPage;
+        if (keyword != null && !keyword.isBlank()) {
+            qaPage = academyQARepository.findByAcademyIdAndTitleContainingOrQuestionTextContaining(
+                    academyId, keyword, keyword, pageable);
+        } else {
+            qaPage = academyQARepository.findByAcademyId(academyId, pageable);
+        }
+
+        return qaPage.map(QAResponse::from);
     }
 
     /**
