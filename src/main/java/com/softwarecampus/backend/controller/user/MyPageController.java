@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * - GET /api/mypage/profile: 프로필 조회
  * - PATCH /api/mypage/profile: 프로필 수정
  * - DELETE /api/mypage/account: 계정 삭제
- * - PUT /api/mypage/password: 비밀번호 재설정
+ * - PUT /api/mypage/password: 비밀번호 변경 (이중 인증)
  * 
  * 인증: 모든 엔드포인트 JWT 토큰 필수
  */
@@ -40,10 +40,10 @@ public class MyPageController {
     @GetMapping("/profile")
     public ResponseEntity<AccountResponse> getProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         String email = userDetails.getUsername();
         log.info("프로필 조회 요청");
-        
+
         AccountResponse response = profileService.getAccountByEmail(email);
         return ResponseEntity.ok(response);
     }
@@ -52,17 +52,17 @@ public class MyPageController {
      * 프로필 수정
      * 
      * @param userDetails Spring Security 인증 정보
-     * @param request 수정할 프로필 정보
+     * @param request     수정할 프로필 정보
      * @return 200 OK + AccountResponse
      */
     @PatchMapping("/profile")
     public ResponseEntity<AccountResponse> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request) {
-        
+
         String email = userDetails.getUsername();
         log.info("프로필 수정 요청");
-        
+
         AccountResponse response = profileService.updateProfile(email, request);
         return ResponseEntity.ok(response);
     }
@@ -76,30 +76,34 @@ public class MyPageController {
     @DeleteMapping("/account")
     public ResponseEntity<Void> deleteAccount(
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         String email = userDetails.getUsername();
         log.info("계정 삭제 요청");
-        
+
         profileService.deleteAccount(email);
         return ResponseEntity.noContent().build();
     }
-    
+
     /**
-     * 비밀번호 재설정
+     * 비밀번호 변경 (이중 인증 - 로그인 사용자용)
+     * 
+     * 선행 조건:
+     * 1. POST /api/auth/verify-password (현재 비밀번호 확인)
+     * 2. POST /api/auth/email/send-change-code (인증 코드 발송)
      * 
      * @param userDetails Spring Security 인증 정보
-     * @param request 인증 코드 및 새 비밀번호
+     * @param request     인증 코드 및 새 비밀번호
      * @return 200 OK
      */
     @PutMapping("/password")
-    public ResponseEntity<Void> resetPassword(
+    public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ResetPasswordRequest request) {
-        
+
         String email = userDetails.getUsername();
-        log.info("비밀번호 재설정 요청");
-        
-        profileService.resetPassword(email, request);
+        log.info("비밀번호 변경 요청");
+
+        profileService.changePassword(email, request);
         return ResponseEntity.ok().build();
     }
 }
