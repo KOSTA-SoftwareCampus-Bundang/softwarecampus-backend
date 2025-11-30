@@ -22,8 +22,7 @@ public class CourseQnaController {
     @GetMapping("/{courseId}/qna")
     public List<QnaResponse> getQnaList(
             @PathVariable CategoryType type,
-            @PathVariable Long courseId
-    ) {
+            @PathVariable Long courseId) {
         return qnaService.getQnaList(type, courseId);
     }
 
@@ -31,8 +30,7 @@ public class CourseQnaController {
     @GetMapping("/qna/{qnaId}")
     public QnaResponse getQnaDetail(
             @PathVariable CategoryType type,
-            @PathVariable Long qnaId
-    ) {
+            @PathVariable Long qnaId) {
         return qnaService.getQnaDetail(type, qnaId);
     }
 
@@ -42,8 +40,7 @@ public class CourseQnaController {
             @PathVariable CategoryType type,
             @PathVariable Long courseId,
             @RequestBody @Valid QnaRequest request,
-            @RequestAttribute("userId") Long writerId
-    ) {
+            @RequestAttribute("userId") Long writerId) {
         return qnaService.createQuestion(type, courseId, writerId, request);
     }
 
@@ -53,8 +50,7 @@ public class CourseQnaController {
             @PathVariable CategoryType type,
             @PathVariable Long qnaId,
             @RequestBody @Valid QnaRequest request,
-            @RequestAttribute("userId") Long writerId
-    ) {
+            @RequestAttribute("userId") Long writerId) {
         return qnaService.updateQuestion(type, qnaId, writerId, request);
     }
 
@@ -63,8 +59,7 @@ public class CourseQnaController {
     public void deleteQuestion(
             @PathVariable CategoryType type,
             @PathVariable Long qnaId,
-            @RequestAttribute("userId") Long writerId
-    ) {
+            @RequestAttribute("userId") Long writerId) {
         qnaService.deleteQuestion(type, qnaId, writerId);
     }
 
@@ -74,8 +69,7 @@ public class CourseQnaController {
             @PathVariable CategoryType type,
             @PathVariable Long qnaId,
             @RequestBody @Valid QnaAnswerRequest request,
-            @RequestAttribute("userId") Long adminId
-    ) {
+            @RequestAttribute("userId") Long adminId) {
         return qnaService.answerQuestion(type, qnaId, adminId, request);
     }
 
@@ -85,8 +79,7 @@ public class CourseQnaController {
             @PathVariable CategoryType type,
             @PathVariable Long qnaId,
             @RequestBody @Valid QnaAnswerRequest request,
-            @RequestAttribute("userId") Long adminId
-    ) {
+            @RequestAttribute("userId") Long adminId) {
         return qnaService.updateAnswer(type, qnaId, adminId, request);
     }
 
@@ -95,8 +88,7 @@ public class CourseQnaController {
     public void deleteAnswer(
             @PathVariable CategoryType type,
             @PathVariable Long qnaId,
-            @RequestAttribute("userId") Long adminId
-    ) {
+            @RequestAttribute("userId") Long adminId) {
         qnaService.deleteAnswer(type, qnaId, adminId);
     }
 }

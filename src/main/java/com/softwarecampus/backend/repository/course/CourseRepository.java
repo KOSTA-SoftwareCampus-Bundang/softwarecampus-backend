@@ -21,15 +21,23 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findByCategory_CategoryTypeAndDeletedAtIsNull(CategoryType type);
 
     /**
-     * 카테고리 타입 + 키워드 검색
+     * 카테고리 타입 + 온/오프라인 필터 조회
+     */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
+    List<Course> findByCategory_CategoryTypeAndIsOfflineAndDeletedAtIsNull(CategoryType type, boolean isOffline);
+
+    /**
+     * 카테고리 타입 + 키워드 검색 (+ 온/오프라인 필터 옵션)
      */
     @QueryHints(@QueryHint(name = org.hibernate.annotations.QueryHints.CACHEABLE, value = "false"))
     @Query(value = "SELECT * FROM course c " +
             "JOIN course_category cc ON c.category_id = cc.id " +
             "WHERE cc.category_type = :type " +
             "AND c.deleted_at IS NULL " +
+            "AND (:isOffline IS NULL OR c.is_offline = :isOffline) " +
             "AND LOWER(c.name) LIKE CONCAT('%', LOWER(:keyword), '%')", nativeQuery = true)
-    List<Course> searchByName(@Param("type") String type, @Param("keyword") String keyword);
+    List<Course> searchByName(@Param("type") String type, @Param("keyword") String keyword,
+            @Param("isOffline") Boolean isOffline);
 
     // 등록 요청 목록 (승인 대기 중)
     List<Course> findByIsApproved(ApprovalStatus status);

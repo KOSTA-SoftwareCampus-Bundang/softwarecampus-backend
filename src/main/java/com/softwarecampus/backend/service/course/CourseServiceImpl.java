@@ -22,87 +22,99 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class CourseServiceImpl implements CourseService {
 
-    private final CourseRepository courseRepository;
-    private final AcademyRepository academyRepository;
-    private final CourseCategoryRepository courseCategoryRepository;
+        private final CourseRepository courseRepository;
+        private final AcademyRepository academyRepository;
+        private final CourseCategoryRepository courseCategoryRepository;
 
+        @Override
+        public List<CourseResponseDTO> getAllCourses(CategoryType type, Boolean isOffline) {
+                List<Course> courses;
+                if (isOffline != null) {
+                        courses = courseRepository.findByCategory_CategoryTypeAndIsOfflineAndDeletedAtIsNull(type,
+                                        isOffline);
+                } else {
+                        courses = courseRepository.findByCategory_CategoryTypeAndDeletedAtIsNull(type);
+                }
 
-    @Override
-    public List<CourseResponseDTO> getAllCourses(CategoryType type) {
-        return courseRepository.findByCategory_CategoryTypeAndDeletedAtIsNull(type)
-                .stream()
-                .map(CourseResponseDTO::fromEntity)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<CourseResponseDTO> searchCourses(CategoryType type, String keyword) {
-        if (keyword == null || keyword.isBlank()) {
-            return courseRepository.findByCategory_CategoryTypeAndDeletedAtIsNull(type)
-                    .stream().map(CourseResponseDTO::fromEntity).toList();
+                return courses.stream()
+                                .map(CourseResponseDTO::fromEntity)
+                                .toList();
         }
 
-        return courseRepository.searchByName(type.name(), keyword)
-                .stream().map(CourseResponseDTO::fromEntity).toList();
-    }
+        @Override
+        @Transactional(readOnly = true)
+        public List<CourseResponseDTO> searchCourses(CategoryType type, String keyword, Boolean isOffline) {
+                if (keyword == null || keyword.isBlank()) {
+                        return getAllCourses(type, isOffline);
+                }
 
+                return courseRepository.searchByName(type.name(), keyword, isOffline)
+                                .stream().map(CourseResponseDTO::fromEntity).toList();
+        }
 
-    /** 관리자 - 요청 승인 후 등록 */
-    @Override
-    @Transactional
-    public CourseResponseDTO approveCourse(Long courseId) {
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
+        /** 관리자 - 요청 승인 후 등록 */
+        @Override
+        @Transactional
+        public CourseResponseDTO approveCourse(Long courseId) {
+                Course course = courseRepository.findById(courseId)
+                                .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
 
-        course.setIsApproved(ApprovalStatus.APPROVED);
-        return CourseResponseDTO.fromEntity(course);
-    }
+                course.setIsApproved(ApprovalStatus.APPROVED);
+                return CourseResponseDTO.fromEntity(course);
+        }
 
-    /** 기관유저 - 과정 등록 요청 (PENDING) */
-    @Override
-    @Transactional
-    public CourseResponseDTO requestCourseRegistration(CourseRequestDTO dto) {
-        var academy = academyRepository.findById(dto.getAcademyId())
-                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 기관입니다. ID=" + dto.getAcademyId()));
+        /** 기관유저 - 과정 등록 요청 (PENDING) */
+        @Override
+        @Transactional
+        public CourseResponseDTO requestCourseRegistration(CourseRequestDTO dto) {
+                var academy = academyRepository.findById(dto.getAcademyId())
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "존재하지 않는 기관입니다. ID=" + dto.getAcademyId()));
 
-        var category = courseCategoryRepository
-                .findByCategoryTypeAndCategoryName(dto.getCategoryType(), dto.getCategoryName())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "존재하지 않는 과정 카테고리입니다. type=" + dto.getCategoryType() + ", name=" + dto.getCategoryName()
-                ));
+                var category = courseCategoryRepository
+                                .findByCategoryTypeAndCategoryName(dto.getCategoryType(), dto.getCategoryName())
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "존재하지 않는 과정 카테고리입니다. type=" + dto.getCategoryType() + ", name="
+                                                                + dto.getCategoryName()));
 
-        var course = dto.toEntity(academy, category);
-        course.setIsApproved(ApprovalStatus.PENDING); // 기관 유저 요청 상태
+                var course = dto.toEntity(academy, category);
+                course.setIsApproved(ApprovalStatus.PENDING); // 기관 유저 요청 상태
 
-        courseRepository.save(course);
-        return CourseResponseDTO.fromEntity(course);
-    }
+                courseRepository.save(course);
+                return CourseResponseDTO.fromEntity(course);
+        }
 
-    @Override
-    @Transactional
-    public CourseResponseDTO updateCourse(Long courseId, CourseRequestDTO dto) {
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다."));
+        @Override
+        @Transactional
+        public CourseResponseDTO updateCourse(Long courseId, CourseRequestDTO dto) {
+                Course course = courseRepository.findById(courseId)
+                                .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다."));
 
-        course.setName(dto.getName());
-        course.setCost(dto.getCost());
-        course.setLocation(dto.getLocation());
-        course.setClassDay(dto.getClassDay());
-        course.setRecruitStart(dto.getRecruitStart());
-        course.setRecruitEnd(dto.getRecruitEnd());
-        course.setCourseStart(dto.getCourseStart());
-        course.setCourseEnd(dto.getCourseEnd());
-        course.setRequirement(dto.getRequirement());
+                course.setName(dto.getName());
+                course.setCost(dto.getCost());
+                course.setLocation(dto.getLocation());
+                course.setClassDay(dto.getClassDay());
+                course.setRecruitStart(dto.getRecruitStart());
+                course.setRecruitEnd(dto.getRecruitEnd());
+                course.setCourseStart(dto.getCourseStart());
+                course.setCourseEnd(dto.getCourseEnd());
+                course.setRequirement(dto.getRequirement());
 
-        return CourseResponseDTO.fromEntity(course);
-    }
+                return CourseResponseDTO.fromEntity(course);
+        }
 
-    @Override
-    @Transactional
-    public void deleteCourse(Long courseId) {
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다."));
-        course.markDeleted();
-    }
+        @Override
+        @Transactional
+        public void deleteCourse(Long courseId) {
+                Course course = courseRepository.findById(courseId)
+                                .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다."));
+                course.markDeleted();
+        }
+
+        @Override
+        public com.softwarecampus.backend.dto.course.CourseDetailResponseDTO getCourseDetail(Long courseId) {
+                Course course = courseRepository.findById(courseId)
+                                .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
+                return com.softwarecampus.backend.dto.course.CourseDetailResponseDTO.fromEntity(course);
+        }
 }
