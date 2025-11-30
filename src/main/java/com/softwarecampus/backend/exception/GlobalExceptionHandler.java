@@ -294,6 +294,10 @@ public class GlobalExceptionHandler {
 
         problemDetail.setType(URI.create(problemBaseUri + "/invalid-password"));
         problemDetail.setTitle("Invalid Password");
+        return problemDetail;
+    }
+
+    /**
      * 인증되지 않은 사용자 접근 예외 처리
      * HTTP 401 Unauthorized
      */
@@ -561,8 +565,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.NOT_FOUND,
-                ex.getMessage()
-        );
+                ex.getMessage());
         problemDetail.setType(URI.create(problemBaseUri + "/course-not-found"));
         problemDetail.setTitle("Course Resource Not Found");
 
@@ -578,8 +581,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                ex.getMessage()
-        );
+                ex.getMessage());
         problemDetail.setType(URI.create(problemBaseUri + "/course-bad-request"));
         problemDetail.setTitle("Invalid Course Request");
 
