@@ -15,52 +15,47 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ReviewLikeController {
 
-    private final ReviewLikeService reviewLikeService;
+        private final ReviewLikeService reviewLikeService;
 
-    /**
-     * 좋아요/싫어요 토글 (인증 필요)
-     * POST /api/courses/{courseId}/reviews/{reviewId}/likes
-     */
-    @PostMapping("/{reviewId}/likes")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ReviewLikeResponse> toggleLike(
-            @PathVariable Long courseId,
-            @PathVariable Long reviewId,
-            @RequestBody ReviewLikeRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        // reviewId가 courseId에 속하는지 검증
-        reviewLikeService.validateReviewBelongsToCourse(courseId, reviewId);
-        
-        Long accountId = userDetails.getId();
-        var result = reviewLikeService.toggleLike(reviewId, accountId, request.getType());
+        /**
+         * 좋아요/싫어요 토글 (인증 필요)
+         * POST /api/courses/{courseId}/reviews/{reviewId}/likes
+         */
+        @PostMapping("/{reviewId}/likes")
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<ReviewLikeResponse> toggleLike(
+                        @PathVariable Long courseId,
+                        @PathVariable Long reviewId,
+                        @RequestBody ReviewLikeRequest request,
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+                // reviewId가 courseId에 속하는지 검증
+                reviewLikeService.validateReviewBelongsToCourse(courseId, reviewId);
 
-        return ResponseEntity.ok(
-                new ReviewLikeResponse(
-                        result.getType().name(),
-                        reviewLikeService.getLikeCount(reviewId),
-                        reviewLikeService.getDislikeCount(reviewId)
-                )
-        );
-    }
+                Long accountId = userDetails.getId();
+                var result = reviewLikeService.toggleLike(reviewId, accountId, request.getType());
 
-    /**
-     * 좋아요/싫어요 개수 조회
-     * GET /api/courses/{courseId}/reviews/{reviewId}/likes
-     */
-    @GetMapping("/{reviewId}/likes")
-    public ResponseEntity<ReviewLikeResponse> getCounts(
-            @PathVariable Long courseId,
-            @PathVariable Long reviewId
-    ) {
-        // reviewId가 courseId에 속하는지 검증
-        reviewLikeService.validateReviewBelongsToCourse(courseId, reviewId);
-        
-        long likeCount = reviewLikeService.getLikeCount(reviewId);
-        long dislikeCount = reviewLikeService.getDislikeCount(reviewId);
+                return ResponseEntity.ok(
+                                new ReviewLikeResponse(
+                                                result.isActive() ? result.getType().name() : "NONE",
+                                                reviewLikeService.getLikeCount(reviewId),
+                                                reviewLikeService.getDislikeCount(reviewId)));
+        }
 
-        return ResponseEntity.ok(
-                new ReviewLikeResponse("NONE", likeCount, dislikeCount)
-        );
-    }
+        /**
+         * 좋아요/싫어요 개수 조회
+         * GET /api/courses/{courseId}/reviews/{reviewId}/likes
+         */
+        @GetMapping("/{reviewId}/likes")
+        public ResponseEntity<ReviewLikeResponse> getCounts(
+                        @PathVariable Long courseId,
+                        @PathVariable Long reviewId) {
+                // reviewId가 courseId에 속하는지 검증
+                reviewLikeService.validateReviewBelongsToCourse(courseId, reviewId);
+
+                long likeCount = reviewLikeService.getLikeCount(reviewId);
+                long dislikeCount = reviewLikeService.getDislikeCount(reviewId);
+
+                return ResponseEntity.ok(
+                                new ReviewLikeResponse("NONE", likeCount, dislikeCount));
+        }
 }

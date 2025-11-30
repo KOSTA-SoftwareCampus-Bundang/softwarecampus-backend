@@ -23,25 +23,14 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     /**
      * reviewId가 courseId에 속하는지 검증
      * 
-     * @throws NotFoundException reviewId가 존재하지 않거나 course가 null인 경우
+     * @throws NotFoundException   reviewId가 존재하지 않거나 course가 null인 경우
      * @throws BadRequestException reviewId가 courseId에 속하지 않는 경우
      */
     @Override
     @Transactional(readOnly = true)
     public void validateReviewBelongsToCourse(Long courseId, Long reviewId) {
-        var review = courseReviewRepository.findById(reviewId)
+        courseReviewRepository.findByIdAndCourseIdAndIsDeletedFalse(reviewId, courseId)
                 .orElseThrow(() -> new NotFoundException("리뷰를 찾을 수 없습니다: " + reviewId));
-
-        // Lazy loading 방지 및 NPE 방지
-        if (review.getCourse() == null) {
-            throw new NotFoundException("리뷰(ID: " + reviewId + ")에 연결된 과정이 없습니다.");
-        }
-
-        if (!review.getCourse().getId().equals(courseId)) {
-            throw new BadRequestException(
-                    String.format("리뷰(ID: %d)는 과정(ID: %d)에 속하지 않습니다.", reviewId, courseId)
-            );
-        }
     }
 
     @Override
@@ -89,7 +78,6 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
 
         return reviewLikeRepository.save(newLike);
     }
-
 
     @Override
     public long getLikeCount(Long reviewId) {
