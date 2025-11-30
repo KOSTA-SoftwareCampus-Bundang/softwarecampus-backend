@@ -296,7 +296,7 @@ class MyPageIntegrationTest {
                                 .andExpect(status().isCreated());
 
                 // 2. 관리자가 ACADEMY 계정 승인 (수동)
-                Account academyAccount = accountRepository.findByEmail("academy@example.com")
+                Account academyAccount = accountRepository.findByEmailAndIsDeletedFalse("academy@example.com")
                                 .orElseThrow();
                 academyAccount.setAccountApproved(ApprovalStatus.APPROVED);
                 accountRepository.save(academyAccount);

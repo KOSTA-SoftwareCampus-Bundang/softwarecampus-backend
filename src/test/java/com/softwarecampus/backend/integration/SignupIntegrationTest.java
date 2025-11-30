@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 1. 회원가입 성공 (USER)
  * 2. 회원가입 성공 (ACADEMY)
  * 3. 이메일 중복 확인 (Repository.existsByEmail 검증)
- * 4. DB 저장 확인 (Repository.save + findByEmail 검증)
+ * 4. DB 저장 확인 (Repository.save + findByEmailAndIsDeletedFalse 검증)
  * 5. 전화번호 중복 확인 (Repository.existsByPhoneNumber 검증)
  * 6. 이메일 중복 확인 API (/check-email)
  * 
@@ -102,7 +102,7 @@ class SignupIntegrationTest {
                                 .andExpect(jsonPath("$.approvalStatus").value("APPROVED"));
 
                 // Repository 검증: DB 저장 확인
-                Account savedAccount = accountRepository.findByEmail("user@test.com")
+                Account savedAccount = accountRepository.findByEmailAndIsDeletedFalse("user@test.com")
                                 .orElseThrow(() -> new AssertionError("저장된 계정을 찾을 수 없습니다."));
 
                 assertThat(savedAccount.getEmail()).isEqualTo("user@test.com");
@@ -144,7 +144,7 @@ class SignupIntegrationTest {
                                 .andExpect(jsonPath("$.approvalStatus").value("PENDING")); // ACADEMY는 승인 대기
 
                 // Repository 검증: DB 저장 확인
-                Account savedAccount = accountRepository.findByEmail("academy@test.com")
+                Account savedAccount = accountRepository.findByEmailAndIsDeletedFalse("academy@test.com")
                                 .orElseThrow(() -> new AssertionError("저장된 계정을 찾을 수 없습니다."));
 
                 assertThat(savedAccount.getEmail()).isEqualTo("academy@test.com");
@@ -264,7 +264,7 @@ class SignupIntegrationTest {
         }
 
         @Test
-        @DisplayName("DB 저장 및 조회 - save() + findByEmail() 검증")
+        @DisplayName("DB 저장 및 조회 - save() + findByEmailAndIsDeletedFalse() 검증")
         void DB저장조회_Repository검증() {
                 // given
                 Account newAccount = Account.builder()
@@ -284,11 +284,11 @@ class SignupIntegrationTest {
                 assertThat(savedAccount.getEmail()).isEqualTo("repository@test.com");
                 assertThat(savedAccount.getCreatedAt()).isNotNull();
 
-                // when - findByEmail() 검증
-                Account foundAccount = accountRepository.findByEmail("repository@test.com")
+                // when - findByEmailAndIsDeletedFalse() 검증
+                Account foundAccount = accountRepository.findByEmailAndIsDeletedFalse("repository@test.com")
                                 .orElseThrow(() -> new AssertionError("계정을 찾을 수 없습니다."));
 
-                // then - findByEmail() 결과 확인
+                // then - findByEmailAndIsDeletedFalse() 결과 확인
                 assertThat(foundAccount.getId()).isEqualTo(savedAccount.getId());
                 assertThat(foundAccount.getEmail()).isEqualTo("repository@test.com");
                 assertThat(foundAccount.getUserName()).isEqualTo("레포지토리테스트");
@@ -400,7 +400,7 @@ class SignupIntegrationTest {
 
                 // Step 2: DB 저장 확인
                 assertThat(accountRepository.existsByEmail("fullflow@test.com")).isTrue();
-                Account savedAccount = accountRepository.findByEmail("fullflow@test.com")
+                Account savedAccount = accountRepository.findByEmailAndIsDeletedFalse("fullflow@test.com")
                                 .orElseThrow(() -> new AssertionError("계정이 저장되지 않았습니다."));
                 assertThat(savedAccount.getUserName()).isEqualTo("플로우테스트");
 

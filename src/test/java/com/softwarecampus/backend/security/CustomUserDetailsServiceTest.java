@@ -36,180 +36,180 @@ import static org.mockito.Mockito.*;
 @DisplayName("CustomUserDetailsService 테스트")
 class CustomUserDetailsServiceTest {
 
-    @Mock
-    private AccountRepository accountRepository;
+        @Mock
+        private AccountRepository accountRepository;
 
-    @InjectMocks
-    private CustomUserDetailsService customUserDetailsService;
+        @InjectMocks
+        private CustomUserDetailsService customUserDetailsService;
 
-    private Account testUserAccount;
-    private Account testAcademyAccount;
-    private Account testAdminAccount;
+        private Account testUserAccount;
+        private Account testAcademyAccount;
+        private Account testAdminAccount;
 
-    @BeforeEach
-    void setUp() {
-        // 일반 사용자 계정
-        testUserAccount = Account.builder()
-                .id(1L)
-                .email("user@test.com")
-                .password("$2a$10$hashedPassword")
-                .userName("테스트유저")
-                .phoneNumber("01012345678")
-                .accountType(AccountType.USER)
-                .accountApproved(ApprovalStatus.APPROVED)
-                .build();
+        @BeforeEach
+        void setUp() {
+                // 일반 사용자 계정
+                testUserAccount = Account.builder()
+                                .id(1L)
+                                .email("user@test.com")
+                                .password("$2a$10$hashedPassword")
+                                .userName("테스트유저")
+                                .phoneNumber("01012345678")
+                                .accountType(AccountType.USER)
+                                .accountApproved(ApprovalStatus.APPROVED)
+                                .build();
 
-        // 기관 계정
-        testAcademyAccount = Account.builder()
-                .id(2L)
-                .email("academy@test.com")
-                .password("$2a$10$hashedPassword2")
-                .userName("테스트학원")
-                .phoneNumber("01087654321")
-                .accountType(AccountType.ACADEMY)
-                .accountApproved(ApprovalStatus.APPROVED)  // PENDING → APPROVED로 변경
-                .academyId(100L)
-                .build();
+                // 기관 계정
+                testAcademyAccount = Account.builder()
+                                .id(2L)
+                                .email("academy@test.com")
+                                .password("$2a$10$hashedPassword2")
+                                .userName("테스트학원")
+                                .phoneNumber("01087654321")
+                                .accountType(AccountType.ACADEMY)
+                                .accountApproved(ApprovalStatus.APPROVED) // PENDING → APPROVED로 변경
+                                .academyId(100L)
+                                .build();
 
-        // 관리자 계정
-        testAdminAccount = Account.builder()
-                .id(3L)
-                .email("admin@test.com")
-                .password("$2a$10$hashedPassword3")
-                .userName("관리자")
-                .phoneNumber("01011112222")
-                .accountType(AccountType.ADMIN)
-                .accountApproved(ApprovalStatus.APPROVED)
-                .build();
-    }
+                // 관리자 계정
+                testAdminAccount = Account.builder()
+                                .id(3L)
+                                .email("admin@test.com")
+                                .password("$2a$10$hashedPassword3")
+                                .userName("관리자")
+                                .phoneNumber("01011112222")
+                                .accountType(AccountType.ADMIN)
+                                .accountApproved(ApprovalStatus.APPROVED)
+                                .build();
+        }
 
-    @Test
-    @DisplayName("USER 타입 계정으로 UserDetails 로드 성공")
-    void loadUserByUsername_UserType_Success() {
-        // given
-        when(accountRepository.findByEmail("user@test.com"))
-                .thenReturn(Optional.of(testUserAccount));
+        @Test
+        @DisplayName("USER 타입 계정으로 UserDetails 로드 성공")
+        void loadUserByUsername_UserType_Success() {
+                // given
+                when(accountRepository.findByEmailAndIsDeletedFalse("user@test.com"))
+                                .thenReturn(Optional.of(testUserAccount));
 
-        // when
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername("user@test.com");
+                // when
+                UserDetails userDetails = customUserDetailsService.loadUserByUsername("user@test.com");
 
-        // then
-        assertThat(userDetails).isNotNull();
-        assertThat(userDetails.getUsername()).isEqualTo("user@test.com");
-        assertThat(userDetails.getPassword()).isEqualTo("$2a$10$hashedPassword");
-        assertThat(userDetails.getAuthorities()).hasSize(1);
-        assertThat(userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList()).containsExactly("ROLE_USER");
+                // then
+                assertThat(userDetails).isNotNull();
+                assertThat(userDetails.getUsername()).isEqualTo("user@test.com");
+                assertThat(userDetails.getPassword()).isEqualTo("$2a$10$hashedPassword");
+                assertThat(userDetails.getAuthorities()).hasSize(1);
+                assertThat(userDetails.getAuthorities().stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .toList()).containsExactly("ROLE_USER");
 
-        verify(accountRepository, times(1)).findByEmail("user@test.com");
-    }
+                verify(accountRepository, times(1)).findByEmailAndIsDeletedFalse("user@test.com");
+        }
 
-    @Test
-    @DisplayName("ACADEMY 타입 계정으로 UserDetails 로드 성공")
-    void loadUserByUsername_AcademyType_Success() {
-        // given
-        when(accountRepository.findByEmail("academy@test.com"))
-                .thenReturn(Optional.of(testAcademyAccount));
+        @Test
+        @DisplayName("ACADEMY 타입 계정으로 UserDetails 로드 성공")
+        void loadUserByUsername_AcademyType_Success() {
+                // given
+                when(accountRepository.findByEmailAndIsDeletedFalse("academy@test.com"))
+                                .thenReturn(Optional.of(testAcademyAccount));
 
-        // when
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername("academy@test.com");
+                // when
+                UserDetails userDetails = customUserDetailsService.loadUserByUsername("academy@test.com");
 
-        // then
-        assertThat(userDetails).isNotNull();
-        assertThat(userDetails.getUsername()).isEqualTo("academy@test.com");
-        assertThat(userDetails.getPassword()).isEqualTo("$2a$10$hashedPassword2");
-        assertThat(userDetails.getAuthorities()).hasSize(1);
-        assertThat(userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList()).containsExactly("ROLE_ACADEMY");
+                // then
+                assertThat(userDetails).isNotNull();
+                assertThat(userDetails.getUsername()).isEqualTo("academy@test.com");
+                assertThat(userDetails.getPassword()).isEqualTo("$2a$10$hashedPassword2");
+                assertThat(userDetails.getAuthorities()).hasSize(1);
+                assertThat(userDetails.getAuthorities().stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .toList()).containsExactly("ROLE_ACADEMY");
 
-        verify(accountRepository, times(1)).findByEmail("academy@test.com");
-    }
+                verify(accountRepository, times(1)).findByEmailAndIsDeletedFalse("academy@test.com");
+        }
 
-    @Test
-    @DisplayName("ADMIN 타입 계정으로 UserDetails 로드 성공")
-    void loadUserByUsername_AdminType_Success() {
-        // given
-        when(accountRepository.findByEmail("admin@test.com"))
-                .thenReturn(Optional.of(testAdminAccount));
+        @Test
+        @DisplayName("ADMIN 타입 계정으로 UserDetails 로드 성공")
+        void loadUserByUsername_AdminType_Success() {
+                // given
+                when(accountRepository.findByEmailAndIsDeletedFalse("admin@test.com"))
+                                .thenReturn(Optional.of(testAdminAccount));
 
-        // when
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername("admin@test.com");
+                // when
+                UserDetails userDetails = customUserDetailsService.loadUserByUsername("admin@test.com");
 
-        // then
-        assertThat(userDetails).isNotNull();
-        assertThat(userDetails.getUsername()).isEqualTo("admin@test.com");
-        assertThat(userDetails.getPassword()).isEqualTo("$2a$10$hashedPassword3");
-        assertThat(userDetails.getAuthorities()).hasSize(1);
-        assertThat(userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList()).containsExactly("ROLE_ADMIN");
+                // then
+                assertThat(userDetails).isNotNull();
+                assertThat(userDetails.getUsername()).isEqualTo("admin@test.com");
+                assertThat(userDetails.getPassword()).isEqualTo("$2a$10$hashedPassword3");
+                assertThat(userDetails.getAuthorities()).hasSize(1);
+                assertThat(userDetails.getAuthorities().stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .toList()).containsExactly("ROLE_ADMIN");
 
-        verify(accountRepository, times(1)).findByEmail("admin@test.com");
-    }
+                verify(accountRepository, times(1)).findByEmailAndIsDeletedFalse("admin@test.com");
+        }
 
-    @Test
-    @DisplayName("존재하지 않는 이메일로 로드 시 UsernameNotFoundException 발생")
-    void loadUserByUsername_NotFound_ThrowsException() {
-        // given
-        when(accountRepository.findByEmail("nonexistent@test.com"))
-                .thenReturn(Optional.empty());
+        @Test
+        @DisplayName("존재하지 않는 이메일로 로드 시 UsernameNotFoundException 발생")
+        void loadUserByUsername_NotFound_ThrowsException() {
+                // given
+                when(accountRepository.findByEmailAndIsDeletedFalse("nonexistent@test.com"))
+                                .thenReturn(Optional.empty());
 
-        // when & then
-        assertThatThrownBy(() -> customUserDetailsService.loadUserByUsername("nonexistent@test.com"))
-                .isInstanceOf(UsernameNotFoundException.class)
-                .hasMessageContaining("사용자를 찾을 수 없습니다")
-                .hasMessageContaining("nonexistent@test.com");
+                // when & then
+                assertThatThrownBy(() -> customUserDetailsService.loadUserByUsername("nonexistent@test.com"))
+                                .isInstanceOf(UsernameNotFoundException.class)
+                                .hasMessageContaining("사용자를 찾을 수 없습니다")
+                                .hasMessageContaining("nonexistent@test.com");
 
-        verify(accountRepository, times(1)).findByEmail("nonexistent@test.com");
-    }
+                verify(accountRepository, times(1)).findByEmailAndIsDeletedFalse("nonexistent@test.com");
+        }
 
-    @Test
-    @DisplayName("권한 목록에 ROLE_ 접두사가 정확히 추가됨")
-    void getAuthorities_AddsRolePrefix() {
-        // given
-        when(accountRepository.findByEmail("user@test.com"))
-                .thenReturn(Optional.of(testUserAccount));
+        @Test
+        @DisplayName("권한 목록에 ROLE_ 접두사가 정확히 추가됨")
+        void getAuthorities_AddsRolePrefix() {
+                // given
+                when(accountRepository.findByEmailAndIsDeletedFalse("user@test.com"))
+                                .thenReturn(Optional.of(testUserAccount));
 
-        // when
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername("user@test.com");
+                // when
+                UserDetails userDetails = customUserDetailsService.loadUserByUsername("user@test.com");
 
-        // then
-        assertThat(userDetails.getAuthorities()).hasSize(1);
-        GrantedAuthority authority = userDetails.getAuthorities().iterator().next();
-        assertThat(authority.getAuthority()).startsWith("ROLE_");
-        assertThat(authority.getAuthority()).isEqualTo("ROLE_USER");
-    }
+                // then
+                assertThat(userDetails.getAuthorities()).hasSize(1);
+                GrantedAuthority authority = userDetails.getAuthorities().iterator().next();
+                assertThat(authority.getAuthority()).startsWith("ROLE_");
+                assertThat(authority.getAuthority()).isEqualTo("ROLE_USER");
+        }
 
-    @Test
-    @DisplayName("동일 이메일로 여러 번 호출 시 Repository 호출 확인 (캐싱은 통합 테스트)")
-    void loadUserByUsername_MultipleCalls_RepositoryCalled() {
-        // given
-        when(accountRepository.findByEmail("user@test.com"))
-                .thenReturn(Optional.of(testUserAccount));
+        @Test
+        @DisplayName("동일 이메일로 여러 번 호출 시 Repository 호출 확인 (캐싱은 통합 테스트)")
+        void loadUserByUsername_MultipleCalls_RepositoryCalled() {
+                // given
+                when(accountRepository.findByEmailAndIsDeletedFalse("user@test.com"))
+                                .thenReturn(Optional.of(testUserAccount));
 
-        // when
-        customUserDetailsService.loadUserByUsername("user@test.com");
-        customUserDetailsService.loadUserByUsername("user@test.com");
-        customUserDetailsService.loadUserByUsername("user@test.com");
+                // when
+                customUserDetailsService.loadUserByUsername("user@test.com");
+                customUserDetailsService.loadUserByUsername("user@test.com");
+                customUserDetailsService.loadUserByUsername("user@test.com");
 
-        // then - 캐싱 없는 단위 테스트에서는 3번 호출됨
-        // 실제 캐싱은 @Cacheable이 동작하는 통합 테스트에서 검증
-        verify(accountRepository, times(3)).findByEmail("user@test.com");
-    }
+                // then - 캐싱 없는 단위 테스트에서는 3번 호출됨
+                // 실제 캐싱은 @Cacheable이 동작하는 통합 테스트에서 검증
+                verify(accountRepository, times(3)).findByEmailAndIsDeletedFalse("user@test.com");
+        }
 
-    @Test
-    @DisplayName("evictUserDetailsCache 호출 시 예외 없이 종료")
-    void evictUserDetailsCache_NoException() {
-        // given
-        String email = "user@test.com";
+        @Test
+        @DisplayName("evictUserDetailsCache 호출 시 예외 없이 종료")
+        void evictUserDetailsCache_NoException() {
+                // given
+                String email = "user@test.com";
 
-        // when & then - 예외 발생하지 않음을 확인
-        customUserDetailsService.evictUserDetailsCache(email);
+                // when & then - 예외 발생하지 않음을 확인
+                customUserDetailsService.evictUserDetailsCache(email);
 
-        // 캐시 제거는 Spring의 @CacheEvict가 처리하므로
-        // 단위 테스트에서는 메서드 호출만 확인
-        verifyNoInteractions(accountRepository);
-    }
+                // 캐시 제거는 Spring의 @CacheEvict가 처리하므로
+                // 단위 테스트에서는 메서드 호출만 확인
+                verifyNoInteractions(accountRepository);
+        }
 }
