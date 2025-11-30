@@ -52,8 +52,8 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
-                CourseReview review = reviewRepository.findWithDetailsById(reviewId)
-                                .filter(r -> !r.getIsDeleted() && r.getCourse().getId().equals(courseId))
+                CourseReview review = reviewRepository.findWithDetailsByIdAndIsDeletedFalse(reviewId)
+                                .filter(r -> r.getCourse().getId().equals(courseId))
                                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
 
                 return toDto(review);
@@ -209,12 +209,8 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
-                CourseReview review = reviewRepository.findWithDetailsById(reviewId)
+                CourseReview review = reviewRepository.findWithDetailsByIdAndIsDeletedFalse(reviewId)
                                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
-
-                if (review.getIsDeleted()) {
-                        throw new BadRequestException("이미 삭제된 리뷰는 삭제 요청할 수 없습니다.");
-                }
 
                 if (!review.getCourse().getId().equals(courseId)) {
                         throw new BadRequestException("이 리뷰는 해당 과정의 리뷰가 아닙니다.");

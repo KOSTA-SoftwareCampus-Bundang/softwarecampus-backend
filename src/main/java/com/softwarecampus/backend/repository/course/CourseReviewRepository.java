@@ -40,5 +40,5 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
 
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "writer", "sections", "attachments",
                         "likes" })
-        Optional<CourseReview> findWithDetailsById(Long id);
+        Optional<CourseReview> findWithDetailsByIdAndIsDeletedFalse(Long id);
 }
