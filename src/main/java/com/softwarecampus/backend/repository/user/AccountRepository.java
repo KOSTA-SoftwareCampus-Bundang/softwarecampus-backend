@@ -42,6 +42,18 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByEmailAndIsDeletedTrue(String email);
 
     /**
+     * 특정 타입의 활성 계정 존재 여부 확인
+     * - ADMIN 계정 초기화 시 사용
+     */
+    boolean existsByAccountTypeAndIsDeletedFalse(AccountType accountType);
+
+    /**
+     * 이메일과 타입으로 삭제된 계정 조회
+     * - ADMIN 계정 복구 시 사용
+     */
+    Optional<Account> findByEmailAndAccountTypeAndIsDeletedTrue(String email, AccountType accountType);
+
+    /**
      * 활성 사용자명 중복 체크 (Soft Delete 고려)
      * - isDeleted=false인 계정 중에서만 중복 체크
      */
