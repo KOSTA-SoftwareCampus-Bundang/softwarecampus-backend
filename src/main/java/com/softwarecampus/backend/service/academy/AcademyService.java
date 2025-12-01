@@ -27,15 +27,23 @@ public interface AcademyService {
 
     // 승인 처리
     AcademyResponse approveAcademy(Long id);
-    
+
     /**
      * 기관 거절 처리
      * 작성자: GitHub Copilot
      * 작성일: 2025-11-28
      * 
-     * @param id 기관 ID
+     * @param id     기관 ID
      * @param reason 거절 사유
      * @return 거절 처리된 기관 정보
      */
     AcademyResponse rejectAcademy(Long id, String reason);
+
+    /**
+     * 관리자용 기관 목록 조회 (검색, 필터링, 페이징)
+     */
+    org.springframework.data.domain.Page<AcademyResponse> getAdminAcademies(
+            com.softwarecampus.backend.domain.common.ApprovalStatus status,
+            String keyword,
+            org.springframework.data.domain.Pageable pageable);
 }
