@@ -29,6 +29,10 @@ public class BoardListResponseDTO {
 
     private Long commentsCount;
 
+    private Long hits;
+
+    private Long likeCount;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 

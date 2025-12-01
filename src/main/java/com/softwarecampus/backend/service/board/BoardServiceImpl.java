@@ -25,6 +25,7 @@ import java.util.Map;
 public class BoardServiceImpl implements BoardService {
 
     private final S3Service s3Service;
+    private final FileType fileType;
     private final BoardRepository boardRepository;
     private final BoardAttachRepository boardAttachRepository;
     private final AccountRepository accountRepository;
@@ -84,6 +85,14 @@ public class BoardServiceImpl implements BoardService {
 
         Board board = boardCreateRequestDTO.toEntity();
 
+        // 파일 개수 검증
+        FileType.FileTypeConfig config = fileType.getConfig(FileType.FileTypeEnum.BOARD_ATTACH);
+        if (files != null && files.length > 0) {
+            if (!config.isFileCountValid(files.length)) {
+                throw new BoardException(BoardErrorCode.FILE_COUNT_EXCEEDED);
+            }
+        }
+
         // 파일업로드 코드 작성
         List<BoardAttach> boardAttachList = board.getBoardAttaches();
         if (files != null && files.length > 0) {
@@ -113,21 +122,41 @@ public class BoardServiceImpl implements BoardService {
         if (!board.isActive()) {
             throw new BoardException(BoardErrorCode.BOARD_NOT_FOUND);
         }
+
         List<BoardAttach> boardAttachList = board.getBoardAttaches();
-        if (files != null && files.length > 0) {
-            if (boardAttachList.size() > 0) {
-                for (BoardAttach boardAttach : board.getBoardAttaches()) {
+        FileType.FileTypeConfig config = fileType.getConfig(FileType.FileTypeEnum.BOARD_ATTACH);
+
+        // 1. 선택적 파일 삭제 (deleteAttachIds에 있는 파일만 삭제)
+        List<Long> deleteAttachIds = boardUpdateRequestDTO.getDeleteAttachIds();
+        if (deleteAttachIds != null && !deleteAttachIds.isEmpty()) {
+            for (BoardAttach boardAttach : boardAttachList) {
+                if (boardAttach.isActive() && deleteAttachIds.contains(boardAttach.getId())) {
                     deleteFile(boardAttach);
                     boardAttach.markDeleted();
                     boardAttachRepository.save(boardAttach);
                 }
             }
+        }
+
+        // 2. 현재 활성 파일 개수 계산
+        long activeFileCount = boardAttachList.stream()
+                .filter(BoardAttach::isActive)
+                .count();
+
+        // 3. 새 파일 추가 (개수 검증 포함)
+        if (files != null && files.length > 0) {
+            // 총 파일 개수 검증
+            if (!config.isFileCountValid((int) (activeFileCount + files.length))) {
+                throw new BoardException(BoardErrorCode.FILE_COUNT_EXCEEDED);
+            }
+
             for (MultipartFile file : files) {
                 BoardAttach boardAttach = uploadFile(file);
                 boardAttach.setBoard(board);
                 boardAttachList.add(boardAttach);
             }
         }
+
         boardUpdateRequestDTO.updateEntity(board);
     }
 
