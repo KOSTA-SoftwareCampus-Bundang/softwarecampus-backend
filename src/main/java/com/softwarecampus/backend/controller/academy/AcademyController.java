@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/academies")
+@RequestMapping("/api/academies")
 @RequiredArgsConstructor
 public class AcademyController {
 
@@ -55,7 +55,7 @@ public class AcademyController {
     }
 
     /**
-     *  훈련기관 상세 정보 조회
+     * 훈련기관 상세 정보 조회
      */
     @GetMapping("/{academyId}")
     public ResponseEntity<AcademyResponse> getAcademyDetails(@PathVariable Long academyId) {
@@ -67,7 +67,8 @@ public class AcademyController {
      * 훈련기관 정보 수정
      */
     @PatchMapping("/{id}")
-    public ResponseEntity<AcademyResponse> updateAcademy(@PathVariable Long id, @RequestBody AcademyUpdateRequest request) {
+    public ResponseEntity<AcademyResponse> updateAcademy(@PathVariable Long id,
+            @RequestBody AcademyUpdateRequest request) {
         AcademyResponse academyResponse = academyService.updateAcademy(id, request);
         return ResponseEntity.ok(academyResponse);
     }

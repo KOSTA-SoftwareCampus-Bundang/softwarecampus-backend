@@ -24,7 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/academies/{academyId}/qna")
+@RequestMapping("/api/academies/{academyId}/qna")
 @RequiredArgsConstructor
 @Slf4j
 public class AcademyQAController {
