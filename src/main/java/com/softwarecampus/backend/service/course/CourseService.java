@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.service.course;
 
 import com.softwarecampus.backend.domain.course.CategoryType;
+import com.softwarecampus.backend.domain.course.CourseStatus;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
 import org.springframework.data.domain.Page;
@@ -20,7 +21,7 @@ public interface CourseService {
      * @param pageable     페이지 정보
      */
     Page<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline, String keyword,
-            String status, Pageable pageable);
+            CourseStatus status, Pageable pageable);
 
     /**
      * 과정 목록 조회 (전체)

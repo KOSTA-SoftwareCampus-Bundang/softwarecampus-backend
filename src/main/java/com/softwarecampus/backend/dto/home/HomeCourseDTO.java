@@ -38,11 +38,25 @@ public class HomeCourseDTO {
     private boolean isOffline;
 
     private String imageUrl;
+    private Double rating;
+    private Integer reviewCount;
 
     /**
      * Entity → DTO 변환
      */
     public static HomeCourseDTO fromEntity(Course course) {
+        // 유효한 리뷰 필터링 (삭제되지 않은 리뷰)
+        java.util.List<com.softwarecampus.backend.domain.course.CourseReview> validReviews = course.getReviews()
+                .stream()
+                .filter(r -> !Boolean.TRUE.equals(r.getIsDeleted()))
+                .toList();
+
+        // 평점 평균 계산
+        double avgRating = validReviews.stream()
+                .mapToDouble(com.softwarecampus.backend.domain.course.CourseReview::calculateAverageScore)
+                .average()
+                .orElse(0.0);
+
         return HomeCourseDTO.builder()
                 .id(course.getId())
                 .name(course.getName())
@@ -65,6 +79,8 @@ public class HomeCourseDTO {
                         .findFirst()
                         .map(img -> img.getImageUrl())
                         .orElse(null))
+                .rating(Math.round(avgRating * 10) / 10.0)
+                .reviewCount(validReviews.size())
                 .build();
     }
 }

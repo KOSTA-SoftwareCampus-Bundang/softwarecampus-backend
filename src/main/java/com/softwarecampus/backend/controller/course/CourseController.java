@@ -13,8 +13,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import com.softwarecampus.backend.domain.course.CourseStatus;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,15 +29,17 @@ public class CourseController {
      * @param categoryType 카테고리 타입 (EMPLOYEE/JOB_SEEKER)
      * @param isOffline    온/오프라인 필터
      * @param keyword      검색 키워드
+     * @param status       과정 상태 (RECRUITING, IN_PROGRESS, ENDED)
      * @param pageable     페이지 정보 (page, size, sort)
      */
+
     @GetMapping
     public ResponseEntity<Page<CourseResponseDTO>> getCourses(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) CategoryType categoryType,
             @RequestParam(required = false) Boolean isOffline,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String status,
+            @RequestParam(required = false) CourseStatus status,
             @PageableDefault(size = 20, sort = "id") Pageable pageable) {
         return ResponseEntity
                 .ok(courseService.getCourses(categoryId, categoryType, isOffline, keyword, status, pageable));

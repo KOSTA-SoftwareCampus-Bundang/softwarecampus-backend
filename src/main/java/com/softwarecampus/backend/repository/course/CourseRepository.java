@@ -12,6 +12,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
+import com.softwarecampus.backend.domain.course.CourseStatus;
+
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
         /**
@@ -86,16 +88,19 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                         "AND (:isOffline IS NULL OR c.isOffline = :isOffline) " +
                         "AND (:keyword IS NULL OR LOWER(c.name) LIKE CONCAT('%', LOWER(:keyword), '%')) " +
                         "AND (:status IS NULL OR (" +
-                        "   (:status = 'RECRUITING' AND CURRENT_DATE BETWEEN c.recruitStart AND c.recruitEnd) OR " +
-                        "   (:status = 'IN_PROGRESS' AND CURRENT_DATE BETWEEN c.courseStart AND c.courseEnd) OR " +
-                        "   (:status = 'ENDED' AND CURRENT_DATE > c.courseEnd)" +
+                        "   (:status = com.softwarecampus.backend.domain.course.CourseStatus.RECRUITING AND c.recruitStart IS NOT NULL AND c.recruitEnd IS NOT NULL AND CURRENT_DATE BETWEEN c.recruitStart AND c.recruitEnd) OR "
+                        +
+                        "   (:status = com.softwarecampus.backend.domain.course.CourseStatus.IN_PROGRESS AND c.courseStart IS NOT NULL AND c.courseEnd IS NOT NULL AND CURRENT_DATE BETWEEN c.courseStart AND c.courseEnd) OR "
+                        +
+                        "   (:status = com.softwarecampus.backend.domain.course.CourseStatus.ENDED AND c.courseEnd IS NOT NULL AND CURRENT_DATE > c.courseEnd)"
+                        +
                         "))")
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
         Page<Course> searchCourses(@Param("categoryId") Long categoryId,
                         @Param("categoryType") CategoryType categoryType,
                         @Param("isOffline") Boolean isOffline,
                         @Param("keyword") String keyword,
-                        @Param("status") String status,
+                        @Param("status") CourseStatus status,
                         Pageable pageable);
 
         /**
@@ -116,7 +121,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                         @Param("isOffline") Boolean isOffline,
                         @Param("keyword") String keyword);
 
-        // 등록 요청 목록 (승인 대기 중)
+        @Query("SELECT DISTINCT c FROM Course c " +
+                        "LEFT JOIN FETCH c.reviews r " +
+                        "LEFT JOIN FETCH r.sections " +
+                        "LEFT JOIN FETCH c.favorites " +
+                        "WHERE c.category.categoryType = :categoryType AND c.deletedAt IS NULL")
+        List<Course> findHomeCoursesByCategory(@Param("categoryType") CategoryType categoryType);
+
         List<Course> findByIsApproved(ApprovalStatus status);
 
         // courseId 와 categoryType 으로 단일 Course 조회

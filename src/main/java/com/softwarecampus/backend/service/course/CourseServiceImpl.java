@@ -10,6 +10,7 @@ import com.softwarecampus.backend.dto.course.CourseResponseDTO;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.repository.course.CourseCategoryRepository;
 import com.softwarecampus.backend.repository.course.CourseRepository;
+import com.softwarecampus.backend.domain.course.CourseStatus;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,7 +31,7 @@ public class CourseServiceImpl implements CourseService {
 
         @Override
         public Page<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline,
-                        String keyword, String status, Pageable pageable) {
+                        String keyword, CourseStatus status, Pageable pageable) {
                 // 통합 검색 쿼리 사용 (모든 파라미터가 null 가능)
                 Page<Course> coursePage = courseRepository.searchCourses(categoryId, categoryType, isOffline, keyword,
                                 status,
