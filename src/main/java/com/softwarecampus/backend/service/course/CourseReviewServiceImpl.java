@@ -122,6 +122,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                                 .writerId(review.getWriter().getId())
                                 .writerName(review.getWriter().getUserName()) // 추가
                                 .courseId(review.getCourse().getId())
+                                .courseName(review.getCourse().getName()) // 추가: 과정 이름
                                 .comment(review.getComment())
                                 .approvalStatus(review.getApprovalStatus().name())
                                 .averageScore(review.calculateAverageScore())
