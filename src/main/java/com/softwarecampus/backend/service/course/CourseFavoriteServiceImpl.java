@@ -15,7 +15,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,17 +31,21 @@ public class CourseFavoriteServiceImpl implements CourseFavoriteService {
     /**
      * 찜하기 추가 (idempotent - 동시성 안전)
      * 
-     * TOCTOU 경쟁 조건 해결:
-     * - check-then-create 대신 save 후 unique constraint 예외 처리
-     * - 동시 요청 시 하나는 성공, 나머지는 예외 발생하지만 모두 정상 처리
-     * 
-     * Unique constraint만 선택적으로 처리:
-     * - account_id + course_id unique constraint 위반: idempotent 처리
-     * - 기타 데이터 무결성 위반 (NOT NULL, CHECK 등): 예외 전파
+     * 전략: Check-then-Act + Exception Handling
+     * 1. 기존 데이터 조회 (Hard Delete이므로 존재하면 무조건 활성 상태)
+     * 2. 존재하면: 이미 찜한 상태이므로 무시
+     * 3. 없으면: 신규 생성 (save)
+     * 4. 동시성 문제로 중복 insert 발생 시 예외 처리
      */
     @Override
     @Transactional
     public void addFavorite(Long accountId, Long courseId) {
+        // 1. 먼저 조회하여 존재 여부 확인
+        if (favoriteRepository.existsByAccount_IdAndCourse_Id(accountId, courseId)) {
+            log.debug("이미 찜한 상태 - accountId: {}, courseId: {}", accountId, courseId);
+            return;
+        }
+
         try {
             Course course = courseRepository.findById(courseId)
                     .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다."));
@@ -54,80 +57,49 @@ public class CourseFavoriteServiceImpl implements CourseFavoriteService {
                     .course(course)
                     .build();
             favoriteRepository.save(favorite);
-            
+            log.debug("찜하기 신규 생성 - accountId: {}, courseId: {}", accountId, courseId);
+
         } catch (DataIntegrityViolationException e) {
-            // Root cause 확인: unique constraint 위반인지 검증
-            if (isUniqueConstraintViolation(e, accountId, courseId)) {
-                // account_id + course_id unique constraint 위반 = 이미 찜한 상태 → 정상 처리 (idempotent)
+            // 동시성 문제로 인한 중복 발생 시 무시 (idempotent)
+            if (isUniqueConstraintViolation(e)) {
                 log.debug("찜하기 중복 요청 무시 (unique constraint) - accountId: {}, courseId: {}", accountId, courseId);
-                // no-op: 이미 존재하므로 아무 작업도 하지 않음
             } else {
-                // 다른 종류의 데이터 무결성 위반 (NOT NULL, FK, CHECK 등)
-                log.error("찜하기 실패 - 데이터 무결성 위반 - accountId: {}, courseId: {}, cause: {}", 
-                          accountId, courseId, e.getRootCause(), e);
-                throw e; // 예외 전파
+                log.error("찜하기 실패 - 데이터 무결성 위반 - accountId: {}, courseId: {}, cause: {}",
+                        accountId, courseId, e.getRootCause(), e);
+                throw e;
             }
         }
     }
 
     /**
-     * DataIntegrityViolationException이 account_id + course_id unique constraint 위반인지 확인
-     * 
-     * @param e DataIntegrityViolationException
-     * @param accountId 계정 ID (로깅용)
-     * @param courseId 과정 ID (로깅용)
-     * @return unique constraint 위반 여부
+     * DataIntegrityViolationException이 unique constraint 위반인지 확인
      */
-    private boolean isUniqueConstraintViolation(DataIntegrityViolationException e, Long accountId, Long courseId) {
+    private boolean isUniqueConstraintViolation(DataIntegrityViolationException e) {
         Throwable rootCause = e.getRootCause();
-        
-        if (rootCause == null) {
+        if (rootCause == null)
             return false;
-        }
 
-        // Hibernate ConstraintViolationException 확인
-        if (rootCause instanceof ConstraintViolationException) {
-            ConstraintViolationException cve = (ConstraintViolationException) rootCause;
-            String constraintName = cve.getConstraintName();
-            
-            // Constraint 이름 확인 (MySQL: UK_*, PostgreSQL: course_favorite_account_id_course_id_key 등)
-            // 또는 컬럼명으로 확인
-            if (constraintName != null && 
-                (constraintName.toLowerCase().contains("account_id") && 
-                 constraintName.toLowerCase().contains("course_id"))) {
-                return true;
-            }
-        }
-
-        // SQLException 메시지 확인 (fallback)
         String message = rootCause.getMessage();
         if (message != null) {
             String lowerMessage = message.toLowerCase();
-            
-            // MySQL: Duplicate entry ... for key 'account_id'
-            // PostgreSQL: duplicate key value violates unique constraint
-            // H2: Unique index or primary key violation
-            boolean isDuplicate = lowerMessage.contains("duplicate") || 
-                                  lowerMessage.contains("unique");
-            boolean hasAccountCourse = lowerMessage.contains("account_id") && 
-                                        lowerMessage.contains("course_id");
-            
-            if (isDuplicate && hasAccountCourse) {
-                return true;
-            }
+            // MySQL: Duplicate entry ... for key ...
+            return lowerMessage.contains("duplicate") || lowerMessage.contains("unique");
         }
-
         return false;
     }
 
     /**
-     * 찜하기 삭제 (idempotent - 없어도 에러 안 남)
+     * 찜하기 삭제 (idempotent)
+     * Hard Delete: DB에서 레코드를 물리적으로 삭제
      */
     @Override
     @Transactional
     public void removeFavorite(Long accountId, Long courseId) {
         Optional<CourseFavorite> existing = favoriteRepository.findByAccount_IdAndCourse_Id(accountId, courseId);
-        existing.ifPresent(favoriteRepository::delete);
+        existing.ifPresent(favorite -> {
+            favoriteRepository.delete(favorite);
+            log.debug("찜하기 삭제 (Hard Delete) - accountId: {}, courseId: {}", accountId, courseId);
+        });
     }
 
     /**
@@ -140,8 +112,7 @@ public class CourseFavoriteServiceImpl implements CourseFavoriteService {
                 .map(f -> new CourseFavoriteResponseDTO(
                         f.getCourse().getId(),
                         f.getCourse().getName(),
-                        true
-                ))
+                        true))
                 .toList();
     }
 
