@@ -57,9 +57,17 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     @Transactional
     public ReviewLikeResponse toggleLike(Long courseId, Long reviewId, Long accountId, LikeType type) {
 
-        // 1) 삭제되지 않은 리뷰 검증 (courseId도 함께 검증)
-        var review = courseReviewRepository.findByIdAndCourseIdAndIsDeletedFalse(reviewId, courseId)
-                .orElseThrow(() -> new NotFoundException("리뷰를 찾을 수 없거나 삭제되었습니다"));
+        // 1) 리뷰 조회 (삭제 여부 및 코스 일치 여부 수동 검증)
+        var review = courseReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException("리뷰를 찾을 수 없습니다: " + reviewId));
+
+        if (!review.getCourse().getId().equals(courseId)) {
+            throw new BadRequestException("해당 과정의 리뷰가 아닙니다.");
+        }
+
+        if (Boolean.TRUE.equals(review.getIsDeleted())) {
+            throw new NotFoundException("삭제된 리뷰입니다.");
+        }
 
         // 2) 계정 존재 확인
         var account = accountRepository.findById(accountId)
