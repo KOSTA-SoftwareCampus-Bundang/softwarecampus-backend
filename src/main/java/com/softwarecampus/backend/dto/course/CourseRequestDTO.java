@@ -37,12 +37,17 @@ public class CourseRequestDTO {
     private LocalDate courseEnd;
 
     private Integer cost;
-    private String classDay;
+    
+    @Builder.Default
+    private String classDay = "평일"; // 기본값: 평일
+    
     private String location;
 
     private boolean isKdt;
     private boolean isNailbaeum;
-    private boolean isOffline = true;
+    
+    @Builder.Default
+    private boolean isOffline = true; // 기본값: 오프라인
 
     private String requirement;
 
