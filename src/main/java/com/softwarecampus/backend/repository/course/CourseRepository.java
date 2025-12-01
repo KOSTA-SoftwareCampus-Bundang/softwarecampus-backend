@@ -123,7 +123,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
         @Query("SELECT DISTINCT c FROM Course c " +
                         "LEFT JOIN FETCH c.reviews r " +
-                        "LEFT JOIN FETCH r.sections " +
                         "LEFT JOIN FETCH c.favorites " +
                         "WHERE c.category.categoryType = :categoryType AND c.deletedAt IS NULL")
         List<Course> findHomeCoursesByCategory(@Param("categoryType") CategoryType categoryType);

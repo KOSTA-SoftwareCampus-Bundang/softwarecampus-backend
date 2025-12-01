@@ -14,10 +14,12 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class CourseFavorite extends BaseTimeEntity {
 
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
+        @EqualsAndHashCode.Include
         private Long id;
 
         @ManyToOne(fetch = FetchType.LAZY)

@@ -83,6 +83,7 @@ public class AcademyResponse {
 
                         // 리뷰 수 및 평점 계산
                         var activeReviews = activeCourses.stream()
+                                        .filter(c -> c.getReviews() != null)
                                         .flatMap(c -> c.getReviews().stream())
                                         .filter(r -> r.isActive() && r
                                                         .getApprovalStatus() == com.softwarecampus.backend.domain.common.ApprovalStatus.APPROVED)

@@ -137,11 +137,13 @@ public class HomeServiceImpl implements HomeService {
          * Course 엔티티를 HomeCourseDTO로 변환 (평점 계산 포함)
          */
         private HomeCourseDTO convertToHomeCourseDTO(Course course) {
-                // 유효한 리뷰 필터링 (삭제되지 않은 리뷰)
+                // 유효한 리뷰 필터링 (삭제되지 않고, 활성화되고, 승인된 리뷰만)
                 List<CourseReview> validReviews = Optional.ofNullable(course.getReviews())
                                 .orElse(Collections.emptyList())
                                 .stream()
                                 .filter(r -> !Boolean.TRUE.equals(r.getIsDeleted()))
+                                .filter(r -> r.isActive())
+                                .filter(r -> r.getApprovalStatus() == ApprovalStatus.APPROVED)
                                 .toList();
 
                 // 평점 평균 계산
