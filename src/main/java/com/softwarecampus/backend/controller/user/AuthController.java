@@ -23,10 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -233,24 +231,10 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         try {
-            // 보안 검증: 현재 인증된 사용자와 요청 이메일 일치 여부 확인
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-            // 인증되지 않은 경우 또는 익명 사용자인 경우
-            if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-                log.warn("Unauthenticated refresh attempt for email: {}", EmailUtils.maskEmail(request.email()));
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            String authenticatedEmail = auth.getName();
-
-            // 인증된 이메일과 요청 이메일이 다른 경우 (보안 위협)
-            if (!authenticatedEmail.equals(request.email())) {
-                log.warn("Email mismatch - authenticated: {}, requested: {}",
-                        EmailUtils.maskEmail(authenticatedEmail),
-                        EmailUtils.maskEmail(request.email()));
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+            // ✅ 수정: SecurityContext 인증 체크 제거
+            // 리프레시 토큰 갱신은 액세스 토큰이 만료된 상태에서 호출되므로,
+            // 리프레시 토큰 자체의 유효성만 검증해야 함 (OAuth 2.0 표준)
+            // tokenService.refreshAccessToken() 내부에서 Redis의 리프레시 토큰 검증
 
             // Refresh Token으로 새 Access Token 발급
             String newAccessToken = tokenService.refreshAccessToken(
