@@ -137,7 +137,7 @@ class CourseControllerTest {
                                 .build();
                 CourseResponseDTO responseDTO = new CourseResponseDTO();
 
-                given(courseService.requestCourseRegistration(any(CourseRequestDTO.class))).willReturn(responseDTO);
+                given(courseService.requestCourseRegistration(any(CourseRequestDTO.class), any(Long.class))).willReturn(responseDTO);
 
                 mockMvc.perform(post("/api/courses/request")
                                 .with(csrf())
@@ -145,7 +145,7 @@ class CourseControllerTest {
                                 .content(objectMapper.writeValueAsString(requestDTO)))
                                 .andExpect(status().isOk());
 
-                verify(courseService).requestCourseRegistration(any(CourseRequestDTO.class));
+                verify(courseService).requestCourseRegistration(any(CourseRequestDTO.class), any(Long.class));
         }
 
         @Test
