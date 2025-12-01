@@ -157,4 +157,39 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                         "AND cat.deletedAt IS NULL")
         Optional<Course> findWithDetailsByIdAndDeletedAtIsNull(@Param("id") Long id);
 
+        /**
+         * 관리자용 과정 검색 (상태별, 검색어별)
+         */
+        @Query("SELECT c FROM Course c " +
+                        "WHERE c.deletedAt IS NULL " +
+                        "AND (:status IS NULL OR c.isApproved = :status) " +
+                        "AND (:keyword IS NULL OR LOWER(c.name) LIKE CONCAT('%', LOWER(:keyword), '%'))")
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "academy" })
+        Page<Course> searchAdminCourses(@Param("status") ApprovalStatus status,
+                        @Param("keyword") String keyword,
+                        Pageable pageable);
+
+        /**
+         * 기관용 과정 검색 (상태별, 검색어별) - 본인 기관의 과정만 조회
+         */
+        @Query("SELECT c FROM Course c " +
+                        "WHERE c.deletedAt IS NULL " +
+                        "AND c.academy.id = :academyId " +
+                        "AND (:status IS NULL OR c.isApproved = :status) " +
+                        "AND (:keyword IS NULL OR LOWER(c.name) LIKE CONCAT('%', LOWER(:keyword), '%'))")
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "academy" })
+        Page<Course> searchInstitutionCourses(@Param("academyId") Long academyId,
+                        @Param("status") ApprovalStatus status,
+                        @Param("keyword") String keyword,
+                        Pageable pageable);
+
+        long countByDeletedAtIsNull();
+
+        long countByIsApprovedAndDeletedAtIsNull(ApprovalStatus status);
+
+        // 기관별 과정 수 (삭제되지 않은 것만)
+        long countByAcademyIdAndDeletedAtIsNull(Long academyId);
+
+        // 기관별 승인 대기 과정 수
+        long countByAcademyIdAndIsApprovedAndDeletedAtIsNull(Long academyId, ApprovalStatus status);
 }

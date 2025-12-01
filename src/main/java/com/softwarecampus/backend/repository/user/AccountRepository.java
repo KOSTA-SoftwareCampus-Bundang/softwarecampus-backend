@@ -20,89 +20,94 @@ import java.util.Optional;
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
 
-    /**
-     * ID로 활성 계정 조회 (Soft Delete 고려)
-     * - isDeleted=false인 계정만 조회
-     * - 프로필 조회, 계정 정보 확인 등에 사용
-     */
-    Optional<Account> findByIdAndIsDeletedFalse(Long id);
+        /**
+         * ID로 활성 계정 조회 (Soft Delete 고려)
+         * - isDeleted=false인 계정만 조회
+         * - 프로필 조회, 계정 정보 확인 등에 사용
+         */
+        Optional<Account> findByIdAndIsDeletedFalse(Long id);
 
-    /**
-     * 이메일로 활성 계정 조회 (Soft Delete 고려)
-     * - isDeleted=false인 계정만 조회
-     * - 로그인, 프로필 조회 등에 사용
-     */
-    Optional<Account> findByEmailAndIsDeletedFalse(String email);
+        /**
+         * 이메일로 활성 계정 조회 (Soft Delete 고려)
+         * - isDeleted=false인 계정만 조회
+         * - 로그인, 프로필 조회 등에 사용
+         */
+        Optional<Account> findByEmailAndIsDeletedFalse(String email);
 
-    /**
-     * 활성 이메일 중복 체크 (Soft Delete 고려)
-     * - isDeleted=false인 계정 중에서만 중복 체크
-     * - 삭제된 계정의 이메일 재사용 허용
-     */
-    boolean existsByEmailAndIsDeletedFalse(String email);
+        /**
+         * 활성 이메일 중복 체크 (Soft Delete 고려)
+         * - isDeleted=false인 계정 중에서만 중복 체크
+         * - 삭제된 계정의 이메일 재사용 허용
+         */
+        boolean existsByEmailAndIsDeletedFalse(String email);
 
-    /**
-     * 삭제된 계정 조회 (Soft Delete 복구용)
-     * - ADMIN 계정 초기화 시 복구에 사용
-     * - 중복 생성 방지
-     */
-    Optional<Account> findByEmailAndIsDeletedTrue(String email);
+        /**
+         * 삭제된 계정 조회 (Soft Delete 복구용)
+         * - ADMIN 계정 초기화 시 복구에 사용
+         * - 중복 생성 방지
+         */
+        Optional<Account> findByEmailAndIsDeletedTrue(String email);
 
-    /**
-     * 특정 타입의 활성 계정 존재 여부 확인
-     * - ADMIN 계정 초기화 시 사용
-     */
-    boolean existsByAccountTypeAndIsDeletedFalse(AccountType accountType);
+        /**
+         * 특정 타입의 활성 계정 존재 여부 확인
+         * - ADMIN 계정 초기화 시 사용
+         */
+        boolean existsByAccountTypeAndIsDeletedFalse(AccountType accountType);
 
-    /**
-     * 이메일과 타입으로 삭제된 계정 조회
-     * - ADMIN 계정 복구 시 사용
-     */
-    Optional<Account> findByEmailAndAccountTypeAndIsDeletedTrue(String email, AccountType accountType);
+        /**
+         * 이메일과 타입으로 삭제된 계정 조회
+         * - ADMIN 계정 복구 시 사용
+         */
+        Optional<Account> findByEmailAndAccountTypeAndIsDeletedTrue(String email, AccountType accountType);
 
-    /**
-     * 활성 사용자명 중복 체크 (Soft Delete 고려)
-     * - isDeleted=false인 계정 중에서만 중복 체크
-     */
-    boolean existsByUserNameAndIsDeletedFalse(String userName);
+        /**
+         * 활성 사용자명 중복 체크 (Soft Delete 고려)
+         * - isDeleted=false인 계정 중에서만 중복 체크
+         */
+        boolean existsByUserNameAndIsDeletedFalse(String userName);
 
-    /**
-     * 사용자명으로 활성 계정 조회 (Soft Delete 고려)
-     */
-    Optional<Account> findByUserNameAndIsDeletedFalse(String userName);
+        /**
+         * 사용자명으로 활성 계정 조회 (Soft Delete 고려)
+         */
+        Optional<Account> findByUserNameAndIsDeletedFalse(String userName);
 
-    /**
-     * 활성 전화번호 중복 체크 (Soft Delete 고려)
-     * - isDeleted=false인 계정 중에서만 중복 체크
-     * - 삭제된 계정의 전화번호 재사용 허용
-     */
-    boolean existsByPhoneNumberAndIsDeletedFalse(String phoneNumber);
+        /**
+         * 활성 전화번호 중복 체크 (Soft Delete 고려)
+         * - isDeleted=false인 계정 중에서만 중복 체크
+         * - 삭제된 계정의 전화번호 재사용 허용
+         */
+        boolean existsByPhoneNumberAndIsDeletedFalse(String phoneNumber);
 
-    /**
-     * 계정 타입별 활성 계정 조회
-     */
-    List<Account> findByAccountTypeAndIsDeletedFalse(AccountType accountType);
+        /**
+         * 계정 타입별 활성 계정 조회
+         */
+        List<Account> findByAccountTypeAndIsDeletedFalse(AccountType accountType);
 
-    /**
-     * 계정 타입 및 승인 상태별 활성 계정 조회
-     */
-    List<Account> findByAccountTypeAndAccountApprovedAndIsDeletedFalse(
-            AccountType accountType,
-            ApprovalStatus accountApproved);
+        /**
+         * 계정 타입 및 승인 상태별 활성 계정 조회
+         */
+        List<Account> findByAccountTypeAndAccountApprovedAndIsDeletedFalse(
+                        AccountType accountType,
+                        ApprovalStatus accountApproved);
 
-    /**
-     * 전체 활성 계정 목록 조회
-     */
-    Page<Account> findByIsDeletedFalse(Pageable pageable);
+        /**
+         * 전체 활성 계정 목록 조회
+         */
+        Page<Account> findByIsDeletedFalse(Pageable pageable);
 
-    /**
-     * 활성 계정을 대상으로 특정 회원 검색
-     */
-    @Query("SELECT a FROM Account a " +
-            "WHERE a.isDeleted = false AND " + // Soft Delete 제외 조건
-            "(:keyword IS NULL OR " +
-            "LOWER(a.userName) LIKE %:keyword% OR " +
-            "LOWER(a.email) LIKE %:keyword% OR " +
-            "a.phoneNumber LIKE %:keyword%)")
-    Page<Account> searchActiveAccounts(@Param("keyword") String keyword, Pageable pageable);
+        /**
+         * 활성 계정을 대상으로 특정 회원 검색
+         */
+        @Query("SELECT a FROM Account a " +
+                        "WHERE a.isDeleted = false AND " + // Soft Delete 제외 조건
+                        "(:keyword IS NULL OR " +
+                        "LOWER(a.userName) LIKE %:keyword% OR " +
+                        "LOWER(a.email) LIKE %:keyword% OR " +
+                        "a.phoneNumber LIKE %:keyword%)")
+        Page<Account> searchActiveAccounts(@Param("keyword") String keyword, Pageable pageable);
+
+        /**
+         * 삭제되지 않은 전체 계정 수 조회
+         */
+        long countByDeletedAtIsNull();
 }

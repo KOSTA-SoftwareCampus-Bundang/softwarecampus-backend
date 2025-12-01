@@ -65,6 +65,14 @@ public class FileType {
     @Value("${file.upload.academy-file.max-size}")
     private long academyFileMaxSize;
 
+    // 후기 첨부파일 설정 (course_review_file 테이블)
+    @Value("${file.upload.review-file.extensions}")
+    private String reviewFileExtensionsStr;
+    @Value("${file.upload.review-file.content-types}")
+    private String reviewFileContentTypesStr;
+    @Value("${file.upload.review-file.max-size}")
+    private long reviewFileMaxSize;
+
     // 파싱된 설정을 저장하는 Map
     private final Map<FileTypeEnum, FileTypeConfig> configs = new HashMap<>();
 
@@ -91,10 +99,16 @@ public class FileType {
         validateFileTypeConfig("ACADEMY_FILE", academyExts, academyTypes, academyFileMaxSize);
         configs.put(FileTypeEnum.ACADEMY_FILE, new FileTypeConfig(academyExts, academyTypes, academyFileMaxSize));
 
+        Set<String> reviewExts = parseSet(reviewFileExtensionsStr);
+        Set<String> reviewTypes = parseSet(reviewFileContentTypesStr);
+        validateFileTypeConfig("REVIEW_FILE", reviewExts, reviewTypes, reviewFileMaxSize);
+        configs.put(FileTypeEnum.REVIEW_FILE, new FileTypeConfig(reviewExts, reviewTypes, reviewFileMaxSize));
+
         log.info("FileType configurations initialized: {}", configs.keySet());
     }
 
-    private void validateFileTypeConfig(String typeName, Set<String> extensions, Set<String> contentTypes, long maxSize) {
+    private void validateFileTypeConfig(String typeName, Set<String> extensions, Set<String> contentTypes,
+            long maxSize) {
         if (extensions == null || extensions.isEmpty()) {
             throw new IllegalStateException(
                     String.format("File type %s: allowedExtensions is null or empty. " +
@@ -141,7 +155,9 @@ public class FileType {
         /** 과정 이미지 (course_image 테이블) */
         COURSE_IMAGE,
         /** 기관 첨부파일 (academy_files 테이블) */
-        ACADEMY_FILE
+        ACADEMY_FILE,
+        /** 후기 첨부파일 (course_review_file 테이블) - 수료증 */
+        REVIEW_FILE
     }
 
     /**
