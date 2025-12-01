@@ -71,30 +71,32 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
          * 
          * 성능 고려사항:
          * - LIKE '%keyword%' 패턴은 인덱스를 활용할 수 없음
-         * - 대용량 데이터의 경우 course.name 컨럼에 Full-Text Index 추가 권장
+         * - 대용량 데이터의 경우 course.name 컬럼에 Full-Text Index 추가 권장
          * - 또는 Elasticsearch 등 전문 검색 엔진 도입 검토
          * 
          * @param categoryId   카테고리 ID (옵션)
          * @param categoryType 카테고리 타입 (옵션)
          * @param isOffline    온/오프라인 필터 (옵션)
          * @param keyword      검색 키워드 (옵션)
+         * @param status       과정 상태 (옵션)
          * @param pageable     페이지 정보
          * @return 페이지네이션된 과정 목록
          */
         @Query("SELECT c FROM Course c " +
                         "WHERE c.deletedAt IS NULL " +
+                        "AND c.isApproved = com.softwarecampus.backend.domain.common.ApprovalStatus.APPROVED " +
                         "AND (:categoryId IS NULL OR c.category.id = :categoryId) " +
                         "AND (:categoryType IS NULL OR c.category.categoryType = :categoryType) " +
                         "AND (:isOffline IS NULL OR c.isOffline = :isOffline) " +
                         "AND (:keyword IS NULL OR LOWER(c.name) LIKE CONCAT('%', LOWER(:keyword), '%')) " +
-                        "AND (:status IS NULL OR (" +
-                        "   (:status = com.softwarecampus.backend.domain.course.CourseStatus.RECRUITING AND c.recruitStart IS NOT NULL AND c.recruitEnd IS NOT NULL AND CURRENT_DATE BETWEEN c.recruitStart AND c.recruitEnd) OR "
+                        "AND (" +
+                        "   :status IS NULL OR " +
+                        "   (STR(:status) = 'RECRUITING' AND c.recruitStart IS NOT NULL AND c.recruitEnd IS NOT NULL AND CURRENT_DATE BETWEEN c.recruitStart AND c.recruitEnd) OR "
                         +
-                        "   (:status = com.softwarecampus.backend.domain.course.CourseStatus.IN_PROGRESS AND c.courseStart IS NOT NULL AND c.courseEnd IS NOT NULL AND CURRENT_DATE BETWEEN c.courseStart AND c.courseEnd) OR "
+                        "   (STR(:status) = 'IN_PROGRESS' AND c.courseStart IS NOT NULL AND c.courseEnd IS NOT NULL AND CURRENT_DATE BETWEEN c.courseStart AND c.courseEnd) OR "
                         +
-                        "   (:status = com.softwarecampus.backend.domain.course.CourseStatus.ENDED AND c.courseEnd IS NOT NULL AND CURRENT_DATE > c.courseEnd)"
-                        +
-                        "))")
+                        "   (STR(:status) = 'ENDED' AND c.courseEnd IS NOT NULL AND CURRENT_DATE > c.courseEnd)" +
+                        ")")
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "images" })
         Page<Course> searchCourses(@Param("categoryId") Long categoryId,
                         @Param("categoryType") CategoryType categoryType,
