@@ -3,7 +3,7 @@ package com.softwarecampus.backend.service.course;
 import com.softwarecampus.backend.domain.course.ReviewLike;
 import com.softwarecampus.backend.domain.course.ReviewLike.LikeType;
 import com.softwarecampus.backend.dto.course.ReviewLikeResponse;
-import com.softwarecampus.backend.exception.course.BadRequestException;
+
 import com.softwarecampus.backend.exception.course.NotFoundException;
 import com.softwarecampus.backend.repository.course.CourseReviewRepository;
 import com.softwarecampus.backend.repository.course.ReviewLikeRepository;
@@ -57,17 +57,9 @@ public class ReviewLikeServiceImpl implements ReviewLikeService {
     @Transactional
     public ReviewLikeResponse toggleLike(Long courseId, Long reviewId, Long accountId, LikeType type) {
 
-        // 1) 리뷰 조회 (삭제 여부 및 코스 일치 여부 수동 검증)
-        var review = courseReviewRepository.findById(reviewId)
+        // 1) 리뷰 조회 (DB 레벨 검증)
+        var review = courseReviewRepository.findByIdAndCourseIdAndIsDeletedFalse(reviewId, courseId)
                 .orElseThrow(() -> new NotFoundException("리뷰를 찾을 수 없습니다: " + reviewId));
-
-        if (!review.getCourse().getId().equals(courseId)) {
-            throw new BadRequestException("해당 과정의 리뷰가 아닙니다.");
-        }
-
-        if (Boolean.TRUE.equals(review.getIsDeleted())) {
-            throw new NotFoundException("삭제된 리뷰입니다.");
-        }
 
         // 2) 계정 존재 확인
         var account = accountRepository.findById(accountId)
