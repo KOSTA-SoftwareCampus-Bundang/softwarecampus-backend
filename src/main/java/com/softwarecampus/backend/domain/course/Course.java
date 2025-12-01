@@ -52,6 +52,17 @@ public class Course extends BaseSoftDeleteSupportEntity {
     @Column(columnDefinition = "TEXT")
     private String requirement;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Long viewCount = 0L;
+
+    public void incrementViewCount() {
+        if (this.viewCount == null) {
+            this.viewCount = 0L;
+        }
+        this.viewCount++;
+    }
+
     /** 승인 관련 */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

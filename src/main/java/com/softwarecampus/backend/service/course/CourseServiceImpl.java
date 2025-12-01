@@ -1,4 +1,3 @@
-
 package com.softwarecampus.backend.service.course;
 
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
@@ -12,6 +11,7 @@ import com.softwarecampus.backend.repository.course.CourseCategoryRepository;
 import com.softwarecampus.backend.repository.course.CourseRepository;
 import com.softwarecampus.backend.domain.course.CourseStatus;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -56,10 +56,10 @@ public class CourseServiceImpl implements CourseService {
                                 .toList();
         }
 
-        /** 관리자 - 요청 승인 후 등록 */
+        /** 관리자 - 과정 승인 (APPROVED) */
         @Override
         @Transactional
-        public CourseResponseDTO approveCourse(Long courseId) {
+        public CourseResponseDTO approveCourse(@NonNull Long courseId) {
                 Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
 
@@ -88,9 +88,30 @@ public class CourseServiceImpl implements CourseService {
                 return CourseResponseDTO.fromEntity(course);
         }
 
+        /** 관리자 - 과정 직접 등록 (즉시 APPROVED) */
         @Override
         @Transactional
-        public CourseResponseDTO updateCourse(Long courseId, CourseRequestDTO dto) {
+        public CourseResponseDTO createCourseByAdmin(CourseRequestDTO dto) {
+                var academy = academyRepository.findById(dto.getAcademyId())
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "존재하지 않는 기관입니다. ID=" + dto.getAcademyId()));
+
+                var category = courseCategoryRepository
+                                .findByCategoryTypeAndCategoryName(dto.getCategoryType(), dto.getCategoryName())
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "존재하지 않는 과정 카테고리입니다. type=" + dto.getCategoryType() + ", name="
+                                                                + dto.getCategoryName()));
+
+                var course = dto.toEntity(academy, category);
+                course.setIsApproved(ApprovalStatus.APPROVED); // 관리자는 즉시 승인
+
+                courseRepository.save(course);
+                return CourseResponseDTO.fromEntity(course);
+        }
+
+        @Override
+        @Transactional
+        public CourseResponseDTO updateCourse(@NonNull Long courseId, CourseRequestDTO dto) {
                 Course course = courseRepository.findByIdAndDeletedAtIsNull(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다."));
 
@@ -109,16 +130,47 @@ public class CourseServiceImpl implements CourseService {
 
         @Override
         @Transactional
-        public void deleteCourse(Long courseId) {
+        public void deleteCourse(@NonNull Long courseId) {
                 Course course = courseRepository.findByIdAndDeletedAtIsNull(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다."));
                 course.markDeleted();
         }
 
         @Override
-        public CourseDetailResponseDTO getCourseDetail(Long courseId) {
+        public CourseDetailResponseDTO getCourseDetail(@NonNull Long courseId) {
                 Course course = courseRepository.findWithDetailsByIdAndDeletedAtIsNull(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
+
+                // 조회수 증가
+                course.incrementViewCount();
+
                 return CourseDetailResponseDTO.fromEntity(course);
+        }
+
+        @Override
+        public Page<CourseResponseDTO> getAdminCourses(ApprovalStatus status, String keyword, Pageable pageable) {
+                Page<Course> coursePage = courseRepository.searchAdminCourses(status, keyword, pageable);
+                return coursePage.map(CourseResponseDTO::fromEntity);
+        }
+
+        @Override
+        @Transactional
+        public CourseResponseDTO rejectCourse(@NonNull Long courseId, String reason) {
+                Course course = courseRepository.findById(courseId)
+                                .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
+
+                course.setIsApproved(ApprovalStatus.REJECTED);
+                // 만약 없다면 로그를 남기거나 별도 테이블에 저장해야 함. 일단 상태 변경만 수행.
+
+                return CourseResponseDTO.fromEntity(course);
+        }
+
+        @Override
+        public Page<CourseResponseDTO> getInstitutionCourses(@NonNull Long academyId, ApprovalStatus status,
+                        String keyword,
+                        Pageable pageable) {
+                Page<Course> coursePage = courseRepository.searchInstitutionCourses(academyId, status, keyword,
+                                pageable);
+                return coursePage.map(CourseResponseDTO::fromEntity);
         }
 }

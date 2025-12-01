@@ -1,9 +1,11 @@
 package com.softwarecampus.backend.controller.course;
 
 import com.softwarecampus.backend.domain.course.CategoryType;
+import com.softwarecampus.backend.dto.course.CourseCategoryDTO;
 import com.softwarecampus.backend.dto.course.CourseDetailResponseDTO;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
+import com.softwarecampus.backend.repository.course.CourseCategoryRepository;
 import com.softwarecampus.backend.service.course.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +17,37 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.softwarecampus.backend.domain.course.CourseStatus;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/courses")
 public class CourseController {
 
     private final CourseService courseService;
+    private final CourseCategoryRepository courseCategoryRepository;
+
+    /**
+     * 과정 카테고리 목록 조회
+     * @param categoryType 카테고리 타입 필터 (옵션: EMPLOYEE/JOB_SEEKER)
+     */
+    @GetMapping("/categories")
+    public ResponseEntity<List<CourseCategoryDTO>> getCategories(
+            @RequestParam(required = false) CategoryType categoryType) {
+        List<CourseCategoryDTO> categories;
+        if (categoryType != null) {
+            categories = courseCategoryRepository.findByCategoryTypeAndDeletedAtIsNull(categoryType)
+                    .stream()
+                    .map(CourseCategoryDTO::fromEntity)
+                    .toList();
+        } else {
+            categories = courseCategoryRepository.findAllByDeletedAtIsNull()
+                    .stream()
+                    .map(CourseCategoryDTO::fromEntity)
+                    .toList();
+        }
+        return ResponseEntity.ok(categories);
+    }
 
     /**
      * 과정 목록 조회 (다양한 필터 지원 + 페이지네이션)
@@ -59,6 +86,16 @@ public class CourseController {
         return ResponseEntity.ok(courseService.approveCourse(courseId));
     }
 
+    /** 관리자 - 과정 등록 거부 */
+    @PostMapping("/{courseId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CourseResponseDTO> rejectCourse(
+            @PathVariable Long courseId,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        String reason = body != null ? body.get("reason") : null;
+        return ResponseEntity.ok(courseService.rejectCourse(courseId, reason));
+    }
+
     /** 과정 수정 */
     @PutMapping("/{courseId}")
     @PreAuthorize("hasAnyRole('ADMIN','INSTITUTION')")
@@ -81,5 +118,12 @@ public class CourseController {
     @PreAuthorize("hasRole('INSTITUTION')")
     public ResponseEntity<CourseResponseDTO> requestCourse(@RequestBody @Valid CourseRequestDTO dto) {
         return ResponseEntity.ok(courseService.requestCourseRegistration(dto));
+    }
+
+    /** 관리자 - 과정 직접 등록 (즉시 승인) */
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CourseResponseDTO> createCourse(@RequestBody @Valid CourseRequestDTO dto) {
+        return ResponseEntity.ok(courseService.createCourseByAdmin(dto));
     }
 }
