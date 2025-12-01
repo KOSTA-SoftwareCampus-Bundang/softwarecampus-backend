@@ -56,8 +56,8 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
             // 5 S3 업로드
             String url = s3Service.uploadFile(
                     file,
-                    S3Folder.COURSE.getPath(),
-                    FileType.FileTypeEnum.COURSE_IMAGE);
+                    S3Folder.REVIEW.getPath(),
+                    FileType.FileTypeEnum.REVIEW_FILE);
             reviewFile.setFileUrl(url);
 
         } catch (Exception e) {

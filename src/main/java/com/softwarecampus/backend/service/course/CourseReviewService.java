@@ -18,4 +18,19 @@ public interface CourseReviewService {
     void deleteReview(Long courseId, Long reviewId, Long accountId);
 
     void requestDeleteReview(Long courseId, Long reviewId, Long accountId);
+
+    /** 관리자 - 리뷰 목록 조회 (승인 상태별) */
+    Page<CourseReviewResponse> getAdminReviews(com.softwarecampus.backend.domain.common.ApprovalStatus status,
+            String keyword, Pageable pageable);
+
+    /** 관리자 - 리뷰 승인 */
+    CourseReviewResponse approveReview(Long reviewId);
+
+    /** 관리자 - 리뷰 거부 */
+    CourseReviewResponse rejectReview(Long reviewId, String reason);
+
+    /** 기관 - 리뷰 목록 조회 (상태별) */
+    Page<CourseReviewResponse> getInstitutionReviews(Long academyId,
+            com.softwarecampus.backend.domain.common.ApprovalStatus status,
+            String keyword, Pageable pageable);
 }

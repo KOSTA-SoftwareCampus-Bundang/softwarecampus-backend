@@ -11,13 +11,12 @@ import com.softwarecampus.backend.repository.course.CourseReviewRepository;
 import com.softwarecampus.backend.repository.course.ReviewSectionRepository;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,14 +30,23 @@ public class CourseReviewServiceImpl implements CourseReviewService {
 
         /**
          * 1. 리뷰 리스트 조회 (Pageable)
+         * - 승인된 후기(APPROVED)만 조회
+         * - 작성자 본인은 자신의 대기 중(PENDING) 후기도 조회 가능
          */
         @Override
         public Page<CourseReviewResponse> getReviews(Long courseId, Pageable pageable, Long accountId) {
 
-                Course course = courseRepository.findById(courseId)
-                                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
+                if (courseId == null) {
+                        throw new IllegalArgumentException("Course ID cannot be null");
+                }
+                if (!courseRepository.existsById(courseId)) {
+                        throw new EntityNotFoundException("Course not found");
+                }
 
-                Page<CourseReview> reviewPage = reviewRepository.findByCourseIdAndIsDeletedFalse(courseId, pageable);
+                // 승인된 후기만 조회
+                Page<CourseReview> reviewPage = reviewRepository
+                                .findByCourseIdAndApprovalStatusAndIsDeletedFalse(
+                                                courseId, ApprovalStatus.APPROVED, pageable);
 
                 return reviewPage.map(review -> toDto(review, accountId));
         }
@@ -47,10 +55,11 @@ public class CourseReviewServiceImpl implements CourseReviewService {
          * 2. 리뷰 상세 조회
          */
         @Override
-        public CourseReviewResponse getReviewDetail(Long courseId, Long reviewId, Long accountId) {
+        public CourseReviewResponse getReviewDetail(@NonNull Long courseId, @NonNull Long reviewId, Long accountId) {
 
-                Course course = courseRepository.findById(courseId)
-                                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
+                if (!courseRepository.existsById(courseId)) {
+                        throw new EntityNotFoundException("Course not found");
+                }
 
                 CourseReview review = reviewRepository.findWithDetailsByIdAndIsDeletedFalse(reviewId)
                                 .filter(r -> r.getCourse().getId().equals(courseId))
@@ -61,7 +70,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
 
         @Override
         @Transactional
-        public CourseReviewResponse createReview(Long courseId, Long accountId,
+        public CourseReviewResponse createReview(@NonNull Long courseId, @NonNull Long accountId,
                         CourseReviewRequest request) {
 
                 Course course = courseRepository.findById(courseId)
@@ -98,7 +107,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         /**
          * DTO 변환
          */
-        private CourseReviewResponse toDto(CourseReview review, Long accountId) {
+        private CourseReviewResponse toDto(@NonNull CourseReview review, Long accountId) {
                 String myLikeType = "NONE";
                 if (accountId != null) {
                         myLikeType = review.getLikes().stream()
@@ -141,11 +150,13 @@ public class CourseReviewServiceImpl implements CourseReviewService {
          */
         @Override
         @Transactional
-        public CourseReviewResponse updateReview(Long courseId, Long reviewId, Long accountId,
+        public CourseReviewResponse updateReview(@NonNull Long courseId, @NonNull Long reviewId,
+                        @NonNull Long accountId,
                         CourseReviewRequest request) {
 
-                Course course = courseRepository.findById(courseId)
-                                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
+                if (!courseRepository.existsById(courseId)) {
+                        throw new EntityNotFoundException("Course not found");
+                }
 
                 CourseReview review = reviewRepository.findById(reviewId)
                                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
@@ -189,10 +200,14 @@ public class CourseReviewServiceImpl implements CourseReviewService {
          */
         @Override
         @Transactional
-        public void deleteReview(Long courseId, Long reviewId, Long accountId) {
+        public void deleteReview(@NonNull Long courseId, @NonNull Long reviewId, @NonNull Long accountId) {
 
-                Course course = courseRepository.findById(courseId)
-                                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
+                if (courseId == null) {
+                        throw new IllegalArgumentException("Course ID cannot be null");
+                }
+                if (!courseRepository.existsById(courseId)) {
+                        throw new EntityNotFoundException("Course not found");
+                }
 
                 CourseReview review = reviewRepository.findById(reviewId)
                                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
@@ -214,10 +229,11 @@ public class CourseReviewServiceImpl implements CourseReviewService {
          */
         @Override
         @Transactional
-        public void requestDeleteReview(Long courseId, Long reviewId, Long accountId) {
+        public void requestDeleteReview(@NonNull Long courseId, @NonNull Long reviewId, @NonNull Long accountId) {
 
-                Course course = courseRepository.findById(courseId)
-                                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
+                if (!courseRepository.existsById(courseId)) {
+                        throw new EntityNotFoundException("Course not found");
+                }
 
                 CourseReview review = reviewRepository.findWithDetailsByIdAndIsDeletedFalse(reviewId)
                                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
@@ -232,5 +248,40 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 }
 
                 review.requestDelete(); // 삭제 요청 상태로 변경 (도메인에서 구현 필요)
+        }
+
+        @Override
+        public Page<CourseReviewResponse> getAdminReviews(ApprovalStatus status, String keyword, Pageable pageable) {
+                Page<CourseReview> reviewPage = reviewRepository.searchAdminReviews(status, keyword, pageable);
+                return reviewPage.map(review -> toDto(review, null));
+        }
+
+        @Override
+        @Transactional
+        public CourseReviewResponse approveReview(@NonNull Long reviewId) {
+                CourseReview review = reviewRepository.findById(reviewId)
+                                .orElseThrow(() -> new EntityNotFoundException("Review not found"));
+
+                review.setApprovalStatus(ApprovalStatus.APPROVED);
+                return toDto(review, null);
+        }
+
+        @Override
+        @Transactional
+        public CourseReviewResponse rejectReview(@NonNull Long reviewId, String reason) {
+                CourseReview review = reviewRepository.findById(reviewId)
+                                .orElseThrow(() -> new EntityNotFoundException("Review not found"));
+
+                review.setApprovalStatus(ApprovalStatus.REJECTED);
+                // 거부 사유 저장 로직이 필요하다면 여기에 추가
+                return toDto(review, null);
+        }
+
+        @Override
+        public Page<CourseReviewResponse> getInstitutionReviews(Long academyId, ApprovalStatus status, String keyword,
+                        Pageable pageable) {
+                Page<CourseReview> reviewPage = reviewRepository.searchInstitutionReviews(academyId, status, keyword,
+                                pageable);
+                return reviewPage.map(review -> toDto(review, null));
         }
 }
