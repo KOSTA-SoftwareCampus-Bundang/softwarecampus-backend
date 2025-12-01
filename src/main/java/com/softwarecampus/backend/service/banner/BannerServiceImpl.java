@@ -11,6 +11,7 @@ import com.softwarecampus.backend.exception.banner.BannerErrorCode;
 import com.softwarecampus.backend.exception.banner.BannerException;
 import com.softwarecampus.backend.repository.banner.BannerRepository;
 import com.softwarecampus.backend.service.academy.qna.AttachmentService;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,136 +22,160 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class BannerServiceImpl implements BannerService {
 
-    private final BannerRepository bannerRepository;
-    private final AttachmentService attachmentService;
+        private final BannerRepository bannerRepository;
+        private final AttachmentService attachmentService;
 
-    private static final AttachmentCategoryType BANNER_TYPE = AttachmentCategoryType.BANNER;
+        private static final AttachmentCategoryType BANNER_TYPE = AttachmentCategoryType.BANNER;
 
-    /**
-     *  배너 등록
-     */
-    @Override
-    @Transactional
-    public BannerResponse createBanner(BannerCreateRequest request) {
-        Banner banner = new Banner(
-                null,
-                request.getTitle(),
-                null,
-                request.getLinkUrl(),
-                request.getSequence(),
-                request.getIsActivated()
-        );
+        /**
+         * 배너 등록
+         */
+        @Override
+        @Transactional
+        public BannerResponse createBanner(BannerCreateRequest request) {
+                Banner banner = new Banner(
+                                null,
+                                request.getTitle(),
+                                null,
+                                request.getLinkUrl(),
+                                null, // description
+                                request.getSequence(),
+                                request.getIsActivated());
 
-        Banner savedBanner = bannerRepository.save(banner);
+                Banner savedBanner = bannerRepository.save(banner);
 
-        String finalImageUrl = null;
-        QAFileDetail imageAttachment = request.getImageAttachment();
+                String finalImageUrl = null;
+                QAFileDetail imageAttachment = request.getImageAttachment();
 
-        if (imageAttachment != null) {
-            // 단일 파일이지만 List로 감싸서 호출
-            attachmentService.confirmAttachments(
-                    List.of(imageAttachment), savedBanner.getId(), BANNER_TYPE
-            );
+                if (imageAttachment != null) {
+                        // 단일 파일이지만 List로 감싸서 호출
+                        attachmentService.confirmAttachments(
+                                        List.of(imageAttachment), savedBanner.getId(), BANNER_TYPE);
 
-            List<QAFileDetail> confirmedFiles = attachmentService.getActiveFileDetailsByQAId(BANNER_TYPE, savedBanner.getId());
-            if (!confirmedFiles.isEmpty()) {
-                finalImageUrl = confirmedFiles.get(0).getFilename();
-            }
+                        List<QAFileDetail> confirmedFiles = attachmentService.getActiveFileDetailsByQAId(BANNER_TYPE,
+                                        savedBanner.getId());
+                        if (!confirmedFiles.isEmpty()) {
+                                finalImageUrl = confirmedFiles.get(0).getFilename();
+                        }
+                }
+
+                savedBanner.update(
+                                request.getTitle(),
+                                finalImageUrl,
+                                request.getLinkUrl(),
+                                null, // description
+                                request.getSequence(),
+                                request.getIsActivated());
+
+                return BannerResponse.from(savedBanner);
         }
 
-        savedBanner.update(
-                request.getTitle(),
-                finalImageUrl,
-                request.getLinkUrl(),
-                request.getSequence(),
-                request.getIsActivated()
-        );
+        /**
+         * 배너 수정
+         */
+        @Transactional
+        public BannerResponse updateBanner(@NonNull Long bannerId, BannerUpdateRequest request) {
+                // 배너 조회
+                Banner banner = bannerRepository.findById(bannerId)
+                                .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
-        return BannerResponse.from(savedBanner);
-    }
+                if (banner.getIsDeleted()) {
+                        throw new BannerException(BannerErrorCode.BANNER_ALREADY_DELETED);
+                }
 
-    /**
-     *  배너 수정
-     */
-    @Transactional
-    public BannerResponse updateBanner(Long bannerId, BannerUpdateRequest request) {
-        // 배너 조회
-        Banner banner = bannerRepository.findById(bannerId)
-                .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
+                MultipartFile newImageFile = request.getNewImageFile();
 
-        if (banner.getIsDeleted()) {
-            throw new BannerException(BannerErrorCode.BANNER_ALREADY_DELETED);
+                String updatedImageUrl = banner.getImageUrl();
+
+                // 새로운 배너 등록된 경우
+                if (newImageFile != null && !newImageFile.isEmpty()) {
+                        List<QAFileDetail> uploadedFileDetails = attachmentService.uploadFiles(List.of(newImageFile));
+
+                        if (!uploadedFileDetails.isEmpty()) {
+                                QAFileDetail newFileDetail = uploadedFileDetails.get(0);
+
+                                attachmentService.confirmAttachments(uploadedFileDetails, banner.getId(), BANNER_TYPE);
+
+                                updatedImageUrl = newFileDetail.getFilename();
+                        }
+                }
+                banner.update(
+                                request.getTitle(),
+                                updatedImageUrl,
+                                request.getLinkUrl(),
+                                banner.getDescription(),
+                                request.getSequence(),
+                                request.getIsActivated());
+
+                Banner updatedBanner = bannerRepository.save(banner);
+                return BannerResponse.from(updatedBanner);
         }
 
-        MultipartFile newImageFile = request.getNewImageFile();
+        /**
+         * 배너 삭제
+         */
+        @Override
+        @Transactional
+        public void deleteBanner(@NonNull Long bannerId) {
 
-        String updatedImageUrl = banner.getImageUrl();
+                Banner banner = bannerRepository.findById(bannerId)
+                                .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
-        // 새로운 배너 등록된 경우
-        if (newImageFile != null && !newImageFile.isEmpty()) {
-            List<QAFileDetail> uploadedFileDetails = attachmentService.uploadFiles(List.of(newImageFile));
+                if (!banner.getIsActivated() || banner.getIsDeleted()) {
+                        BannerErrorCode errorCode = banner.getIsDeleted() ? BannerErrorCode.BANNER_ALREADY_DELETED
+                                        : BannerErrorCode.BANNER_NOT_ACTIVE;
+                        throw new BannerException(errorCode);
+                }
 
-            if (!uploadedFileDetails.isEmpty()) {
-                QAFileDetail newFileDetail = uploadedFileDetails.get(0);
+                List<Attachment> attachmentsToHardDelete = attachmentService.softDeleteAllByCategoryAndId(BANNER_TYPE,
+                                bannerId);
 
-                attachmentService.confirmAttachments(uploadedFileDetails, banner.getId(), BANNER_TYPE);
+                banner.markDeleted();
 
-                updatedImageUrl = newFileDetail.getFilename();
-            }
-        }
-        banner.update(
-                request.getTitle(),
-                updatedImageUrl,
-                request.getLinkUrl(),
-                request.getSequence(),
-                request.getIsActivated()
-        );
-
-        Banner updatedBanner = bannerRepository.save(banner);
-        return BannerResponse.from(updatedBanner);
-    }
-
-    /**
-     *  배너 삭제
-     */
-    @Override
-    @Transactional
-    public void deleteBanner(Long bannerId) {
-
-        Banner banner = bannerRepository.findById(bannerId)
-                .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
-
-        if (!banner.getIsActivated() || banner.getIsDeleted()) {
-            BannerErrorCode errorCode = banner.getIsDeleted() ? BannerErrorCode.BANNER_ALREADY_DELETED : BannerErrorCode.BANNER_NOT_ACTIVE;
-            throw new BannerException(errorCode);
+                attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
         }
 
-        List<Attachment> attachmentsToHardDelete =
-                attachmentService.softDeleteAllByCategoryAndId(BANNER_TYPE, bannerId);
+        /**
+         * 메인 페이지 활성 배너 목록
+         */
+        public List<BannerResponse> getActiveBanners() {
+                return bannerRepository.findByIsActivatedTrueAndIsDeletedFalseOrderBySequenceAsc().stream()
+                                .map(BannerResponse::from)
+                                .collect(Collectors.toList());
+        }
 
-        banner.markDeleted();
+        /**
+         * 관리자용 전체 배너 목록 조회
+         */
+        public List<BannerResponse> getAllBannersForAdmin() {
+                return bannerRepository.findByIsDeletedFalseOrderBySequenceAsc().stream()
+                                .map(BannerResponse::from)
+                                .collect(Collectors.toList());
+        }
 
-        attachmentService.hardDeleteS3Files(attachmentsToHardDelete);
-    }
+        @Override
+        @Transactional
+        public void updateBannerOrder(@NonNull Long bannerId, int newOrder) {
+                Banner banner = bannerRepository.findById(bannerId)
+                                .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
-    /**
-     *  메인 페이지 활성 배너 목록
-     */
-    public List<BannerResponse> getActiveBanners() {
-        return bannerRepository.findByIsActivatedTrueAndIsDeletedFalseOrderBySequenceAsc().stream()
-                .map(BannerResponse::from)
-                .collect(Collectors.toList());
-    }
+                // 순서 변경 로직 (단순 업데이트)
+                // 주의: 실제 운영 환경에서는 순서 교환 로직이 필요할 수 있음
+                banner.update(banner.getTitle(), banner.getImageUrl(), banner.getLinkUrl(), banner.getDescription(),
+                                newOrder,
+                                banner.getIsActivated());
+        }
 
-    /**
-     *  관리자용 전체 배너 목록 조회
-     */
-    public List<BannerResponse> getAllBannersForAdmin() {
-        return bannerRepository.findByIsDeletedFalseOrderBySequenceAsc().stream()
-                .map(BannerResponse::from)
-                .collect(Collectors.toList());
-    }
+        @Override
+        @Transactional
+        public void toggleBannerActivation(@NonNull Long bannerId) {
+                Banner banner = bannerRepository.findById(bannerId)
+                                .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
+
+                banner.update(banner.getTitle(), banner.getImageUrl(), banner.getLinkUrl(), banner.getDescription(),
+                                banner.getSequence(), !banner.getIsActivated());
+        }
 }

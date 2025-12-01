@@ -24,18 +24,28 @@ public class Banner extends BaseSoftDeleteSupportEntity {
 
     private String linkUrl;
 
+    @Column(length = 500)
+    private String description;
+
     @Column(nullable = false)
     private Integer sequence;
 
     @Column(nullable = false)
     private Boolean isActivated;
 
-    public void update(String title, String imageUrl, String linkUrl, int sequence, Boolean isActivated) {
-        if (title != null) this.title = title;
-        if (imageUrl != null) this.imageUrl = imageUrl;
-        if (linkUrl != null) this.linkUrl = linkUrl;
+    public void update(String title, String imageUrl, String linkUrl, String description, int sequence,
+            Boolean isActivated) {
+        if (title != null)
+            this.title = title;
+        if (imageUrl != null)
+            this.imageUrl = imageUrl;
+        if (linkUrl != null)
+            this.linkUrl = linkUrl;
+        if (description != null)
+            this.description = description;
 
         this.sequence = sequence;
-        if (isActivated != null) this.isActivated = isActivated;
+        if (isActivated != null)
+            this.isActivated = isActivated;
     }
 }
