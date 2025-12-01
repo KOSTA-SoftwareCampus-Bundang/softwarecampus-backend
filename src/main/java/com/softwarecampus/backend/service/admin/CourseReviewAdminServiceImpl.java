@@ -2,11 +2,13 @@ package com.softwarecampus.backend.service.admin;
 
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CourseReview;
+import com.softwarecampus.backend.domain.course.ReviewLike.LikeType;
 import com.softwarecampus.backend.dto.course.CourseReviewResponse;
 import com.softwarecampus.backend.dto.course.ReviewAttachmentResponse;
 import com.softwarecampus.backend.dto.course.ReviewSectionResponse;
 import com.softwarecampus.backend.exception.course.NotFoundException;
 import com.softwarecampus.backend.repository.course.CourseReviewRepository;
+import com.softwarecampus.backend.repository.course.ReviewLikeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 public class CourseReviewAdminServiceImpl implements CourseReviewAdminService {
 
     private final CourseReviewRepository courseReviewRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
 
     @Override
     @Transactional
@@ -66,6 +69,10 @@ public class CourseReviewAdminServiceImpl implements CourseReviewAdminService {
      * CourseReview 엔티티를 CourseReviewResponse DTO로 변환
      */
     private CourseReviewResponse buildReviewResponse(CourseReview review) {
+        // 좋아요/싫어요 수 계산
+        int likeCount = reviewLikeRepository.countByReviewIdAndType(review.getId(), LikeType.LIKE);
+        int dislikeCount = reviewLikeRepository.countByReviewIdAndType(review.getId(), LikeType.DISLIKE);
+
         return CourseReviewResponse.builder()
                 .reviewId(review.getId())
                 .writerId(review.getWriter().getId())
@@ -90,9 +97,9 @@ public class CourseReviewAdminServiceImpl implements CourseReviewAdminService {
                                 .originalName(attachment.getOriginalName())
                                 .build())
                         .collect(Collectors.toList()))
-                .likeCount(0) // 좋아요 수는 별도 계산 필요
-                .dislikeCount(0) // 싫어요 수는 별도 계산 필요
-                .myLikeType("NONE")
+                .likeCount(likeCount)
+                .dislikeCount(dislikeCount)
+                .myLikeType("NONE") // 관리자 API에서는 특정 사용자의 좋아요 상태가 필요없음
                 .createdAt(review.getCreatedAt())
                 .build();
     }

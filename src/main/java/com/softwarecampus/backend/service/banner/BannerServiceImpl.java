@@ -162,11 +162,8 @@ public class BannerServiceImpl implements BannerService {
                 Banner banner = bannerRepository.findById(bannerId)
                                 .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
-                // 순서 변경 로직 (단순 업데이트)
-                // 주의: 실제 운영 환경에서는 순서 교환 로직이 필요할 수 있음
-                banner.update(banner.getTitle(), banner.getImageUrl(), banner.getLinkUrl(), banner.getDescription(),
-                                newOrder,
-                                banner.getIsActivated());
+                // 특정 목적 메서드 사용으로 코드 명확성 향상
+                banner.updateSequence(newOrder);
         }
 
         @Override
@@ -175,7 +172,7 @@ public class BannerServiceImpl implements BannerService {
                 Banner banner = bannerRepository.findById(bannerId)
                                 .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
-                banner.update(banner.getTitle(), banner.getImageUrl(), banner.getLinkUrl(), banner.getDescription(),
-                                banner.getSequence(), !banner.getIsActivated());
+                // 특정 목적 메서드 사용으로 코드 명확성 향상
+                banner.toggleActivation();
         }
 }

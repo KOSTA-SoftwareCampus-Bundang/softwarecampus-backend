@@ -3,6 +3,7 @@ package com.softwarecampus.backend.service.course;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
+import com.softwarecampus.backend.dto.course.CourseCategoryDTO;
 import com.softwarecampus.backend.dto.course.CourseDetailResponseDTO;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
@@ -20,6 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * 과정 서비스 구현체
+ * 수정일: 2025-12-02 - Soft Delete 준수, @Transactional 추가
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -28,6 +33,24 @@ public class CourseServiceImpl implements CourseService {
         private final CourseRepository courseRepository;
         private final AcademyRepository academyRepository;
         private final CourseCategoryRepository courseCategoryRepository;
+
+        /**
+         * 과정 카테고리 목록 조회
+         * 작성일: 2025-12-02 - 레이어 규칙 준수를 위해 서비스 계층으로 이동
+         */
+        @Override
+        public List<CourseCategoryDTO> getCategories(CategoryType categoryType) {
+                if (categoryType != null) {
+                        return courseCategoryRepository.findByCategoryTypeAndDeletedAtIsNull(categoryType)
+                                        .stream()
+                                        .map(CourseCategoryDTO::fromEntity)
+                                        .toList();
+                }
+                return courseCategoryRepository.findAllByDeletedAtIsNull()
+                                .stream()
+                                .map(CourseCategoryDTO::fromEntity)
+                                .toList();
+        }
 
         @Override
         public Page<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline,
@@ -60,7 +83,8 @@ public class CourseServiceImpl implements CourseService {
         @Override
         @Transactional
         public CourseResponseDTO approveCourse(@NonNull Long courseId) {
-                Course course = courseRepository.findById(courseId)
+                // Soft Delete 준수: findByIdAndDeletedAtIsNull 사용
+                Course course = courseRepository.findByIdAndDeletedAtIsNull(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
 
                 course.setIsApproved(ApprovalStatus.APPROVED);
@@ -136,7 +160,12 @@ public class CourseServiceImpl implements CourseService {
                 course.markDeleted();
         }
 
+        /**
+         * 과정 상세 조회 (조회수 증가 포함)
+         * 수정일: 2025-12-02 - @Transactional 추가 (viewCount 증가 반영을 위해)
+         */
         @Override
+        @Transactional
         public CourseDetailResponseDTO getCourseDetail(@NonNull Long courseId) {
                 Course course = courseRepository.findWithDetailsByIdAndDeletedAtIsNull(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
@@ -153,14 +182,18 @@ public class CourseServiceImpl implements CourseService {
                 return coursePage.map(CourseResponseDTO::fromEntity);
         }
 
+        /**
+         * 관리자 - 과정 승인 거부
+         * 수정일: 2025-12-02 - Soft Delete 준수, 거부 사유 저장
+         */
         @Override
         @Transactional
         public CourseResponseDTO rejectCourse(@NonNull Long courseId, String reason) {
-                Course course = courseRepository.findById(courseId)
+                // Soft Delete 준수: findByIdAndDeletedAtIsNull 사용
+                Course course = courseRepository.findByIdAndDeletedAtIsNull(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("해당 과정이 존재하지 않습니다. ID=" + courseId));
 
-                course.setIsApproved(ApprovalStatus.REJECTED);
-                // 만약 없다면 로그를 남기거나 별도 테이블에 저장해야 함. 일단 상태 변경만 수행.
+                course.reject(reason); // 거부 상태 변경 및 사유 저장
 
                 return CourseResponseDTO.fromEntity(course);
         }

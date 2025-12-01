@@ -2,6 +2,7 @@ package com.softwarecampus.backend.service.course;
 
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.CourseStatus;
+import com.softwarecampus.backend.dto.course.CourseCategoryDTO;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
 import org.springframework.data.domain.Page;
@@ -10,6 +11,15 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface CourseService {
+
+        /**
+         * 과정 카테고리 목록 조회
+         * 작성일: 2025-12-02 - 레이어 규칙 준수를 위해 서비스 계층으로 이동
+         * 
+         * @param categoryType 카테고리 타입 필터 (옵션: EMPLOYEE/JOB_SEEKER)
+         * @return 카테고리 목록
+         */
+        List<CourseCategoryDTO> getCategories(CategoryType categoryType);
 
         /**
          * 과정 목록 조회 (페이지네이션 지원)

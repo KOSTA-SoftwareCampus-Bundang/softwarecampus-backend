@@ -256,24 +256,41 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 return reviewPage.map(review -> toDto(review, null));
         }
 
+        /**
+         * 리뷰 승인 (관리자용)
+         * 수정일: 2025-12-02 - Soft Delete 준수, 중복 승인 검증 추가
+         */
         @Override
         @Transactional
         public CourseReviewResponse approveReview(@NonNull Long reviewId) {
-                CourseReview review = reviewRepository.findById(reviewId)
+                // Soft Delete 준수: findByIdAndIsDeletedFalse 사용
+                CourseReview review = reviewRepository.findByIdAndIsDeletedFalse(reviewId)
                                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
 
+                // 이미 승인된 리뷰인지 검증
+                if (review.getApprovalStatus() == ApprovalStatus.APPROVED) {
+                        // 이미 승인된 경우 현재 상태 그대로 반환
+                        return toDto(review, null);
+                }
+
                 review.setApprovalStatus(ApprovalStatus.APPROVED);
+                review.setRejectionReason(null); // 승인 시 거부 사유 초기화
                 return toDto(review, null);
         }
 
+        /**
+         * 리뷰 거부 (관리자용)
+         * 수정일: 2025-12-02 - Soft Delete 준수, 거부 사유 저장
+         */
         @Override
         @Transactional
         public CourseReviewResponse rejectReview(@NonNull Long reviewId, String reason) {
-                CourseReview review = reviewRepository.findById(reviewId)
+                // Soft Delete 준수: findByIdAndIsDeletedFalse 사용
+                CourseReview review = reviewRepository.findByIdAndIsDeletedFalse(reviewId)
                                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
 
                 review.setApprovalStatus(ApprovalStatus.REJECTED);
-                // 거부 사유 저장 로직이 필요하다면 여기에 추가
+                review.setRejectionReason(reason); // 거부 사유 저장
                 return toDto(review, null);
         }
 
