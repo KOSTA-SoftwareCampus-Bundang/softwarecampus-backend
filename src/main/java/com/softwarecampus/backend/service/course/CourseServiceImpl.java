@@ -30,9 +30,10 @@ public class CourseServiceImpl implements CourseService {
 
         @Override
         public Page<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline,
-                        String keyword, Pageable pageable) {
+                        String keyword, String status, Pageable pageable) {
                 // 통합 검색 쿼리 사용 (모든 파라미터가 null 가능)
                 Page<Course> coursePage = courseRepository.searchCourses(categoryId, categoryType, isOffline, keyword,
+                                status,
                                 pageable);
                 return coursePage.map(CourseResponseDTO::fromEntity);
         }

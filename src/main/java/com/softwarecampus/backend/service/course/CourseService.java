@@ -12,16 +12,19 @@ public interface CourseService {
 
     /**
      * 과정 목록 조회 (페이지네이션 지원)
-     * @param categoryId 카테고리 ID (옵션)
+     * 
+     * @param categoryId   카테고리 ID (옵션)
      * @param categoryType 카테고리 타입 EMPLOYEE/JOB_SEEKER (옵션)
-     * @param isOffline 온/오프라인 필터 (옵션)
-     * @param keyword 검색 키워드 (옵션)
-     * @param pageable 페이지 정보
+     * @param isOffline    온/오프라인 필터 (옵션)
+     * @param keyword      검색 키워드 (옵션)
+     * @param pageable     페이지 정보
      */
-    Page<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline, String keyword, Pageable pageable);
+    Page<CourseResponseDTO> getCourses(Long categoryId, CategoryType categoryType, Boolean isOffline, String keyword,
+            String status, Pageable pageable);
 
     /**
      * 과정 목록 조회 (전체)
+     * 
      * @deprecated 페이지네이션 버전 사용 권장
      */
     @Deprecated

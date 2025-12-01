@@ -23,13 +23,14 @@ public class CourseController {
 
     private final CourseService courseService;
 
-    /** 
+    /**
      * 과정 목록 조회 (다양한 필터 지원 + 페이지네이션)
-     * @param categoryId 카테고리 ID (예: 33=백엔드 개발)
+     * 
+     * @param categoryId   카테고리 ID (예: 33=백엔드 개발)
      * @param categoryType 카테고리 타입 (EMPLOYEE/JOB_SEEKER)
-     * @param isOffline 온/오프라인 필터
-     * @param keyword 검색 키워드
-     * @param pageable 페이지 정보 (page, size, sort)
+     * @param isOffline    온/오프라인 필터
+     * @param keyword      검색 키워드
+     * @param pageable     페이지 정보 (page, size, sort)
      */
     @GetMapping
     public ResponseEntity<Page<CourseResponseDTO>> getCourses(
@@ -37,8 +38,10 @@ public class CourseController {
             @RequestParam(required = false) CategoryType categoryType,
             @RequestParam(required = false) Boolean isOffline,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
             @PageableDefault(size = 20, sort = "id") Pageable pageable) {
-        return ResponseEntity.ok(courseService.getCourses(categoryId, categoryType, isOffline, keyword, pageable));
+        return ResponseEntity
+                .ok(courseService.getCourses(categoryId, categoryType, isOffline, keyword, status, pageable));
     }
 
     /** 과정 상세 조회 */
