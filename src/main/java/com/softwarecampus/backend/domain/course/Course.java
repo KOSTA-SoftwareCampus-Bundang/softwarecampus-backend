@@ -56,10 +56,11 @@ public class Course extends BaseSoftDeleteSupportEntity {
     @Builder.Default
     private Long viewCount = 0L;
 
+    /**
+     * 조회수 증가
+     * @Builder.Default로 0L 초기화되므로 null 체크 불필요
+     */
     public void incrementViewCount() {
-        if (this.viewCount == null) {
-            this.viewCount = 0L;
-        }
         this.viewCount++;
     }
 
@@ -69,6 +70,10 @@ public class Course extends BaseSoftDeleteSupportEntity {
     private ApprovalStatus isApproved = ApprovalStatus.PENDING;
 
     private LocalDateTime approvedAt;
+
+    /** 거부 사유 (REJECTED 상태일 때 저장) */
+    @Column(length = 500)
+    private String rejectionReason;
 
     /** 커리큘럼 */
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -163,6 +168,13 @@ public class Course extends BaseSoftDeleteSupportEntity {
     public void reject() {
         this.isApproved = ApprovalStatus.REJECTED;
         this.approvedAt = null;
+        this.rejectionReason = null;
+    }
+
+    public void reject(String reason) {
+        this.isApproved = ApprovalStatus.REJECTED;
+        this.approvedAt = null;
+        this.rejectionReason = reason;
     }
 
     public CategoryType getCategoryType() {
