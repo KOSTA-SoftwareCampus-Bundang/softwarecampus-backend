@@ -33,21 +33,21 @@ public class CourseReviewServiceImpl implements CourseReviewService {
          * 1. 리뷰 리스트 조회 (Pageable)
          */
         @Override
-        public Page<CourseReviewResponse> getReviews(Long courseId, Pageable pageable) {
+        public Page<CourseReviewResponse> getReviews(Long courseId, Pageable pageable, Long accountId) {
 
                 Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
                 Page<CourseReview> reviewPage = reviewRepository.findByCourseIdAndIsDeletedFalse(courseId, pageable);
 
-                return reviewPage.map(this::toDto);
+                return reviewPage.map(review -> toDto(review, accountId));
         }
 
         /**
          * 2. 리뷰 상세 조회
          */
         @Override
-        public CourseReviewResponse getReviewDetail(Long courseId, Long reviewId) {
+        public CourseReviewResponse getReviewDetail(Long courseId, Long reviewId, Long accountId) {
 
                 Course course = courseRepository.findById(courseId)
                                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
@@ -56,7 +56,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                                 .filter(r -> r.getCourse().getId().equals(courseId))
                                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
 
-                return toDto(review);
+                return toDto(review, accountId);
         }
 
         @Override
@@ -92,13 +92,22 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 }
 
                 CourseReview saved = reviewRepository.save(review);
-                return toDto(saved);
+                return toDto(saved, accountId);
         }
 
         /**
          * DTO 변환
          */
-        private CourseReviewResponse toDto(CourseReview review) {
+        private CourseReviewResponse toDto(CourseReview review, Long accountId) {
+                String myLikeType = "NONE";
+                if (accountId != null) {
+                        myLikeType = review.getLikes().stream()
+                                        .filter(l -> l.getAccount().getId().equals(accountId))
+                                        .findFirst()
+                                        .map(l -> l.getType().name())
+                                        .orElse("NONE");
+                }
+
                 return CourseReviewResponse.builder()
                                 .reviewId(review.getId())
                                 .writerId(review.getWriter().getId())
@@ -122,6 +131,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                                 .dislikeCount((int) review.getLikes().stream()
                                                 .filter(l -> l.getType() == ReviewLike.LikeType.DISLIKE)
                                                 .count())
+                                .myLikeType(myLikeType)
                                 .createdAt(review.getCreatedAt()) // 추가
                                 .build();
         }
@@ -171,7 +181,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                         }
                 }
 
-                return toDto(review);
+                return toDto(review, accountId);
         }
 
         /**
