@@ -2,17 +2,29 @@
  * 관리자 컨트롤러
  * 작성자: GitHub Copilot
  * 작성일: 2025-11-28
+ * 수정일: 2025-12-02 - 레이어 규칙 준수를 위해 Repository 직접 호출 제거
  */
 package com.softwarecampus.backend.controller.admin;
 
+import com.softwarecampus.backend.domain.common.ApprovalStatus;
+import com.softwarecampus.backend.dto.admin.DashboardStatsResponse;
+import com.softwarecampus.backend.dto.course.CourseResponseDTO;
+import com.softwarecampus.backend.dto.course.CourseReviewResponse;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.academy.AcademyRejectRequest;
 import com.softwarecampus.backend.dto.academy.AcademyResponse;
 import com.softwarecampus.backend.service.admin.AccountAdminService;
+import com.softwarecampus.backend.service.admin.AdminDashboardService;
 import com.softwarecampus.backend.service.academy.AcademyService;
 import com.softwarecampus.backend.service.academy.AcademyFileService;
+import com.softwarecampus.backend.service.course.CourseService;
+import com.softwarecampus.backend.service.course.CourseReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +36,7 @@ import java.net.URI;
  * 관리자 전용 API
  * - 회원 승인/거절
  * - 기관 승인/거절 (AcademyController에 구현됨)
+ * - 대시보드 통계 조회
  */
 @RestController
 @RequestMapping("/admin")
@@ -31,18 +44,12 @@ import java.net.URI;
 public class AdminController {
 
     private final AccountAdminService accountAdminService;
-    // 기관 관리 서비스 (작성자: GitHub Copilot, 작성일: 2025-11-28)
+    private final AdminDashboardService adminDashboardService;
     private final AcademyService academyService;
     private final AcademyFileService academyFileService;
+    private final CourseService courseService;
+    private final CourseReviewService reviewService;
     private final com.softwarecampus.backend.scheduler.FileCleanupScheduler fileCleanupScheduler;
-
-    // 대시보드 통계용 Repository
-    private final com.softwarecampus.backend.repository.user.AccountRepository accountRepository;
-    private final com.softwarecampus.backend.repository.course.CourseRepository courseRepository;
-    private final com.softwarecampus.backend.repository.course.CourseReviewRepository reviewRepository;
-
-    private final com.softwarecampus.backend.service.course.CourseService courseService;
-    private final com.softwarecampus.backend.service.course.CourseReviewService reviewService;
 
     /**
      * 회원 승인
@@ -114,25 +121,12 @@ public class AdminController {
     /**
      * 대시보드 통계 조회
      * 작성일: 2025-12-01
+     * 수정일: 2025-12-02 - 서비스 계층으로 로직 이동
      */
     @GetMapping("/dashboard/stats")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<com.softwarecampus.backend.dto.admin.DashboardStatsResponse> getDashboardStats() {
-        long totalUsers = accountRepository.countByDeletedAtIsNull();
-        long totalCourses = courseRepository.countByDeletedAtIsNull();
-        long totalReviews = reviewRepository.countByDeletedAtIsNull();
-        long pendingCourses = courseRepository
-                .countByIsApprovedAndDeletedAtIsNull(com.softwarecampus.backend.domain.common.ApprovalStatus.PENDING);
-        long pendingReviews = reviewRepository.countByApprovalStatusAndDeletedAtIsNull(
-                com.softwarecampus.backend.domain.common.ApprovalStatus.PENDING);
-
-        return ResponseEntity.ok(com.softwarecampus.backend.dto.admin.DashboardStatsResponse.builder()
-                .totalUsers(totalUsers)
-                .totalCourses(totalCourses)
-                .totalReviews(totalReviews)
-                .pendingCourses(pendingCourses)
-                .pendingReviews(pendingReviews)
-                .build());
+    public ResponseEntity<DashboardStatsResponse> getDashboardStats() {
+        return ResponseEntity.ok(adminDashboardService.getDashboardStats());
     }
 
     /**
@@ -141,10 +135,10 @@ public class AdminController {
      */
     @GetMapping("/academies")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<org.springframework.data.domain.Page<AcademyResponse>> getAdminAcademies(
-            @RequestParam(required = false) com.softwarecampus.backend.domain.common.ApprovalStatus status,
+    public ResponseEntity<Page<AcademyResponse>> getAdminAcademies(
+            @RequestParam(required = false) ApprovalStatus status,
             @RequestParam(required = false) String keyword,
-            @org.springframework.data.web.PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(academyService.getAdminAcademies(status, keyword, pageable));
     }
 
@@ -153,13 +147,10 @@ public class AdminController {
      */
     @GetMapping("/accounts")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<org.springframework.data.domain.Page<AccountResponse>> getAdminAccounts(
+    public ResponseEntity<Page<AccountResponse>> getAdminAccounts(
             @RequestParam(required = false) String keyword,
-            @org.springframework.data.web.PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
-        if (keyword != null && !keyword.isEmpty()) {
-            return ResponseEntity.ok(accountAdminService.searchAccounts(keyword, pageable));
-        }
-        return ResponseEntity.ok(accountAdminService.getAllActiveAccounts(pageable));
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(accountAdminService.getAccounts(keyword, pageable));
     }
 
     /**
@@ -167,11 +158,10 @@ public class AdminController {
      */
     @GetMapping("/courses")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<org.springframework.data.domain.Page<com.softwarecampus.backend.dto.course.CourseResponseDTO>> getAdminCourses(
-            @RequestParam(required = false) com.softwarecampus.backend.domain.common.ApprovalStatus status,
+    public ResponseEntity<Page<CourseResponseDTO>> getAdminCourses(
+            @RequestParam(required = false) ApprovalStatus status,
             @RequestParam(required = false) String keyword,
-            @org.springframework.data.web.PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
-        // CourseService 필요 (주입 필요)
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(courseService.getAdminCourses(status, keyword, pageable));
     }
 
@@ -180,11 +170,10 @@ public class AdminController {
      */
     @GetMapping("/reviews")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<org.springframework.data.domain.Page<com.softwarecampus.backend.dto.course.CourseReviewResponse>> getAdminReviews(
-            @RequestParam(required = false) com.softwarecampus.backend.domain.common.ApprovalStatus status,
+    public ResponseEntity<Page<CourseReviewResponse>> getAdminReviews(
+            @RequestParam(required = false) ApprovalStatus status,
             @RequestParam(required = false) String keyword,
-            @org.springframework.data.web.PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
-        // ReviewService 필요 (주입 필요)
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(reviewService.getAdminReviews(status, keyword, pageable));
     }
 }
