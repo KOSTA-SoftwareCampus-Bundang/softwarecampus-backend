@@ -77,7 +77,7 @@ public class Course extends BaseSoftDeleteSupportEntity {
     /** 즐겨찾기 */
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<CourseFavorite> favorites = new ArrayList<>();
+    private Set<CourseFavorite> favorites = new HashSet<>();
 
     /** 이미지 */
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
