@@ -36,6 +36,14 @@ public class AdminController {
     private final AcademyFileService academyFileService;
     private final com.softwarecampus.backend.scheduler.FileCleanupScheduler fileCleanupScheduler;
 
+    // 대시보드 통계용 Repository
+    private final com.softwarecampus.backend.repository.user.AccountRepository accountRepository;
+    private final com.softwarecampus.backend.repository.course.CourseRepository courseRepository;
+    private final com.softwarecampus.backend.repository.course.CourseReviewRepository reviewRepository;
+
+    private final com.softwarecampus.backend.service.course.CourseService courseService;
+    private final com.softwarecampus.backend.service.course.CourseReviewService reviewService;
+
     /**
      * 회원 승인
      * 작성자: GitHub Copilot
@@ -101,5 +109,82 @@ public class AdminController {
     public ResponseEntity<String> triggerFileCleanup() {
         fileCleanupScheduler.cleanupDeletedFiles();
         return ResponseEntity.ok("파일 정리 스케줄러가 수동으로 실행되었습니다.");
+    }
+
+    /**
+     * 대시보드 통계 조회
+     * 작성일: 2025-12-01
+     */
+    @GetMapping("/dashboard/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.softwarecampus.backend.dto.admin.DashboardStatsResponse> getDashboardStats() {
+        long totalUsers = accountRepository.countByDeletedAtIsNull();
+        long totalCourses = courseRepository.countByDeletedAtIsNull();
+        long totalReviews = reviewRepository.countByDeletedAtIsNull();
+        long pendingCourses = courseRepository
+                .countByIsApprovedAndDeletedAtIsNull(com.softwarecampus.backend.domain.common.ApprovalStatus.PENDING);
+        long pendingReviews = reviewRepository.countByApprovalStatusAndDeletedAtIsNull(
+                com.softwarecampus.backend.domain.common.ApprovalStatus.PENDING);
+
+        return ResponseEntity.ok(com.softwarecampus.backend.dto.admin.DashboardStatsResponse.builder()
+                .totalUsers(totalUsers)
+                .totalCourses(totalCourses)
+                .totalReviews(totalReviews)
+                .pendingCourses(pendingCourses)
+                .pendingReviews(pendingReviews)
+                .build());
+    }
+
+    /**
+     * 기관 목록 조회 (관리자용)
+     * 작성일: 2025-12-02
+     */
+    @GetMapping("/academies")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<org.springframework.data.domain.Page<AcademyResponse>> getAdminAcademies(
+            @RequestParam(required = false) com.softwarecampus.backend.domain.common.ApprovalStatus status,
+            @RequestParam(required = false) String keyword,
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(academyService.getAdminAcademies(status, keyword, pageable));
+    }
+
+    /**
+     * 회원 목록 조회 (관리자용)
+     */
+    @GetMapping("/accounts")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<org.springframework.data.domain.Page<AccountResponse>> getAdminAccounts(
+            @RequestParam(required = false) String keyword,
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+        if (keyword != null && !keyword.isEmpty()) {
+            return ResponseEntity.ok(accountAdminService.searchAccounts(keyword, pageable));
+        }
+        return ResponseEntity.ok(accountAdminService.getAllActiveAccounts(pageable));
+    }
+
+    /**
+     * 과정 목록 조회 (관리자용)
+     */
+    @GetMapping("/courses")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<org.springframework.data.domain.Page<com.softwarecampus.backend.dto.course.CourseResponseDTO>> getAdminCourses(
+            @RequestParam(required = false) com.softwarecampus.backend.domain.common.ApprovalStatus status,
+            @RequestParam(required = false) String keyword,
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+        // CourseService 필요 (주입 필요)
+        return ResponseEntity.ok(courseService.getAdminCourses(status, keyword, pageable));
+    }
+
+    /**
+     * 리뷰 목록 조회 (관리자용)
+     */
+    @GetMapping("/reviews")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<org.springframework.data.domain.Page<com.softwarecampus.backend.dto.course.CourseReviewResponse>> getAdminReviews(
+            @RequestParam(required = false) com.softwarecampus.backend.domain.common.ApprovalStatus status,
+            @RequestParam(required = false) String keyword,
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable) {
+        // ReviewService 필요 (주입 필요)
+        return ResponseEntity.ok(reviewService.getAdminReviews(status, keyword, pageable));
     }
 }
