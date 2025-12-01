@@ -7,9 +7,9 @@ import org.springframework.data.domain.Pageable;
 
 public interface CourseReviewService {
 
-    Page<CourseReviewResponse> getReviews(Long courseId, Pageable pageable);
+    Page<CourseReviewResponse> getReviews(Long courseId, Pageable pageable, Long accountId);
 
-    CourseReviewResponse getReviewDetail(Long courseId, Long reviewId);
+    CourseReviewResponse getReviewDetail(Long courseId, Long reviewId, Long accountId);
 
     CourseReviewResponse createReview(Long courseId, Long accountId, CourseReviewRequest request);
 

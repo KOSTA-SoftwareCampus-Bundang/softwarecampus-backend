@@ -27,6 +27,9 @@ public class CourseReviewResponse {
 
     private int likeCount;
     private int dislikeCount;
-    
+
+    @Builder.Default
+    private String myLikeType = "NONE"; // 추가: 내 좋아요 상태 (LIKE, DISLIKE, NONE)
+
     private LocalDateTime createdAt; // 추가: 작성일
 }

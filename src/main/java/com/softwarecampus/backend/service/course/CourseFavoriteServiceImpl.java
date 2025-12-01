@@ -40,9 +40,14 @@ public class CourseFavoriteServiceImpl implements CourseFavoriteService {
     @Override
     @Transactional
     public void addFavorite(Long accountId, Long courseId) {
+        log.info("찜하기 요청 시작 - accountId: {}, courseId: {}", accountId, courseId);
+
         // 1. 먼저 조회하여 존재 여부 확인
-        if (favoriteRepository.existsByAccount_IdAndCourse_Id(accountId, courseId)) {
-            log.debug("이미 찜한 상태 - accountId: {}, courseId: {}", accountId, courseId);
+        boolean exists = favoriteRepository.existsByAccount_IdAndCourse_Id(accountId, courseId);
+        log.info("찜하기 중복 체크 결과 - exists: {}", exists);
+
+        if (exists) {
+            log.info("이미 찜한 상태이므로 무시합니다. - accountId: {}, courseId: {}", accountId, courseId);
             return;
         }
 
@@ -57,12 +62,12 @@ public class CourseFavoriteServiceImpl implements CourseFavoriteService {
                     .course(course)
                     .build();
             favoriteRepository.save(favorite);
-            log.debug("찜하기 신규 생성 - accountId: {}, courseId: {}", accountId, courseId);
+            log.info("찜하기 신규 생성 완료 (save 호출됨) - accountId: {}, courseId: {}", accountId, courseId);
 
         } catch (DataIntegrityViolationException e) {
             // 동시성 문제로 인한 중복 발생 시 무시 (idempotent)
             if (isUniqueConstraintViolation(e)) {
-                log.debug("찜하기 중복 요청 무시 (unique constraint) - accountId: {}, courseId: {}", accountId, courseId);
+                log.info("찜하기 중복 요청 무시 (unique constraint) - accountId: {}, courseId: {}", accountId, courseId);
             } else {
                 log.error("찜하기 실패 - 데이터 무결성 위반 - accountId: {}, courseId: {}, cause: {}",
                         accountId, courseId, e.getRootCause(), e);
@@ -95,11 +100,14 @@ public class CourseFavoriteServiceImpl implements CourseFavoriteService {
     @Override
     @Transactional
     public void removeFavorite(Long accountId, Long courseId) {
+        log.info("찜하기 삭제 요청 - accountId: {}, courseId: {}", accountId, courseId);
         Optional<CourseFavorite> existing = favoriteRepository.findByAccount_IdAndCourse_Id(accountId, courseId);
-        existing.ifPresent(favorite -> {
-            favoriteRepository.delete(favorite);
-            log.debug("찜하기 삭제 (Hard Delete) - accountId: {}, courseId: {}", accountId, courseId);
-        });
+        if (existing.isPresent()) {
+            favoriteRepository.delete(existing.get());
+            log.info("찜하기 삭제 완료 (Hard Delete) - accountId: {}, courseId: {}", accountId, courseId);
+        } else {
+            log.info("삭제할 찜하기 데이터가 없습니다. - accountId: {}, courseId: {}", accountId, courseId);
+        }
     }
 
     /**
@@ -121,6 +129,8 @@ public class CourseFavoriteServiceImpl implements CourseFavoriteService {
      */
     @Override
     public boolean isFavorite(Long accountId, Long courseId) {
-        return favoriteRepository.existsByAccount_IdAndCourse_Id(accountId, courseId);
+        boolean result = favoriteRepository.existsByAccount_IdAndCourse_Id(accountId, courseId);
+        log.info("찜 여부 확인 - accountId: {}, courseId: {}, result: {}", accountId, courseId, result);
+        return result;
     }
 }
