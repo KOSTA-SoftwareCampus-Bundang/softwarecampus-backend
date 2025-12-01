@@ -31,5 +31,6 @@ public class CourseReviewResponse {
     @Builder.Default
     private String myLikeType = "NONE"; // 추가: 내 좋아요 상태 (LIKE, DISLIKE, NONE)
 
+    @com.fasterxml.jackson.annotation.JsonFormat(shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt; // 추가: 작성일
 }

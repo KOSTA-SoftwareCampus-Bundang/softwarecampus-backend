@@ -45,6 +45,11 @@ public class ReviewLike extends BaseTimeEntity {
     @Column(nullable = false)
     private LikeType type; // LIKE / DISLIKE
 
+    // DB 레거시 컬럼 지원 (INSERT 용도)
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
     public enum LikeType {
         LIKE,
         DISLIKE

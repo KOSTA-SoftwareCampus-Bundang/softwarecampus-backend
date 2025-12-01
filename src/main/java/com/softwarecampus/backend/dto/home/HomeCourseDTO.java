@@ -17,54 +17,60 @@ import java.time.LocalDate;
 @Builder
 public class HomeCourseDTO {
 
-    private Long id;
-    private String name;
-    private Long academyId;
-    private String academyName;
-    private Long categoryId;
-    private String categoryName;
-    private CategoryType categoryType;
+        private Long id;
+        private String name;
+        private Long academyId;
+        private String academyName;
+        private Long categoryId;
+        private String categoryName;
+        private CategoryType categoryType;
 
-    private LocalDate recruitStart;
-    private LocalDate recruitEnd;
-    private LocalDate courseStart;
-    private LocalDate courseEnd;
+        private LocalDate recruitStart;
+        private LocalDate recruitEnd;
+        private LocalDate courseStart;
+        private LocalDate courseEnd;
 
-    private Integer cost;
-    private String location;
+        private Integer cost;
+        private String location;
 
-    private boolean isKdt;
-    private boolean isNailbaeum;
-    private boolean isOffline;
+        private boolean isKdt;
+        private boolean isNailbaeum;
+        private boolean isOffline;
 
-    private String imageUrl;
+        private String imageUrl;
+        private Double rating;
+        private Integer reviewCount;
 
-    /**
-     * Entity → DTO 변환
-     */
-    public static HomeCourseDTO fromEntity(Course course) {
-        return HomeCourseDTO.builder()
-                .id(course.getId())
-                .name(course.getName())
-                .academyId(course.getAcademy() != null ? course.getAcademy().getId() : null)
-                .academyName(course.getAcademy() != null ? course.getAcademy().getName() : null)
-                .categoryId(course.getCategory() != null ? course.getCategory().getId() : null)
-                .categoryName(course.getCategory() != null ? course.getCategory().getCategoryName() : null)
-                .categoryType(course.getCategory() != null ? course.getCategory().getCategoryType() : null)
-                .recruitStart(course.getRecruitStart())
-                .recruitEnd(course.getRecruitEnd())
-                .courseStart(course.getCourseStart())
-                .courseEnd(course.getCourseEnd())
-                .cost(course.getCost())
-                .location(course.getLocation())
-                .isKdt(course.isKdt())
-                .isNailbaeum(course.isNailbaeum())
-                .isOffline(course.isOffline())
-                .imageUrl(course.getImages().stream()
-                        .filter(img -> img.isActive() && img.isThumbnail())
-                        .findFirst()
-                        .map(img -> img.getImageUrl())
-                        .orElse(null))
-                .build();
-    }
+        /**
+         * Entity → DTO 변환
+         */
+        public static HomeCourseDTO fromEntity(Course course, Double rating, Integer reviewCount) {
+                return HomeCourseDTO.builder()
+                                .id(course.getId())
+                                .name(course.getName())
+                                .academyId(course.getAcademy() != null ? course.getAcademy().getId() : null)
+                                .academyName(course.getAcademy() != null ? course.getAcademy().getName() : null)
+                                .categoryId(course.getCategory() != null ? course.getCategory().getId() : null)
+                                .categoryName(course.getCategory() != null ? course.getCategory().getCategoryName()
+                                                : null)
+                                .categoryType(course.getCategory() != null ? course.getCategory().getCategoryType()
+                                                : null)
+                                .recruitStart(course.getRecruitStart())
+                                .recruitEnd(course.getRecruitEnd())
+                                .courseStart(course.getCourseStart())
+                                .courseEnd(course.getCourseEnd())
+                                .cost(course.getCost())
+                                .location(course.getLocation())
+                                .isKdt(course.isKdt())
+                                .isNailbaeum(course.isNailbaeum())
+                                .isOffline(course.isOffline())
+                                .imageUrl(course.getImages().stream()
+                                                .filter(img -> img.isActive() && img.isThumbnail())
+                                                .findFirst()
+                                                .map(img -> img.getImageUrl())
+                                                .orElse(null))
+                                .rating(rating)
+                                .reviewCount(reviewCount)
+                                .build();
+        }
 }

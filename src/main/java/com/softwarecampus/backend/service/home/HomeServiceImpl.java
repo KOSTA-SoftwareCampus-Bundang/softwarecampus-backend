@@ -3,6 +3,7 @@ package com.softwarecampus.backend.service.home;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
+import com.softwarecampus.backend.domain.course.CourseReview;
 import com.softwarecampus.backend.dto.home.HomeCommunityDTO;
 import com.softwarecampus.backend.dto.home.HomeCourseDTO;
 import com.softwarecampus.backend.dto.home.HomeResponseDTO;
@@ -13,8 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -49,7 +52,7 @@ public class HomeServiceImpl implements HomeService {
          * - 정렬: (찜 + 리뷰 수) DESC, 리뷰 수 DESC, ID ASC
          */
         private List<HomeCourseDTO> getEmployeeBestCourses(int limit) {
-                return courseRepository.findByCategory_CategoryTypeAndDeletedAtIsNull(CategoryType.EMPLOYEE)
+                return courseRepository.findHomeCoursesByCategory(CategoryType.EMPLOYEE)
                                 .stream()
                                 .filter(course -> course.getIsApproved() == ApprovalStatus.APPROVED)
                                 .sorted(Comparator
@@ -61,7 +64,7 @@ public class HomeServiceImpl implements HomeService {
                                                                 .reversed())
                                                 .thenComparing(Course::getId))
                                 .limit(limit)
-                                .map(HomeCourseDTO::fromEntity)
+                                .map(this::convertToHomeCourseDTO)
                                 .toList();
         }
 
@@ -72,7 +75,7 @@ public class HomeServiceImpl implements HomeService {
          * - 정렬: (찜 + 리뷰 수) DESC, 리뷰 수 DESC, ID ASC
          */
         private List<HomeCourseDTO> getJobSeekerBestCourses(int limit) {
-                return courseRepository.findByCategory_CategoryTypeAndDeletedAtIsNull(CategoryType.JOB_SEEKER)
+                return courseRepository.findHomeCoursesByCategory(CategoryType.JOB_SEEKER)
                                 .stream()
                                 .filter(course -> course.getIsApproved() == ApprovalStatus.APPROVED)
                                 .sorted(Comparator
@@ -84,7 +87,7 @@ public class HomeServiceImpl implements HomeService {
                                                                 .reversed())
                                                 .thenComparing(Course::getId))
                                 .limit(limit)
-                                .map(HomeCourseDTO::fromEntity)
+                                .map(this::convertToHomeCourseDTO)
                                 .toList();
         }
 
@@ -99,11 +102,11 @@ public class HomeServiceImpl implements HomeService {
                 LocalDate today = LocalDate.now();
                 LocalDate endDate = today.plusDays(7);
 
-                // 재직자 + 취업예정자 모두 조회
+                // 재직자 + 취업예정자 모두 조회 (최적화된 쿼리 사용)
                 List<Course> employeeCourses = courseRepository
-                                .findByCategory_CategoryTypeAndDeletedAtIsNull(CategoryType.EMPLOYEE);
+                                .findHomeCoursesByCategory(CategoryType.EMPLOYEE);
                 List<Course> jobSeekerCourses = courseRepository
-                                .findByCategory_CategoryTypeAndDeletedAtIsNull(CategoryType.JOB_SEEKER);
+                                .findHomeCoursesByCategory(CategoryType.JOB_SEEKER);
 
                 return Stream.concat(employeeCourses.stream(), jobSeekerCourses.stream())
                                 .filter(course -> course.getIsApproved() == ApprovalStatus.APPROVED)
@@ -112,7 +115,7 @@ public class HomeServiceImpl implements HomeService {
                                                 && !course.getRecruitEnd().isAfter(endDate))
                                 .sorted(Comparator.comparing(Course::getRecruitEnd))
                                 .limit(limit)
-                                .map(HomeCourseDTO::fromEntity)
+                                .map(this::convertToHomeCourseDTO)
                                 .toList();
         }
 
@@ -128,5 +131,27 @@ public class HomeServiceImpl implements HomeService {
                                 .stream()
                                 .map(HomeCommunityDTO::fromEntity)
                                 .toList();
+        }
+
+        /**
+         * Course 엔티티를 HomeCourseDTO로 변환 (평점 계산 포함)
+         */
+        private HomeCourseDTO convertToHomeCourseDTO(Course course) {
+                // 유효한 리뷰 필터링 (삭제되지 않고, 활성화되고, 승인된 리뷰만)
+                List<CourseReview> validReviews = Optional.ofNullable(course.getReviews())
+                                .orElse(Collections.emptyList())
+                                .stream()
+                                .filter(r -> !Boolean.TRUE.equals(r.getIsDeleted()))
+                                .filter(r -> r.isActive())
+                                .filter(r -> r.getApprovalStatus() == ApprovalStatus.APPROVED)
+                                .toList();
+
+                // 평점 평균 계산
+                double avgRating = validReviews.stream()
+                                .mapToDouble(CourseReview::calculateAverageScore)
+                                .average()
+                                .orElse(0.0);
+
+                return HomeCourseDTO.fromEntity(course, Math.round(avgRating * 10) / 10.0, validReviews.size());
         }
 }
