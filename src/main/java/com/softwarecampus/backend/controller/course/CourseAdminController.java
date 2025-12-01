@@ -8,11 +8,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 관리자 과정 관리 API
+ * 수정일: 2025-12-02 - 과정 승인 엔드포인트 추가 (CourseController에서 이동)
+ */
 @RestController
 @RequestMapping("/admin/courses")
 @RequiredArgsConstructor
@@ -28,8 +33,17 @@ public class CourseAdminController {
     public ResponseEntity<Page<CourseResponseDTO>> getApprovalRequests(
             @RequestParam(required = false) ApprovalStatus status,
             @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(courseService.getAdminCourses(status, keyword, pageable));
+    }
+
+    /**
+     * 과정 승인
+     */
+    @PostMapping("/{courseId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CourseResponseDTO> approveCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(courseService.approveCourse(courseId));
     }
 
     /**

@@ -14,7 +14,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -192,29 +191,5 @@ public class CourseReviewController {
                 return ResponseEntity.noContent().build();
         }
 
-        // -------------------------------
-        // 11. 리뷰 승인 (관리자)
-        // POST /api/courses/{courseId}/reviews/{reviewId}/approve
-        // -------------------------------
-        @PostMapping("/{reviewId}/approve")
-        @PreAuthorize("hasRole('ADMIN')")
-        public ResponseEntity<CourseReviewResponse> approveReview(
-                        @PathVariable Long courseId,
-                        @PathVariable Long reviewId) {
-                return ResponseEntity.ok(reviewService.approveReview(reviewId));
-        }
-
-        // -------------------------------
-        // 12. 리뷰 거부 (관리자)
-        // POST /api/courses/{courseId}/reviews/{reviewId}/reject
-        // -------------------------------
-        @PostMapping("/{reviewId}/reject")
-        @PreAuthorize("hasRole('ADMIN')")
-        public ResponseEntity<CourseReviewResponse> rejectReview(
-                        @PathVariable Long courseId,
-                        @PathVariable Long reviewId,
-                        @RequestBody(required = false) java.util.Map<String, String> body) {
-                String reason = body != null ? body.get("reason") : null;
-                return ResponseEntity.ok(reviewService.rejectReview(reviewId, reason));
-        }
+        // 참고: 리뷰 승인/거부 관리자 API는 CourseReviewAdminController (/admin/reviews)로 일원화됨
 }

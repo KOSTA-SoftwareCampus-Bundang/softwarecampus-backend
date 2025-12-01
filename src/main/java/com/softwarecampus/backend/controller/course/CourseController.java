@@ -5,7 +5,6 @@ import com.softwarecampus.backend.dto.course.CourseCategoryDTO;
 import com.softwarecampus.backend.dto.course.CourseDetailResponseDTO;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
-import com.softwarecampus.backend.repository.course.CourseCategoryRepository;
 import com.softwarecampus.backend.service.course.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +18,18 @@ import com.softwarecampus.backend.domain.course.CourseStatus;
 
 import java.util.List;
 
+/**
+ * 과정 관련 공용 API
+ * 작성일: 2025-11-28
+ * 수정일: 2025-12-02 - 레이어 규칙 준수 (Repository 직접 호출 제거),
+ *                     중복 관리자 엔드포인트 제거 (CourseAdminController로 일원화)
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/courses")
 public class CourseController {
 
     private final CourseService courseService;
-    private final CourseCategoryRepository courseCategoryRepository;
 
     /**
      * 과정 카테고리 목록 조회
@@ -34,19 +38,7 @@ public class CourseController {
     @GetMapping("/categories")
     public ResponseEntity<List<CourseCategoryDTO>> getCategories(
             @RequestParam(required = false) CategoryType categoryType) {
-        List<CourseCategoryDTO> categories;
-        if (categoryType != null) {
-            categories = courseCategoryRepository.findByCategoryTypeAndDeletedAtIsNull(categoryType)
-                    .stream()
-                    .map(CourseCategoryDTO::fromEntity)
-                    .toList();
-        } else {
-            categories = courseCategoryRepository.findAllByDeletedAtIsNull()
-                    .stream()
-                    .map(CourseCategoryDTO::fromEntity)
-                    .toList();
-        }
-        return ResponseEntity.ok(categories);
+        return ResponseEntity.ok(courseService.getCategories(categoryType));
     }
 
     /**
@@ -77,23 +69,6 @@ public class CourseController {
     public ResponseEntity<CourseDetailResponseDTO> getCourseDetail(
             @PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.getCourseDetail(courseId));
-    }
-
-    /** 관리자 - 과정 등록 승인 */
-    @PostMapping("/{courseId}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CourseResponseDTO> approveCourse(@PathVariable Long courseId) {
-        return ResponseEntity.ok(courseService.approveCourse(courseId));
-    }
-
-    /** 관리자 - 과정 등록 거부 */
-    @PostMapping("/{courseId}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CourseResponseDTO> rejectCourse(
-            @PathVariable Long courseId,
-            @RequestBody(required = false) java.util.Map<String, String> body) {
-        String reason = body != null ? body.get("reason") : null;
-        return ResponseEntity.ok(courseService.rejectCourse(courseId, reason));
     }
 
     /** 과정 수정 */
