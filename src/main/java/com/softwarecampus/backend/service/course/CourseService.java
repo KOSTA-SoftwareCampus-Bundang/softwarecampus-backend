@@ -51,10 +51,10 @@ public interface CourseService {
         void deleteCourse(Long courseId);
 
         /** 기관유저 - 과정 등록 요청 (PENDING) */
-        CourseResponseDTO requestCourseRegistration(CourseRequestDTO dto);
+        CourseResponseDTO requestCourseRegistration(CourseRequestDTO dto, Long requesterId);
 
         /** 관리자 - 과정 직접 등록 (즉시 APPROVED) */
-        CourseResponseDTO createCourseByAdmin(CourseRequestDTO dto);
+        CourseResponseDTO createCourseByAdmin(CourseRequestDTO dto, Long requesterId);
 
         /** 과정 상세 조회 (커리큘럼 포함) */
         com.softwarecampus.backend.dto.course.CourseDetailResponseDTO getCourseDetail(Long courseId);

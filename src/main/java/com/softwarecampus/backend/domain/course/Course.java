@@ -3,6 +3,7 @@ package com.softwarecampus.backend.domain.course;
 import com.softwarecampus.backend.domain.academy.Academy;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
+import com.softwarecampus.backend.domain.user.Account;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -26,6 +27,11 @@ public class Course extends BaseSoftDeleteSupportEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "academy_id", nullable = false)
     private Academy academy;
+
+    /** 과정 등록자 (기관 담당자) */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requester_id")
+    private Account requester;
 
     /** 과정 카테고리 */
     @ManyToOne(fetch = FetchType.LAZY)

@@ -5,6 +5,7 @@ import com.softwarecampus.backend.dto.course.CourseCategoryDTO;
 import com.softwarecampus.backend.dto.course.CourseDetailResponseDTO;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
+import com.softwarecampus.backend.security.CustomUserDetails;
 import com.softwarecampus.backend.service.course.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.softwarecampus.backend.domain.course.CourseStatus;
 
@@ -91,14 +93,18 @@ public class CourseController {
     /** 기관유저 - 과정 등록 요청 */
     @PostMapping("/request")
     @PreAuthorize("hasRole('INSTITUTION')")
-    public ResponseEntity<CourseResponseDTO> requestCourse(@RequestBody @Valid CourseRequestDTO dto) {
-        return ResponseEntity.ok(courseService.requestCourseRegistration(dto));
+    public ResponseEntity<CourseResponseDTO> requestCourse(
+            @RequestBody @Valid CourseRequestDTO dto,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(courseService.requestCourseRegistration(dto, userDetails.getId()));
     }
 
     /** 관리자 - 과정 직접 등록 (즉시 승인) */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CourseResponseDTO> createCourse(@RequestBody @Valid CourseRequestDTO dto) {
-        return ResponseEntity.ok(courseService.createCourseByAdmin(dto));
+    public ResponseEntity<CourseResponseDTO> createCourse(
+            @RequestBody @Valid CourseRequestDTO dto,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(courseService.createCourseByAdmin(dto, userDetails.getId()));
     }
 }

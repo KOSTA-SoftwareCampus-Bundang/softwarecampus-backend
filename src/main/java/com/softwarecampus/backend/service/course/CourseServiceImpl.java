@@ -10,6 +10,7 @@ import com.softwarecampus.backend.dto.course.CourseResponseDTO;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.repository.course.CourseCategoryRepository;
 import com.softwarecampus.backend.repository.course.CourseRepository;
+import com.softwarecampus.backend.repository.user.AccountRepository;
 import com.softwarecampus.backend.domain.course.CourseStatus;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.NonNull;
@@ -23,7 +24,7 @@ import java.util.List;
 
 /**
  * 과정 서비스 구현체
- * 수정일: 2025-12-02 - Soft Delete 준수, @Transactional 추가
+ * 수정일: 2025-12-02 - Soft Delete 준수, @Transactional 추가, 등록자 정보 추가
  */
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,7 @@ public class CourseServiceImpl implements CourseService {
         private final CourseRepository courseRepository;
         private final AcademyRepository academyRepository;
         private final CourseCategoryRepository courseCategoryRepository;
+        private final AccountRepository accountRepository;
 
         /**
          * 과정 카테고리 목록 조회
@@ -94,7 +96,7 @@ public class CourseServiceImpl implements CourseService {
         /** 기관유저 - 과정 등록 요청 (PENDING) */
         @Override
         @Transactional
-        public CourseResponseDTO requestCourseRegistration(CourseRequestDTO dto) {
+        public CourseResponseDTO requestCourseRegistration(CourseRequestDTO dto, Long requesterId) {
                 var academy = academyRepository.findById(dto.getAcademyId())
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "존재하지 않는 기관입니다. ID=" + dto.getAcademyId()));
@@ -105,8 +107,13 @@ public class CourseServiceImpl implements CourseService {
                                                 "존재하지 않는 과정 카테고리입니다. type=" + dto.getCategoryType() + ", name="
                                                                 + dto.getCategoryName()));
 
+                var requester = accountRepository.findById(requesterId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "존재하지 않는 사용자입니다. ID=" + requesterId));
+
                 var course = dto.toEntity(academy, category);
                 course.setIsApproved(ApprovalStatus.PENDING); // 기관 유저 요청 상태
+                course.setRequester(requester); // 등록자 설정
 
                 courseRepository.save(course);
                 return CourseResponseDTO.fromEntity(course);
@@ -115,7 +122,7 @@ public class CourseServiceImpl implements CourseService {
         /** 관리자 - 과정 직접 등록 (즉시 APPROVED) */
         @Override
         @Transactional
-        public CourseResponseDTO createCourseByAdmin(CourseRequestDTO dto) {
+        public CourseResponseDTO createCourseByAdmin(CourseRequestDTO dto, Long requesterId) {
                 var academy = academyRepository.findById(dto.getAcademyId())
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "존재하지 않는 기관입니다. ID=" + dto.getAcademyId()));
@@ -126,8 +133,13 @@ public class CourseServiceImpl implements CourseService {
                                                 "존재하지 않는 과정 카테고리입니다. type=" + dto.getCategoryType() + ", name="
                                                                 + dto.getCategoryName()));
 
+                var requester = accountRepository.findById(requesterId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "존재하지 않는 사용자입니다. ID=" + requesterId));
+
                 var course = dto.toEntity(academy, category);
                 course.setIsApproved(ApprovalStatus.APPROVED); // 관리자는 즉시 승인
+                course.setRequester(requester); // 등록자 설정
 
                 courseRepository.save(course);
                 return CourseResponseDTO.fromEntity(course);
