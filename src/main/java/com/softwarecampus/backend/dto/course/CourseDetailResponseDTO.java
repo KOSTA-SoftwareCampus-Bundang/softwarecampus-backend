@@ -69,9 +69,33 @@ public class CourseDetailResponseDTO {
         }
     }
 
+    private Double rating;
+    private Integer reviewCount;
+
     public static CourseDetailResponseDTO fromEntity(Course course) {
         var academy = course.getAcademy();
         var category = course.getCategory();
+
+        // 평점 계산 (삭제되지 않은 승인된 리뷰들의 평균)
+        double rating = 0.0;
+        int reviewCount = 0;
+
+        if (course.getReviews() != null) {
+            var activeReviews = course.getReviews().stream()
+                    .filter(r -> r.isActive() && r.getApprovalStatus() == ApprovalStatus.APPROVED)
+                    .toList();
+
+            reviewCount = activeReviews.size();
+
+            if (reviewCount > 0) {
+                rating = activeReviews.stream()
+                        .mapToDouble(com.softwarecampus.backend.domain.course.CourseReview::calculateAverageScore)
+                        .average()
+                        .orElse(0.0);
+                // 소수점 1자리 반올림
+                rating = Math.round(rating * 10.0) / 10.0;
+            }
+        }
 
         return CourseDetailResponseDTO.builder()
                 .id(course.getId())
@@ -94,6 +118,8 @@ public class CourseDetailResponseDTO {
                 .requirement(course.getRequirement())
                 .approvalStatus(course.getIsApproved())
                 .approvedAt(course.getApprovedAt())
+                .rating(rating)
+                .reviewCount(reviewCount)
                 .curriculums(course.getCurriculums() != null
                         ? course.getCurriculums().stream()
                                 .map(CurriculumDTO::from)
