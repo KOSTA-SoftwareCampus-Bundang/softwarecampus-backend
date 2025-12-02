@@ -64,21 +64,44 @@ public class ClientIpUtils {
         
         // 2. 프록시 헤더를 신뢰하는 경우
         //    - 신뢰할 수 있는 프록시 IP 목록 검증 필요
-        if (trustedProxies != null && !trustedProxies.isEmpty()) {
-            String[] trustedProxyList = trustedProxies.split(",");
-            boolean isTrustedProxy = false;
+        //    - trustedProxies가 null이거나 비어있으면 신뢰하지 않음 (IP 스푸핑 방지)
+        if (trustedProxies == null || trustedProxies.trim().isEmpty()) {
+            return remoteAddr;
+        }
+        
+        String[] trustedProxyList = trustedProxies.split(",");
+        boolean isTrustedProxy = false;
+        boolean hasValidTrustedProxy = false;
+        
+        for (String trustedProxy : trustedProxyList) {
+            String trimmedProxy = trustedProxy.trim();
             
-            for (String trustedProxy : trustedProxyList) {
-                if (remoteAddr.equals(trustedProxy.trim())) {
-                    isTrustedProxy = true;
-                    break;
-                }
+            // 빈 항목은 무시
+            if (trimmedProxy.isEmpty()) {
+                continue;
             }
             
-            // 신뢰할 수 없는 프록시에서 온 요청 → RemoteAddr 사용 (스푸핑 차단)
-            if (!isTrustedProxy) {
-                return remoteAddr;
+            // 기본 IP/CIDR 형식 검증 (잘못된 형식은 무시하여 실수로 신뢰하는 것을 방지)
+            if (!isValidIpOrCidr(trimmedProxy)) {
+                continue;
             }
+            
+            hasValidTrustedProxy = true;
+            
+            if (remoteAddr.equals(trimmedProxy)) {
+                isTrustedProxy = true;
+                break;
+            }
+        }
+        
+        // 유효한 신뢰 프록시가 하나도 없으면 신뢰하지 않음
+        if (!hasValidTrustedProxy) {
+            return remoteAddr;
+        }
+        
+        // 신뢰할 수 없는 프록시에서 온 요청 → RemoteAddr 사용 (스푸핑 차단)
+        if (!isTrustedProxy) {
+            return remoteAddr;
         }
         
         // 3. 신뢰할 수 있는 프록시로 검증됨 → 프록시 헤더에서 클라이언트 IP 추출
@@ -98,5 +121,69 @@ public class ClientIpUtils {
         }
         
         return ip;
+    }
+    
+    /**
+     * IP 주소 또는 CIDR 표기법의 기본 형식을 검증
+     * 
+     * 잘못된 형식의 항목이 신뢰 프록시 목록에 포함되어 
+     * 의도치 않게 신뢰되는 것을 방지
+     * 
+     * @param value 검증할 IP 또는 CIDR 문자열
+     * @return 유효한 형식이면 true, 아니면 false
+     */
+    private boolean isValidIpOrCidr(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        
+        // CIDR 표기법인 경우 (예: 10.0.0.0/8)
+        String ipPart = value;
+        if (value.contains("/")) {
+            String[] parts = value.split("/", 2);
+            ipPart = parts[0];
+            String cidrPart = parts[1];
+            
+            // CIDR prefix 검증 (0-32 범위의 숫자여야 함)
+            if (!cidrPart.matches("\\d{1,2}")) {
+                return false;
+            }
+            try {
+                int prefix = Integer.parseInt(cidrPart);
+                if (prefix < 0 || prefix > 32) {
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        
+        // IPv4 형식 검증 (예: 192.168.1.1)
+        if (ipPart.matches("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}")) {
+            String[] octets = ipPart.split("\\.");
+            for (String octet : octets) {
+                try {
+                    int num = Integer.parseInt(octet);
+                    if (num < 0 || num > 255) {
+                        return false;
+                    }
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        // IPv6 형식 기본 검증 (콜론을 포함하고 허용된 문자만 포함)
+        if (ipPart.contains(":")) {
+            return ipPart.matches("[0-9a-fA-F:]+");
+        }
+        
+        // localhost 허용
+        if ("localhost".equalsIgnoreCase(ipPart)) {
+            return true;
+        }
+        
+        return false;
     }
 }
