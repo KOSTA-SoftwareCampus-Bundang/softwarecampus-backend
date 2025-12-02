@@ -132,11 +132,12 @@ public class AdminController {
     /**
      * 기관 목록 조회 (관리자용)
      * 작성일: 2025-12-02
+     * 수정일: 2025-12-02 - academy.ApprovalStatus 사용 (Repository 타입 일치)
      */
     @GetMapping("/academies")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<AcademyResponse>> getAdminAcademies(
-            @RequestParam(required = false) ApprovalStatus status,
+            @RequestParam(required = false) com.softwarecampus.backend.domain.academy.ApprovalStatus status,
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(academyService.getAdminAcademies(status, keyword, pageable));

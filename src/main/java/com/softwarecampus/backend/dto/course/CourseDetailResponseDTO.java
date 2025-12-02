@@ -4,6 +4,7 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
 import com.softwarecampus.backend.domain.course.CourseCurriculum;
+import com.softwarecampus.backend.domain.course.CourseImageType;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -36,6 +37,7 @@ public class CourseDetailResponseDTO {
     private LocalDate courseEnd;
 
     private Integer cost;
+    private Integer capacity;
     private String classDay;
     private String location;
 
@@ -47,6 +49,18 @@ public class CourseDetailResponseDTO {
 
     private ApprovalStatus approvalStatus;
     private LocalDateTime approvedAt;
+
+    // 과정 이미지 (썸네일 - 목록 표시용)
+    private String imageUrl;
+    
+    // 썸네일 이미지 ID (삭제 API 호출용)
+    private Long thumbnailImageId;
+    
+    // 과정 헤더 이미지 (상세 페이지 배경)
+    private String headerImageUrl;
+    
+    // 헤더 이미지 ID (삭제 API 호출용)
+    private Long headerImageId;
 
     // 상세 정보 추가
     private List<CurriculumDTO> curriculums;
@@ -75,6 +89,22 @@ public class CourseDetailResponseDTO {
     public static CourseDetailResponseDTO fromEntity(Course course) {
         var academy = course.getAcademy();
         var category = course.getCategory();
+
+        // 썸네일 이미지 추출 (THUMBNAIL 타입 또는 기존 isThumbnail=true)
+        var thumbnailImage = course.getImages() != null ? course.getImages().stream()
+                .filter(img -> img.isActive() && img.isThumbnail())
+                .findFirst()
+                .orElse(null) : null;
+        String imageUrl = thumbnailImage != null ? thumbnailImage.getImageUrl() : null;
+        Long thumbnailImageId = thumbnailImage != null ? thumbnailImage.getId() : null;
+
+        // 헤더 이미지 추출 (HEADER 타입)
+        var headerImage = course.getImages() != null ? course.getImages().stream()
+                .filter(img -> img.isActive() && img.getImageType() == CourseImageType.HEADER)
+                .findFirst()
+                .orElse(null) : null;
+        String headerImageUrl = headerImage != null ? headerImage.getImageUrl() : null;
+        Long headerImageId = headerImage != null ? headerImage.getId() : null;
 
         // 평점 계산 (삭제되지 않은 승인된 리뷰들의 평균)
         double rating = 0.0;
@@ -110,6 +140,7 @@ public class CourseDetailResponseDTO {
                 .courseStart(course.getCourseStart())
                 .courseEnd(course.getCourseEnd())
                 .cost(course.getCost())
+                .capacity(course.getCapacity())
                 .classDay(course.getClassDay())
                 .location(course.getLocation())
                 .isKdt(course.isKdt())
@@ -118,6 +149,10 @@ public class CourseDetailResponseDTO {
                 .requirement(course.getRequirement())
                 .approvalStatus(course.getIsApproved())
                 .approvedAt(course.getApprovedAt())
+                .imageUrl(imageUrl)
+                .thumbnailImageId(thumbnailImageId)
+                .headerImageUrl(headerImageUrl)
+                .headerImageId(headerImageId)
                 .rating(rating)
                 .reviewCount(reviewCount)
                 .curriculums(course.getCurriculums() != null

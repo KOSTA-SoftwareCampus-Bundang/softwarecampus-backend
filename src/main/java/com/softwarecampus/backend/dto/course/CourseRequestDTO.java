@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.dto.course;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.softwarecampus.backend.domain.academy.Academy;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
@@ -37,15 +38,23 @@ public class CourseRequestDTO {
     private LocalDate courseEnd;
 
     private Integer cost;
+
+    /** 모집 정원 (기본값: 30) */
+    @Builder.Default
+    private Integer capacity = 30;
     
     @Builder.Default
     private String classDay = "평일"; // 기본값: 평일
     
     private String location;
 
+    @JsonProperty("isKdt")
     private boolean isKdt;
+    
+    @JsonProperty("isNailbaeum")
     private boolean isNailbaeum;
     
+    @JsonProperty("isOffline")
     @Builder.Default
     private boolean isOffline = true; // 기본값: 오프라인
 
@@ -64,6 +73,7 @@ public class CourseRequestDTO {
                 .courseStart(courseStart)
                 .courseEnd(courseEnd)
                 .cost(cost)
+                .capacity(capacity)
                 .classDay(classDay)
                 .location(location)
                 .isKdt(isKdt)
@@ -87,6 +97,7 @@ public class CourseRequestDTO {
                 .courseStart(courseStart)
                 .courseEnd(courseEnd)
                 .cost(cost)
+                .capacity(capacity)
                 .classDay(classDay)
                 .location(location)
                 .isKdt(isKdt)
