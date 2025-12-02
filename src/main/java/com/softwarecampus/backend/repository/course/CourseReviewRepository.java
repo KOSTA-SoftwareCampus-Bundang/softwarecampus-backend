@@ -90,4 +90,19 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
         @Query("SELECT COUNT(r) FROM CourseReview r WHERE r.deletedAt IS NULL AND r.course.academy.id = :academyId AND r.approvalStatus = :status")
         long countByAcademyIdAndApprovalStatusAndDeletedAtIsNull(@Param("academyId") Long academyId,
                         @Param("status") ApprovalStatus status);
+
+        /**
+         * 과정별 리뷰 조회: 승인된 리뷰 + 본인이 작성한 미승인/거부 리뷰
+         * - 승인된 리뷰는 모든 사용자에게 노출
+         * - 본인이 작성한 리뷰는 승인 상태와 관계없이 본인에게만 노출
+         */
+        @Query("SELECT r FROM CourseReview r " +
+                        "WHERE r.deletedAt IS NULL " +
+                        "AND r.course.id = :courseId " +
+                        "AND (r.approvalStatus = 'APPROVED' OR r.writer.id = :writerId)")
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "writer", "sections", "attachments",
+                        "likes" })
+        Page<CourseReview> findByCourseIdWithMyReviews(@Param("courseId") Long courseId,
+                        @Param("writerId") Long writerId,
+                        Pageable pageable);
 }

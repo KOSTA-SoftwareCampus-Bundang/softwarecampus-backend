@@ -20,6 +20,7 @@ public class CourseReviewResponse {
 
     private String comment;
     private String approvalStatus; // APPROVED / PENDING / REJECTED
+    private String rejectionReason; // 거부 사유
 
     private double averageScore;
 
