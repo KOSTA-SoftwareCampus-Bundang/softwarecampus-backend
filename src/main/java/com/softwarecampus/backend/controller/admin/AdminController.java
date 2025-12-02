@@ -143,17 +143,6 @@ public class AdminController {
     }
 
     /**
-     * 회원 목록 조회 (관리자용)
-     */
-    @GetMapping("/accounts")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<AccountResponse>> getAdminAccounts(
-            @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(accountAdminService.getAccounts(keyword, pageable));
-    }
-
-    /**
      * 과정 목록 조회 (관리자용)
      */
     @GetMapping("/courses")
