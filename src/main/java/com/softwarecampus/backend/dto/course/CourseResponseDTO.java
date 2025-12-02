@@ -51,6 +51,9 @@ public class CourseResponseDTO {
     private Long requesterId;
     private String requesterName;
 
+    // 과정 이미지 (썸네일)
+    private String imageUrl;
+
     /**
      * Entity → DTO 변환
      */
@@ -74,6 +77,16 @@ public class CourseResponseDTO {
                 // 소수점 1자리 반올림
                 rating = Math.round(rating * 10.0) / 10.0;
             }
+        }
+
+        // 썸네일 이미지 추출
+        String imageUrl = null;
+        if (course.getImages() != null) {
+            imageUrl = course.getImages().stream()
+                    .filter(img -> img.isActive() && img.isThumbnail())
+                    .findFirst()
+                    .map(img -> img.getImageUrl())
+                    .orElse(null);
         }
 
         return CourseResponseDTO.builder()
@@ -101,6 +114,7 @@ public class CourseResponseDTO {
                 .reviewCount(reviewCount)
                 .requesterId(course.getRequester() != null ? course.getRequester().getId() : null)
                 .requesterName(course.getRequester() != null ? course.getRequester().getUserName() : null)
+                .imageUrl(imageUrl)
                 .build();
     }
 }
