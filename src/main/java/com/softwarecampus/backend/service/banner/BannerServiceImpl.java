@@ -166,6 +166,30 @@ public class BannerServiceImpl implements BannerService {
                 banner.updateSequence(newOrder);
         }
 
+        /**
+         * 두 배너의 순서를 원자적으로 교환
+         * 트랜잭션 내에서 두 배너의 순서를 동시에 변경하여 데이터 일관성 보장
+         */
+        @Override
+        @Transactional
+        public void swapBannerOrder(@NonNull Long bannerId1, @NonNull Long bannerId2) {
+                Banner banner1 = bannerRepository.findById(bannerId1)
+                                .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
+
+                Banner banner2 = bannerRepository.findById(bannerId2)
+                                .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
+
+                // 삭제된 배너 체크
+                if (banner1.getIsDeleted() || banner2.getIsDeleted()) {
+                        throw new BannerException(BannerErrorCode.BANNER_ALREADY_DELETED);
+                }
+
+                // 두 배너의 순서를 교환
+                int tempOrder = banner1.getSequence();
+                banner1.updateSequence(banner2.getSequence());
+                banner2.updateSequence(tempOrder);
+        }
+
         @Override
         @Transactional
         public void toggleBannerActivation(@NonNull Long bannerId) {
