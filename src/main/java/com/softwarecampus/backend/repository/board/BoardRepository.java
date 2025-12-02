@@ -9,7 +9,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface BoardRepository extends JpaRepository<Board, Long> {
+
+        // 게시글 상세 조회용: Account + Recommends + Attaches + Comments 한번에 조회
+        @Query("SELECT DISTINCT b FROM Board b " +
+                        "LEFT JOIN FETCH b.account " +
+                        "LEFT JOIN FETCH b.boardAttaches " +
+                        "LEFT JOIN FETCH b.boardRecommends br " +
+                        "LEFT JOIN FETCH br.account " +
+                        "WHERE b.id = :id")
+        Optional<Board> findByIdWithDetails(@Param("id") Long id);
 
         @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(distinct case when c.isDeleted=false then c.id end),MAX(b.hits),count(distinct r.id),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a "
                         +

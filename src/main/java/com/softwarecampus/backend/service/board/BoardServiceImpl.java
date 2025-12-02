@@ -71,7 +71,8 @@ public class BoardServiceImpl implements BoardService {
     @Transactional
     @Override
     public BoardResponseDTO getBoardById(Long id, Long userId, String clientIp) {
-        Board board = boardRepository.findById(id)
+        // Fetch Join으로 연관 엔티티 한번에 조회 (N+1 방지)
+        Board board = boardRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
         // 삭제된 글 조회 불가 처리
         if (!board.isActive()) {
