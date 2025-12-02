@@ -33,7 +33,7 @@ public class Academy extends BaseSoftDeleteSupportEntity {
     @Column(length = 500) private String logoUrl;
 
     // 기관 웹사이트 URL (작성일: 2025-12-02)
-    private String website;
+    @Column(length = 500) private String website;
 
     // 승인 여부 (PENDING / APPROVED / REJECTED)
     @Enumerated(EnumType.STRING)
