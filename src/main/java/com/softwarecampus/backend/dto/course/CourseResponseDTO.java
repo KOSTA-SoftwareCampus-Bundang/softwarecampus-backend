@@ -3,6 +3,7 @@ package com.softwarecampus.backend.dto.course;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
+import com.softwarecampus.backend.domain.course.CourseImageType;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -51,8 +52,11 @@ public class CourseResponseDTO {
     private Long requesterId;
     private String requesterName;
 
-    // 과정 이미지 (썸네일)
+    // 과정 이미지 (썸네일 - 목록 표시용)
     private String imageUrl;
+    
+    // 과정 헤더 이미지 (상세 페이지 배경)
+    private String headerImageUrl;
 
     /**
      * Entity → DTO 변환
@@ -79,9 +83,16 @@ public class CourseResponseDTO {
             }
         }
 
-        // 썸네일 이미지 추출 (@Builder.Default로 초기화되어 null이 아님)
+        // 썸네일 이미지 추출 (THUMBNAIL 타입 또는 기존 isThumbnail=true)
         String imageUrl = course.getImages().stream()
                 .filter(img -> img.isActive() && img.isThumbnail())
+                .findFirst()
+                .map(com.softwarecampus.backend.domain.course.CourseImage::getImageUrl)
+                .orElse(null);
+
+        // 헤더 이미지 추출 (HEADER 타입)
+        String headerImageUrl = course.getImages().stream()
+                .filter(img -> img.isActive() && img.getImageType() == CourseImageType.HEADER)
                 .findFirst()
                 .map(com.softwarecampus.backend.domain.course.CourseImage::getImageUrl)
                 .orElse(null);
@@ -112,6 +123,7 @@ public class CourseResponseDTO {
                 .requesterId(course.getRequester() != null ? course.getRequester().getId() : null)
                 .requesterName(course.getRequester() != null ? course.getRequester().getUserName() : null)
                 .imageUrl(imageUrl)
+                .headerImageUrl(headerImageUrl)
                 .build();
     }
 }
