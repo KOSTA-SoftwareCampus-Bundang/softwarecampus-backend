@@ -262,7 +262,224 @@ VALUES (15, 8, NULL, '취업 연계 혜택은 무엇이 있나요?', '수료 후
 INSERT INTO course_qna (course_id, account_id, answered_by_id, title, question_text, answer_text, is_answered, created_at, updated_at, is_deleted, deleted_at)
 VALUES (17, 9, 15, '취약점 랩 환경에서 실습 로그는 남나요?', '실습 기록이 저장되는지, 피드백을 받을 수 있는지 궁금합니다.', '운영팀이 실습 로그를 별도 관리하고 피드백을 남겨드립니다.', true, NOW(), NOW(), false, NULL);
 
--- 8. Board (커뮤니티 게시글 30개)
+-- 8. CourseCurriculum (과정별 커리큘럼)
+-- Course 1: 엔터프라이즈 Java 백엔드 아키텍처
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (1, 1, 'Java 고급 문법과 설계 원칙', 'Generic, Lambda, Stream API 심화 학습 및 SOLID 원칙 적용', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (1, 2, 'Spring Framework 핵심', 'IoC/DI, AOP, Spring MVC 아키텍처 및 설계 패턴', 16, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (1, 3, 'Spring Data JPA와 QueryDSL', 'ORM 설계, N+1 문제 해결, 복잡한 쿼리 최적화', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (1, 4, '마이크로서비스 아키텍처', 'Spring Cloud, 서비스 분리, API Gateway, Circuit Breaker', 18, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (1, 5, '배포와 운영', 'Docker, Kubernetes 기초, CI/CD 파이프라인 구축', 12, NOW(), NOW(), false, NULL);
+
+-- Course 2: 프론트엔드 아키텍처와 실전
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (2, 1, 'Modern JavaScript 심화', 'ES6+ 문법, 비동기 처리, 모듈 시스템', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (2, 2, 'React 핵심 원리', 'Virtual DOM, Hooks, Context API, 성능 최적화', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (2, 3, '상태 관리 전략', 'Redux Toolkit, Zustand, React Query 비교 및 적용', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (2, 4, '테스팅과 품질 관리', 'Jest, React Testing Library, Storybook 활용', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (2, 5, '빌드와 배포 최적화', 'Vite, 번들 최적화, Vercel/Netlify 배포', 8, NOW(), NOW(), false, NULL);
+
+-- Course 3: AI 데이터 분석 실무
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (3, 1, 'Python 데이터 분석 기초', 'Pandas, NumPy 심화, 데이터 전처리 기법', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (3, 2, '통계 분석과 시각화', '기술통계, 추론통계, Matplotlib, Seaborn 활용', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (3, 3, '머신러닝 기초', 'Scikit-learn, 회귀/분류 모델, 모델 평가', 16, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (3, 4, '딥러닝 입문', 'TensorFlow/Keras 기초, CNN, RNN 개념', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (3, 5, '실전 프로젝트', '실제 데이터셋 분석, 모델 배포, MLOps 기초', 16, NOW(), NOW(), false, NULL);
+
+-- Course 4: 클라우드 네이티브 인프라 설계
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (4, 1, '클라우드 컴퓨팅 기초', 'AWS/GCP/Azure 비교, 클라우드 서비스 모델', 8, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (4, 2, 'AWS 핵심 서비스', 'EC2, S3, RDS, VPC, IAM 설계 및 운영', 16, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (4, 3, '컨테이너와 오케스트레이션', 'Docker 심화, Kubernetes 아키텍처, EKS', 18, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (4, 4, 'IaC와 자동화', 'Terraform, CloudFormation, Ansible 활용', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (4, 5, '모니터링과 로깅', 'CloudWatch, Prometheus, Grafana, ELK Stack', 12, NOW(), NOW(), false, NULL);
+
+-- Course 5: 모바일 앱 기획부터 배포
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (5, 1, '모바일 앱 기획', 'UX/UI 설계, 와이어프레임, 프로토타이핑', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (5, 2, 'React Native 기초', '컴포넌트, 네비게이션, 스타일링', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (5, 3, '상태 관리와 API 연동', 'Redux, REST API, 인증 처리', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (5, 4, '네이티브 기능 활용', '카메라, 위치, 푸시 알림, 로컬 저장소', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (5, 5, '앱 배포', 'App Store, Play Store 배포, CodePush', 8, NOW(), NOW(), false, NULL);
+
+-- Course 6: AI 엔지니어링 연구 전환 트랙
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (6, 1, '수학적 기초', '선형대수, 확률통계, 최적화 이론', 16, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (6, 2, '딥러닝 심화', 'PyTorch, 모델 구조 설계, 학습 최적화', 18, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (6, 3, 'NLP와 LLM', 'Transformer, BERT, GPT, 파인튜닝 기법', 16, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (6, 4, '컴퓨터 비전', 'CNN 아키텍처, Object Detection, Segmentation', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (6, 5, '논문 리뷰와 연구', '최신 논문 분석, 연구 방법론, 실험 설계', 12, NOW(), NOW(), false, NULL);
+
+-- Course 7: 보안 위협 대응 트레이닝
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (7, 1, '보안 기초와 위협 분석', '보안 개념, 위협 모델링, OWASP Top 10', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (7, 2, '네트워크 보안', '방화벽, IDS/IPS, VPN, 네트워크 모니터링', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (7, 3, '웹 애플리케이션 보안', 'XSS, SQL Injection, CSRF 방어, 시큐어 코딩', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (7, 4, '침투 테스트', 'Kali Linux, Metasploit, 취약점 스캐닝', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (7, 5, '사고 대응', '포렌식 기초, 로그 분석, 인시던트 대응 절차', 10, NOW(), NOW(), false, NULL);
+
+-- Course 8: 풀스택 JavaScript 부트캠프
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (8, 1, 'HTML/CSS/JavaScript 기초', '웹 표준, 반응형 디자인, DOM 조작', 20, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (8, 2, 'React 프론트엔드', '컴포넌트 설계, 상태 관리, 라우팅', 24, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (8, 3, 'Node.js 백엔드', 'Express, REST API, 인증/인가', 24, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (8, 4, '데이터베이스', 'MongoDB, PostgreSQL, ORM 활용', 16, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (8, 5, '팀 프로젝트', '협업 도구, Git Flow, 코드 리뷰, 배포', 40, NOW(), NOW(), false, NULL);
+
+-- Course 9: React + Next.js 현업 프로젝트
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (9, 1, 'Next.js 기초', 'Pages Router, App Router, 파일 기반 라우팅', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (9, 2, 'SSR과 SSG', '서버 사이드 렌더링, 정적 생성, ISR', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (9, 3, 'API Routes와 서버 컴포넌트', 'API 엔드포인트, Server Actions, 캐싱', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (9, 4, '인증과 미들웨어', 'NextAuth.js, 세션 관리, 권한 제어', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (9, 5, '배포와 최적화', 'Vercel 배포, 이미지 최적화, 성능 측정', 8, NOW(), NOW(), false, NULL);
+
+-- Course 10: Spring + Kotlin 마이크로서비스
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (10, 1, 'Kotlin 기초', '문법, 널 안전성, 확장 함수, 코루틴 기초', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (10, 2, 'Spring Boot with Kotlin', 'Spring 설정, Data Class, Repository 패턴', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (10, 3, '코루틴과 비동기 처리', 'suspend 함수, Flow, WebFlux 연동', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (10, 4, '마이크로서비스 구축', 'Spring Cloud, 서비스 디스커버리, Config Server', 16, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (10, 5, '테스트와 모니터링', 'Kotest, MockK, Micrometer, Actuator', 12, NOW(), NOW(), false, NULL);
+
+-- Course 11: 클라우드 보안 운영 마스터
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (11, 1, '클라우드 보안 개요', '공동 책임 모델, 컴플라이언스, 보안 프레임워크', 8, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (11, 2, 'IAM과 접근 제어', '역할 기반 접근, 정책 설계, MFA, SSO', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (11, 3, '네트워크 보안', 'VPC 설계, Security Group, WAF, Shield', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (11, 4, '데이터 보안', '암호화, KMS, Secrets Manager, 백업 전략', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (11, 5, '보안 모니터링', 'CloudTrail, GuardDuty, Security Hub, 대응 자동화', 10, NOW(), NOW(), false, NULL);
+
+-- Course 12: 데이터 엔지니어링 자동화
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (12, 1, '데이터 파이프라인 기초', 'ETL/ELT 개념, 배치/스트리밍 처리', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (12, 2, 'Apache Airflow', 'DAG 설계, 오퍼레이터, 스케줄링, 모니터링', 16, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (12, 3, 'Apache Spark', 'RDD, DataFrame, SQL, 분산 처리 최적화', 18, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (12, 4, '데이터 웨어하우스', 'Snowflake, BigQuery, 모델링 기법', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (12, 5, 'DataOps', 'dbt, 데이터 품질 관리, 문서화, CI/CD', 12, NOW(), NOW(), false, NULL);
+
+-- Course 13: AI 챗봇 실무 구축 트랙
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (13, 1, '챗봇 기초', '대화 시스템 개요, 의도 분류, 엔티티 추출', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (13, 2, 'LLM 활용', 'OpenAI API, 프롬프트 엔지니어링, RAG', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (13, 3, '대화 흐름 설계', 'Dialogflow, 시나리오 설계, 컨텍스트 관리', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (13, 4, '백엔드 연동', 'FastAPI, 웹훅, 외부 API 통합', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (13, 5, '배포와 운영', '메신저 플랫폼 연동, 모니터링, 개선 사이클', 10, NOW(), NOW(), false, NULL);
+
+-- Course 14: DevOps와 GitOps 실무
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (14, 1, 'DevOps 문화와 실천', 'CI/CD 개념, 자동화 전략, 협업 문화', 8, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (14, 2, 'CI/CD 파이프라인', 'GitHub Actions, Jenkins, ArgoCD', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (14, 3, 'GitOps', 'FluxCD, 선언적 인프라, Git 기반 배포', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (14, 4, 'Terraform', '모듈 설계, 상태 관리, 워크스페이스', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (14, 5, '모니터링과 알림', 'Prometheus, Grafana, PagerDuty, SLO/SLI', 10, NOW(), NOW(), false, NULL);
+
+-- Course 15: 웹개발 취업 집중 트랙
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (15, 1, '웹 기초 완성', 'HTML5, CSS3, JavaScript ES6+, 반응형 웹', 24, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (15, 2, '프론트엔드 프레임워크', 'React, Vue 중 택 1, 컴포넌트 설계', 28, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (15, 3, '백엔드 기초', 'Node.js or Spring Boot, REST API 설계', 28, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (15, 4, '팀 프로젝트', '기획부터 배포까지, 애자일 방법론 적용', 40, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (15, 5, '취업 준비', '이력서, 포트폴리오, 기술 면접, 코딩 테스트', 20, NOW(), NOW(), false, NULL);
+
+-- Course 16: 데이터 시각화 & BI 전문가 과정
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (16, 1, 'SQL과 데이터 추출', 'SQL 심화, 윈도우 함수, 성능 최적화', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (16, 2, 'Tableau 기초', '차트 종류, 대시보드 설계, 인터랙션', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (16, 3, 'Power BI', '데이터 모델링, DAX, 보고서 배포', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (16, 4, '스토리텔링', '데이터 기반 인사이트 도출, 시각화 원칙', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (16, 5, '실전 프로젝트', '비즈니스 케이스 분석, 대시보드 구축', 12, NOW(), NOW(), false, NULL);
+
+-- Course 17: 사이버보안 취약점 실습 트랙
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (17, 1, '취약점 분석 기초', 'CVE, CVSS, 취약점 데이터베이스 활용', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (17, 2, '웹 취약점 실습', 'OWASP Juice Shop, SQL Injection, XSS', 16, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (17, 3, '네트워크 취약점', 'Nmap, Wireshark, 네트워크 스캐닝', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (17, 4, '시스템 취약점', 'Linux/Windows 권한 상승, 버퍼 오버플로우', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (17, 5, '레드팀 vs 블루팀', 'CTF 실습, 공격/방어 시나리오, 보고서 작성', 12, NOW(), NOW(), false, NULL);
+
+-- Course 18: 클라우드 마이그레이션 실무
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (18, 1, '마이그레이션 전략', '6R 전략, 평가 방법론, 로드맵 수립', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (18, 2, '애플리케이션 마이그레이션', 'Lift & Shift, 리팩토링, 컨테이너화', 16, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (18, 3, '데이터베이스 마이그레이션', 'DMS, 스키마 변환, 다운타임 최소화', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (18, 4, '네트워크 설계', '하이브리드 연결, Direct Connect, VPN', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (18, 5, '검증과 최적화', '성능 테스트, 비용 최적화, Well-Architected', 12, NOW(), NOW(), false, NULL);
+
+-- 9. Board (커뮤니티 게시글 30개)
 INSERT INTO board (id, category, title, text, hits, is_secret, account_id, created_at, updated_at, is_deleted, deleted_at)
 VALUES (1, 'NOTICE', '2026년 1월 강의 일정 안내', '2026년 1월 재직자 및 취업예정자 과정 일정이 확정되었습니다. 과정 페이지에서 상세 스케줄을 확인하세요.', 340, false, 2, NOW(), NOW(), false, NULL);
 INSERT INTO board (id, category, title, text, hits, is_secret, account_id, created_at, updated_at, is_deleted, deleted_at)
