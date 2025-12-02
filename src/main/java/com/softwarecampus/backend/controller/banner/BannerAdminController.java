@@ -77,6 +77,18 @@ public class BannerAdminController {
     }
 
     /**
+     * 두 배너의 순서를 원자적으로 교환
+     * 단일 트랜잭션에서 두 배너의 순서를 교환하여 데이터 일관성 보장
+     */
+    @PostMapping("/swap-order")
+    public ResponseEntity<Void> swapBannerOrder(
+            @RequestParam Long bannerId1,
+            @RequestParam Long bannerId2) {
+        bannerService.swapBannerOrder(bannerId1, bannerId2);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * 배너 활성화/비활성화 토글
      */
     @PatchMapping("/{bannerId}/toggle")

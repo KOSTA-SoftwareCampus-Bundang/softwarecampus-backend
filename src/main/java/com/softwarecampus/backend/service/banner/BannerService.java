@@ -19,5 +19,10 @@ public interface BannerService {
 
     void updateBannerOrder(Long bannerId, int newOrder);
 
+    /**
+     * 두 배너의 순서를 원자적으로 교환
+     */
+    void swapBannerOrder(Long bannerId1, Long bannerId2);
+
     void toggleBannerActivation(Long bannerId);
 }
