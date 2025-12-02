@@ -27,21 +27,31 @@ public class AttachmentServiceImpl implements AttachmentService {
 
     private static final AttachmentCategoryType QNA_TYPE = AttachmentCategoryType.QNA;
     private static final FileType.FileTypeEnum QNA_FILE_TYPE = FileType.FileTypeEnum.BOARD_ATTACH;
-    private static final S3Folder QNA_S3_FOLDER = S3Folder.ACADEMY;
+    private static final S3Folder DEFAULT_S3_FOLDER = S3Folder.ACADEMY;
 
     /**
-     *  파일 업로드 및 임시 저장
+     *  파일 업로드 및 임시 저장 (기본 폴더: ACADEMY)
      */
     @Override
     @Transactional
     public List<QAFileDetail> uploadFiles(List<MultipartFile> files) {
+        return uploadFiles(files, DEFAULT_S3_FOLDER);
+    }
+
+    /**
+     *  파일 업로드 및 임시 저장 (폴더 지정 가능)
+     */
+    @Override
+    @Transactional
+    public List<QAFileDetail> uploadFiles(List<MultipartFile> files, S3Folder folder) {
         if (files == null || files.isEmpty()) return List.of();
 
         List<QAFileDetail> fileDetails = new ArrayList<>();
         for (MultipartFile file : files) {
 
             // 🟢 1. S3Service를 사용하여 파일 업로드.
-            String s3FileUrl = s3Service.uploadFile(file, String.valueOf(QNA_S3_FOLDER), QNA_FILE_TYPE);
+            // S3Folder enum의 getPath()를 사용하여 소문자 폴더명 전달
+            String s3FileUrl = s3Service.uploadFile(file, folder.getPath(), QNA_FILE_TYPE);
 
             // 🟢 2. DB에 임시 Attachment 레코드 저장
             Attachment attachment = Attachment.builder()
