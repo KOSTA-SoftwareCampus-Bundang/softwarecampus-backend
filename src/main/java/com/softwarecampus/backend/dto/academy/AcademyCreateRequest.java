@@ -2,7 +2,6 @@ package com.softwarecampus.backend.dto.academy;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,6 +14,7 @@ import java.util.List;
 /**
  * 기관 등록 요청 DTO
  * Multipart/form-data 요청을 받기 위해 @ModelAttribute와 함께 사용
+ * 수정일: 2025-12-03 - 파일 첨부를 선택적으로 변경 (개발 환경 호환)
  */
 @Getter
 @Setter
@@ -38,8 +38,7 @@ public class AcademyCreateRequest {
     
     /**
      * 첨부파일 목록 (사업자등록증, 교육기관 인증서 등)
-     * 최소 1개 이상의 파일이 필요합니다.
+     * 선택 사항 - 파일이 없어도 기관 등록 가능
      */
-    @NotEmpty(message = "첨부파일은 최소 1개 이상 필요합니다")
     private List<MultipartFile> files;
 }

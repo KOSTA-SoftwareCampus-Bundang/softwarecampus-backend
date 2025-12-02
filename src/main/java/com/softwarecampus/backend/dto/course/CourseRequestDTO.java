@@ -6,14 +6,18 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
 import com.softwarecampus.backend.domain.course.CourseCategory;
+import com.softwarecampus.backend.domain.course.CourseCurriculum;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 과정 등록/수정 요청 DTO
+ * 수정일: 2025-12-03 - 커리큘럼 필드 추가
  */
 @Getter
 @Setter
@@ -59,6 +63,38 @@ public class CourseRequestDTO {
     private boolean isOffline = true; // 기본값: 오프라인
 
     private String requirement;
+
+    /** 커리큘럼 목록 (2025-12-03 추가) */
+    @Builder.Default
+    private List<CurriculumRequestDTO> curriculums = new ArrayList<>();
+
+    /**
+     * 커리큘럼 요청 DTO (내부 클래스)
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CurriculumRequestDTO {
+        private Long id;              // 기존 커리큘럼 ID (수정 시 사용, 신규 생성 시 null)
+        private int chapterNumber;    // 챕터 번호
+        private String chapterName;   // 챕터 이름
+        private String chapterDetail; // 챕터 상세 설명
+        private int chapterTime;      // 챕터 시간 (시간 단위)
+
+        /**
+         * DTO → Entity 변환
+         */
+        public CourseCurriculum toEntity() {
+            return CourseCurriculum.builder()
+                    .chapterNumber(chapterNumber)
+                    .chapterName(chapterName)
+                    .chapterDetail(chapterDetail)
+                    .chapterTime(chapterTime)
+                    .build();
+        }
+    }
 
     /**
      * DTO → Entity 변환 (테스트 전용 - 실제 저장 불가)

@@ -228,15 +228,24 @@ public class S3Service {
     /**
      * 폴더 경로의 보안 검증
      * S3Folder enum 기반 화이트리스트 검증으로 경로 순회 공격 원천 차단
+     * 서브폴더도 허용 (예: academy/100, course/images/123)
      * 
      * @param folder S3 내 폴더 경로
      * @throws IllegalArgumentException 허용되지 않은 폴더인 경우
      */
     private void validateFolderSecurity(String folder) {
+        // 경로 순회 공격 패턴 사전 차단
+        if (folder.contains("..") || folder.contains("//") || folder.contains("\\")) {
+            log.warn("Path traversal attempt detected in folder: {}", folder);
+            throw new IllegalArgumentException("허용되지 않은 폴더입니다: " + folder);
+        }
+        
         // S3Folder enum 기반 화이트리스트 검증
-        // enum에 정의된 값("board", "academy", "course", "profile", "temp", "")만 허용
-        // 긍정 리스트(positive list) 방식으로 경로 순회 공격 원천 차단
-        if (!ALLOWED_FOLDERS.contains(folder)) {
+        // 1) 정확히 일치하거나
+        // 2) 허용된 폴더로 시작하는 서브폴더 경로 허용 (예: "academy/100")
+        String rootFolder = folder.contains("/") ? folder.split("/")[0] : folder;
+        
+        if (!ALLOWED_FOLDERS.contains(folder) && !ALLOWED_FOLDERS.contains(rootFolder)) {
             log.warn("Invalid folder name attempted: {}", folder);
             throw new IllegalArgumentException("허용되지 않은 폴더입니다: " + folder);
         }
