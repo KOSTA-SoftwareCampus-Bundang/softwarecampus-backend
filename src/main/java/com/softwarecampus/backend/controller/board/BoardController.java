@@ -8,11 +8,12 @@ import com.softwarecampus.backend.service.board.BoardService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +28,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 @RequestMapping("/api/boards")
 public class BoardController {
+
+    private static final Logger logger = LoggerFactory.getLogger(BoardController.class);
 
     private final BoardService boardService;
 
@@ -51,22 +54,15 @@ public class BoardController {
 
     // 게시글 생성 with 첨부파일
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<?> createBoard(@Valid BoardCreateRequestDTO boardCreateRequestDTO,
             @RequestParam(required = false) MultipartFile[] files,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // [DEBUG] 사용자 정보 로깅
-        System.out.println("========== [DEBUG] createBoard ==========");
-        System.out.println("[DEBUG] userDetails: " + userDetails);
-        System.out.println("[DEBUG] userDetails.getId(): " + userDetails.getId());
-        System.out.println("[DEBUG] userDetails.getUsername(): " + userDetails.getUsername());
-        System.out.println("==========================================");
-
         // 게시글 생성 service 메서드 호출
         Long boardId = boardService.createBoard(boardCreateRequestDTO, files, userDetails.getId());
         return ResponseEntity.created(URI.create("/api/boards/" + boardId)).build();
-
     }
 
     // 게시글 수정 with 첨부파일
@@ -74,6 +70,8 @@ public class BoardController {
     @PatchMapping("/{boardId:\\d+}")
     public ResponseEntity<?> updateBoard(@PathVariable Long boardId, @Valid BoardUpdateRequestDTO boardUpdateRequestDTO,
             @RequestParam(required = false) MultipartFile[] files) {
+        // 경로 변수 boardId를 DTO에 명시적으로 설정하여 권한 검증 우회 방지
+        boardUpdateRequestDTO.setId(boardId);
         // 게시글 수정 service 메서드 호출
         boardService.updateBoard(boardUpdateRequestDTO, files);
         return ResponseEntity.noContent().build();
@@ -111,6 +109,7 @@ public class BoardController {
     }
 
     // 댓글 하나 생성
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{boardId:\\d+}/comments")
     public ResponseEntity<?> createComment(@PathVariable Long boardId,
             @Valid @RequestBody CommentCreateRequestDTO commentCreateRequestDTO,
@@ -145,6 +144,7 @@ public class BoardController {
 
     // 게시글 추천
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{boardId:\\d+}/recommends")
     public ResponseEntity<?> recommendBoard(@PathVariable Long boardId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -155,6 +155,7 @@ public class BoardController {
 
     // 게시글 추천취소
 
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{boardId:\\d+}/recommends")
     public ResponseEntity<?> recommendBoardCancel(@PathVariable Long boardId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -165,6 +166,7 @@ public class BoardController {
 
     // 댓글 추천
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{boardId:\\d+}/comments/{commentId:\\d+}/recommends")
     public ResponseEntity<?> recommendComment(@PathVariable Long boardId, @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -176,6 +178,7 @@ public class BoardController {
 
     // 댓글 추천취소
 
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{boardId:\\d+}/comments/{commentId:\\d+}/recommends")
     public ResponseEntity<?> recommendCommentCancel(@PathVariable Long boardId, @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
