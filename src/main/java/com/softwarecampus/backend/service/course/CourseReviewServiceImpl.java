@@ -14,11 +14,13 @@ import com.softwarecampus.backend.repository.user.AccountRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -80,11 +82,20 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 Account writer = accountRepository.findById(accountId)
                                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
+                // Course의 카테고리 타입을 리뷰에 설정 (필수 필드)
+                CategoryType categoryType = course.getCategoryType();
+                if (categoryType == null) {
+                        // 카테고리 타입이 없는 경우 기본값 설정
+                        log.warn("Course(id={})에 카테고리 타입이 설정되어 있지 않아 기본값(JOB_SEEKER)을 사용합니다.", courseId);
+                        categoryType = CategoryType.JOB_SEEKER;
+                }
+
                 CourseReview review = CourseReview.builder()
                                 .course(course)
                                 .writer(writer)
                                 .comment(request.getComment())
                                 .approvalStatus(ApprovalStatus.PENDING)
+                                .type(categoryType)
                                 .build();
 
                 // 섹션 추가
