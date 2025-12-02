@@ -16,6 +16,7 @@ public class CourseReviewResponse {
     private Long writerId;
     private String writerName; // 추가: 작성자 이름
     private Long courseId;
+    private String courseName; // 추가: 과정 이름
 
     private String comment;
     private String approvalStatus; // APPROVED / PENDING / REJECTED

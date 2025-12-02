@@ -127,7 +127,7 @@ class CourseControllerTest {
 
         @Test
         @DisplayName("과정 등록 요청 - 성공")
-        @WithMockUser(roles = "ACADEMY")
+        @WithMockUser(username = "1", roles = "ACADEMY")  // username을 ID로 사용
         void requestCourse_success() throws Exception {
                 CourseRequestDTO requestDTO = CourseRequestDTO.builder()
                                 .academyId(1L)
@@ -137,7 +137,7 @@ class CourseControllerTest {
                                 .build();
                 CourseResponseDTO responseDTO = new CourseResponseDTO();
 
-                given(courseService.requestCourseRegistration(any(CourseRequestDTO.class))).willReturn(responseDTO);
+                given(courseService.requestCourseRegistration(any(CourseRequestDTO.class), eq(1L))).willReturn(responseDTO);
 
                 mockMvc.perform(post("/api/courses/request")
                                 .with(csrf())
@@ -145,7 +145,7 @@ class CourseControllerTest {
                                 .content(objectMapper.writeValueAsString(requestDTO)))
                                 .andExpect(status().isOk());
 
-                verify(courseService).requestCourseRegistration(any(CourseRequestDTO.class));
+                verify(courseService).requestCourseRegistration(any(CourseRequestDTO.class), eq(1L));
         }
 
         @Test

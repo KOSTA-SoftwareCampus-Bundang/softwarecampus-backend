@@ -190,4 +190,6 @@ public class CourseReviewController {
                 reviewFileService.hardDeleteReviewFile(courseId, reviewId, fileId, account.getId());
                 return ResponseEntity.noContent().build();
         }
+
+        // 참고: 리뷰 승인/거부 관리자 API는 CourseReviewAdminController (/admin/reviews)로 일원화됨
 }

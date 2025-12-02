@@ -3,6 +3,7 @@ package com.softwarecampus.backend.domain.course;
 import com.softwarecampus.backend.domain.academy.Academy;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.common.BaseSoftDeleteSupportEntity;
+import com.softwarecampus.backend.domain.user.Account;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -26,6 +27,11 @@ public class Course extends BaseSoftDeleteSupportEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "academy_id", nullable = false)
     private Academy academy;
+
+    /** 과정 등록자 (기관 담당자) */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requester_id")
+    private Account requester;
 
     /** 과정 카테고리 */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -52,12 +58,31 @@ public class Course extends BaseSoftDeleteSupportEntity {
     @Column(columnDefinition = "TEXT")
     private String requirement;
 
+    /**
+     * 조회수 - 필드 레벨 초기화로 JPA no-args 생성자에서도 null 방지
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private long viewCount = 0L;
+
+    /**
+     * 조회수 증가
+     * primitive long 타입 사용으로 null 검사 불필요
+     */
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
     /** 승인 관련 */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ApprovalStatus isApproved = ApprovalStatus.PENDING;
 
     private LocalDateTime approvedAt;
+
+    /** 거부 사유 (REJECTED 상태일 때 저장) */
+    @Column(length = 500)
+    private String rejectionReason;
 
     /** 커리큘럼 */
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -149,9 +174,14 @@ public class Course extends BaseSoftDeleteSupportEntity {
         this.approvedAt = LocalDateTime.now();
     }
 
-    public void reject() {
+    /**
+     * 과정 거절 처리
+     * @param reason 거절 사유 (필수)
+     */
+    public void reject(String reason) {
         this.isApproved = ApprovalStatus.REJECTED;
         this.approvedAt = null;
+        this.rejectionReason = reason;
     }
 
     public CategoryType getCategoryType() {

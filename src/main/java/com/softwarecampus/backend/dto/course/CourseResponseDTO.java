@@ -47,6 +47,10 @@ public class CourseResponseDTO {
     private Double rating;
     private Integer reviewCount;
 
+    // 과정 등록자 정보
+    private Long requesterId;
+    private String requesterName;
+
     /**
      * Entity → DTO 변환
      */
@@ -95,6 +99,8 @@ public class CourseResponseDTO {
                 .approvedAt(course.getApprovedAt())
                 .rating(rating)
                 .reviewCount(reviewCount)
+                .requesterId(course.getRequester() != null ? course.getRequester().getId() : null)
+                .requesterName(course.getRequester() != null ? course.getRequester().getUserName() : null)
                 .build();
     }
 }

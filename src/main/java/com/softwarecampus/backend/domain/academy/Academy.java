@@ -23,6 +23,7 @@ public class Academy extends BaseSoftDeleteSupportEntity {
     private String address;
     private String businessNumber;
     private String email;
+    private String phoneNumber;
 
     // 승인 여부 (PENDING / APPROVED / REJECTED)
     @Enumerated(EnumType.STRING)

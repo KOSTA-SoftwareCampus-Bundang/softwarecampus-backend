@@ -50,6 +50,18 @@ public class AccountAdminServiceImpl implements AccountAdminService {
     }
 
     /**
+     * 회원 목록 조회 (검색 키워드가 있으면 검색, 없으면 전체 조회)
+     * 작성일: 2025-12-02 - 컨트롤러 분기 로직 서비스 계층으로 이동
+     */
+    @Override
+    public Page<AccountResponse> getAccounts(String keyword, Pageable pageable) {
+        if (keyword != null && !keyword.isEmpty()) {
+            return searchAccounts(keyword, pageable);
+        }
+        return getAllActiveAccounts(pageable);
+    }
+
+    /**
      * 전체 활성 회원 목록 조회
      */
     @Override

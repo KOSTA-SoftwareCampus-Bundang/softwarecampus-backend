@@ -19,7 +19,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -218,4 +217,16 @@ public class AcademyServiceImpl implements AcademyService {
         return response;
     }
 
+    /**
+     * 관리자용 기관 목록 조회 (검색, 필터링, 페이징)
+     */
+    @Override
+    public org.springframework.data.domain.Page<AcademyResponse> getAdminAcademies(
+            com.softwarecampus.backend.domain.common.ApprovalStatus status,
+            String keyword,
+            org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<Academy> academyPage = academyRepository.searchAcademies(status, keyword,
+                pageable);
+        return academyPage.map(AcademyResponse::from);
+    }
 }

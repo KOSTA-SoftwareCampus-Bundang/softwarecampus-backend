@@ -40,6 +40,10 @@ public class CourseReview extends BaseSoftDeleteSupportEntity {
     @Column(nullable = false)
     private ApprovalStatus approvalStatus;
 
+    /** 거부 사유 (REJECTED 상태일 때 저장) */
+    @Column(length = 500)
+    private String rejectionReason;
+
     // child 관계
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
