@@ -79,15 +79,12 @@ public class CourseResponseDTO {
             }
         }
 
-        // 썸네일 이미지 추출
-        String imageUrl = null;
-        if (course.getImages() != null) {
-            imageUrl = course.getImages().stream()
-                    .filter(img -> img.isActive() && img.isThumbnail())
-                    .findFirst()
-                    .map(img -> img.getImageUrl())
-                    .orElse(null);
-        }
+        // 썸네일 이미지 추출 (@Builder.Default로 초기화되어 null이 아님)
+        String imageUrl = course.getImages().stream()
+                .filter(img -> img.isActive() && img.isThumbnail())
+                .findFirst()
+                .map(com.softwarecampus.backend.domain.course.CourseImage::getImageUrl)
+                .orElse(null);
 
         return CourseResponseDTO.builder()
                 .id(course.getId())
