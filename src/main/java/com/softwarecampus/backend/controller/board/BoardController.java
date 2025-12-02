@@ -5,6 +5,7 @@ import com.softwarecampus.backend.dto.board.*;
 import com.softwarecampus.backend.exception.board.BoardException;
 import com.softwarecampus.backend.security.CustomUserDetails;
 import com.softwarecampus.backend.service.board.BoardService;
+import com.softwarecampus.backend.util.ClientIpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class BoardController {
     private static final Logger logger = LoggerFactory.getLogger(BoardController.class);
 
     private final BoardService boardService;
+    private final ClientIpUtils clientIpUtils;
 
     // 게시글 목록 조회, 목록 검색기능
     @GetMapping
@@ -50,30 +52,11 @@ public class BoardController {
             HttpServletRequest request) {
 
         Long userId = userDetails != null ? userDetails.getId() : null;
-        String clientIp = getClientIp(request);
+        String clientIp = clientIpUtils.getClientIp(request);
 
         // 게시글 하나 조회 service 메서드 호출
         BoardResponseDTO board = boardService.getBoardById(boardId, userId, clientIp);
         return ResponseEntity.ok(board);
-    }
-
-    /**
-     * 클라이언트 IP 추출 (프록시 환경 대응)
-     */
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
-            // X-Forwarded-For에 여러 IP가 있을 경우 첫 번째가 클라이언트 IP
-            if (ip.contains(",")) {
-                return ip.split(",")[0].trim();
-            }
-            return ip;
-        }
-        ip = request.getHeader("X-Real-IP");
-        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
-            return ip;
-        }
-        return request.getRemoteAddr();
     }
 
     // 게시글 생성 with 첨부파일
