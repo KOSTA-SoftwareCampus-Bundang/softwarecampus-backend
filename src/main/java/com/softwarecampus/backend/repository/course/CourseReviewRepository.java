@@ -44,7 +44,8 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
 
         Optional<CourseReview> findByIdAndCourseIdAndIsDeletedFalse(Long reviewId, Long courseId);
 
-        // ID로 삭제되지 않은 리뷰 조회 (관리자용)
+        // ID로 삭제되지 않은 리뷰 조회 (관리자용) - N+1 문제 방지를 위해 연관 엔티티 함께 조회
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "writer", "course" })
         Optional<CourseReview> findByIdAndIsDeletedFalse(Long id);
 
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "writer", "sections", "attachments",
