@@ -1,11 +1,10 @@
 package com.softwarecampus.backend.dto.board;
 
 import com.softwarecampus.backend.domain.board.Board;
-import com.softwarecampus.backend.domain.board.BoardAttach;
+import com.softwarecampus.backend.domain.board.BoardCategory;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -24,15 +23,22 @@ public class BoardUpdateRequestDTO {
 
     private boolean secret;
 
-    public void updateEntity(Board board){
-        if(this.title != null){
+    private BoardCategory category;
+
+    // 삭제할 첨부파일 ID 목록
+    private List<Long> deleteAttachIds;
+
+    public void updateEntity(Board board) {
+        if (this.title != null) {
             board.setTitle(this.getTitle());
         }
-        if(this.text != null){
+        if (this.text != null) {
             board.setText(this.getText());
         }
+        if (this.category != null) {
+            board.setCategory(this.getCategory());
+        }
         board.setSecret(this.isSecret());
-
     }
 
 }

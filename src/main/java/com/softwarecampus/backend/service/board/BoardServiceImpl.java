@@ -5,6 +5,7 @@ import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.board.*;
 import com.softwarecampus.backend.exception.board.BoardErrorCode;
 import com.softwarecampus.backend.exception.board.BoardException;
+import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.repository.board.*;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import com.softwarecampus.backend.service.common.FileType;
@@ -17,14 +18,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class BoardServiceImpl implements BoardService {
 
     private final S3Service s3Service;
+    private final FileType fileType;
     private final BoardRepository boardRepository;
     private final BoardAttachRepository boardAttachRepository;
     private final AccountRepository accountRepository;
@@ -34,7 +38,8 @@ public class BoardServiceImpl implements BoardService {
 
     @Transactional(readOnly = true)
     @Override
-    public Page<BoardListResponseDTO> getBoards(int pageNo, BoardCategory category, String searchType, String searchText) {
+    public Page<BoardListResponseDTO> getBoards(int pageNo, BoardCategory category, String searchType,
+            String searchText) {
         int pageIndex = Math.max(pageNo - 1, 0);
         PageRequest pageRequest = PageRequest.of(pageIndex, 10, Sort.by("id").descending());
 
@@ -57,8 +62,9 @@ public class BoardServiceImpl implements BoardService {
     @Transactional
     @Override
     public BoardResponseDTO getBoardById(Long id, Long userId) {
-        Board board = boardRepository.findById(id).orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
-        //삭제된 글 조회 불가 처리
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
+        // 삭제된 글 조회 불가 처리
         if (!board.isActive()) {
             throw new BoardException(BoardErrorCode.BOARD_NOT_FOUND);
         }
@@ -66,22 +72,31 @@ public class BoardServiceImpl implements BoardService {
             throw new BoardException(BoardErrorCode.CANNOT_READ_BOARD);
         }
         board.setHits(board.getHits() + 1);
-        BoardResponseDTO boardResponseDTO = BoardResponseDTO.from(board,userId);
+        BoardResponseDTO boardResponseDTO = BoardResponseDTO.from(board, userId);
         if (userId != null) {
-            boardResponseDTO.setLike(board.getBoardRecommends().stream().anyMatch(br -> br.getAccount().getId().equals(userId)));
+            boardResponseDTO.setLike(
+                    board.getBoardRecommends().stream().anyMatch(br -> br.getAccount().getId().equals(userId)));
             boardResponseDTO.setOwner(userId.equals(board.getAccount().getId()));
         }
         return boardResponseDTO;
     }
 
-    //게시글 생성
+    // 게시글 생성
     @Transactional
     @Override
     public Long createBoard(BoardCreateRequestDTO boardCreateRequestDTO, MultipartFile[] files, Long userId) {
 
         Board board = boardCreateRequestDTO.toEntity();
 
-        //파일업로드 코드 작성
+        // 파일 개수 검증
+        FileType.FileTypeConfig config = fileType.getConfig(FileType.FileTypeEnum.BOARD_ATTACH);
+        if (files != null && files.length > 0) {
+            if (!config.isFileCountValid(files.length)) {
+                throw new BoardException(BoardErrorCode.FILE_COUNT_EXCEEDED);
+            }
+        }
+
+        // 파일업로드 코드 작성
         List<BoardAttach> boardAttachList = board.getBoardAttaches();
         if (files != null && files.length > 0) {
             for (MultipartFile file : files) {
@@ -90,48 +105,73 @@ public class BoardServiceImpl implements BoardService {
                 boardAttach.setBoard(board);
             }
         }
-        //사용자 조회하는 코드 작성(실제론 1l 대신 로그인한 사용자의 id값 인자로 전달)
-        Account account = accountRepository.findById(1L).get();
-        //조회된 사용자 boardEntity에 세팅 후 save로 저장
+        // 로그인한 사용자 조회
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다. ID: " + userId));
+        // 조회된 사용자 boardEntity에 세팅 후 save로 저장
         board.setAccount(account);
         boardRepository.save(board);
 
         return board.getId();
     }
 
-    //게시글 수정
+    // 게시글 수정
     @Transactional
     @Override
     public void updateBoard(BoardUpdateRequestDTO boardUpdateRequestDTO, MultipartFile[] files) {
-        Board board = boardRepository.findById(boardUpdateRequestDTO.getId()).orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
-        //삭제된 글 수정 불가 처리
+        Board board = boardRepository.findById(boardUpdateRequestDTO.getId())
+                .orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
+        // 삭제된 글 수정 불가 처리
         if (!board.isActive()) {
             throw new BoardException(BoardErrorCode.BOARD_NOT_FOUND);
         }
+
         List<BoardAttach> boardAttachList = board.getBoardAttaches();
-        if (files != null && files.length > 0) {
-            if (boardAttachList.size() > 0) {
-                for (BoardAttach boardAttach : board.getBoardAttaches()) {
+        FileType.FileTypeConfig config = fileType.getConfig(FileType.FileTypeEnum.BOARD_ATTACH);
+
+        // 1. 선택적 파일 삭제 (deleteAttachIds에 있는 파일만 삭제)
+        List<Long> deleteAttachIds = boardUpdateRequestDTO.getDeleteAttachIds();
+        if (deleteAttachIds != null && !deleteAttachIds.isEmpty()) {
+            // Set으로 변환하여 조회 성능 O(1)으로 개선
+            Set<Long> deleteAttachIdSet = new HashSet<>(deleteAttachIds);
+            for (BoardAttach boardAttach : boardAttachList) {
+                if (boardAttach.isActive() && deleteAttachIdSet.contains(boardAttach.getId())) {
                     deleteFile(boardAttach);
                     boardAttach.markDeleted();
-                    boardAttachRepository.save(boardAttach);
+                    // @Transactional 내에서 managed 엔티티는 dirty checking으로 자동 반영되므로 save 호출 불필요
                 }
             }
+        }
+
+        // 2. 현재 활성 파일 개수 계산
+        long activeFileCount = boardAttachList.stream()
+                .filter(BoardAttach::isActive)
+                .count();
+
+        // 3. 새 파일 추가 (개수 검증 포함)
+        if (files != null && files.length > 0) {
+            // 총 파일 개수 검증
+            if (!config.isFileCountValid((int) (activeFileCount + files.length))) {
+                throw new BoardException(BoardErrorCode.FILE_COUNT_EXCEEDED);
+            }
+
             for (MultipartFile file : files) {
                 BoardAttach boardAttach = uploadFile(file);
                 boardAttach.setBoard(board);
                 boardAttachList.add(boardAttach);
             }
         }
+
         boardUpdateRequestDTO.updateEntity(board);
     }
 
-    //게시글 삭제
+    // 게시글 삭제
     @Transactional
     @Override
     public void deleteBoardById(Long id) {
-        Board board = boardRepository.findById(id).orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
-        //삭제된 글 다시삭제 불가 처리
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
+        // 삭제된 글 다시삭제 불가 처리
         if (!board.isActive()) {
             throw new BoardException(BoardErrorCode.BOARD_NOT_FOUND);
         }
@@ -141,11 +181,13 @@ public class BoardServiceImpl implements BoardService {
     @Transactional(readOnly = true)
     @Override
     public Map<String, byte[]> downloadBoardAttach(Long boardId, Long boardAttachId, Long userId) {
-        BoardAttach boardAttach = boardAttachRepository.findById(boardAttachId).orElseThrow(() -> new BoardException(BoardErrorCode.FILE_NOT_FOUND));
+        BoardAttach boardAttach = boardAttachRepository.findById(boardAttachId)
+                .orElseThrow(() -> new BoardException(BoardErrorCode.FILE_NOT_FOUND));
         if (!boardId.equals(boardAttach.getBoard().getId()) || !boardAttach.isActive()) {
             throw new BoardException(BoardErrorCode.FILE_NOT_FOUND);
         }
-        if (boardAttach.getBoard().isSecret() && (userId == null || !userId.equals(boardAttach.getBoard().getAccount().getId()))) {
+        if (boardAttach.getBoard().isSecret()
+                && (userId == null || !userId.equals(boardAttach.getBoard().getAccount().getId()))) {
             throw new BoardException(BoardErrorCode.FILE_ACCESS_FORBIDDEN);
         }
 
@@ -157,9 +199,11 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public void recommendBoard(Long boardId, Long userId) {
 
-        Account account = accountRepository.findById(userId).get();
-        Board board = boardRepository.findById(boardId).orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
-        //삭제된 글 조회 불가 처리
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다. ID: " + userId));
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
+        // 삭제된 글 조회 불가 처리
         if (!board.isActive()) {
             throw new BoardException(BoardErrorCode.BOARD_NOT_FOUND);
         }
@@ -187,27 +231,28 @@ public class BoardServiceImpl implements BoardService {
         boardRecommendRepository.delete(boardRecommend);
     }
 
-
     @Transactional
     @Override
     public Long createComment(CommentCreateRequestDTO commentCreateRequestDTO, Long userId) {
-        Board board = boardRepository.findById(commentCreateRequestDTO.getBoardId()).orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
-        //삭제된 글 조회 불가(댓글달기 불가)
+        Board board = boardRepository.findById(commentCreateRequestDTO.getBoardId())
+                .orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
+        // 삭제된 글 조회 불가(댓글달기 불가)
         if (!board.isActive()) {
             throw new BoardException(BoardErrorCode.BOARD_NOT_FOUND);
         }
-        //실제론 1L 대신 userId가 인자로 전달
-        Account account = accountRepository.findById(1L).get();
+        // 로그인한 사용자 조회
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다. ID: " + userId));
         Comment comment = commentCreateRequestDTO.toEntity(board, account);
 
         if (commentCreateRequestDTO.getTopCommentId() != null) {
-            Comment topComment = commentRepository.findById(commentCreateRequestDTO.getTopCommentId()).orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
+            Comment topComment = commentRepository.findById(commentCreateRequestDTO.getTopCommentId())
+                    .orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
             if (!topComment.isActive()) {
                 throw new BoardException(BoardErrorCode.COMMENT_NOT_FOUND);
             }
             comment.setTopComment(topComment);
         }
-
 
         commentRepository.save(comment);
 
@@ -217,8 +262,9 @@ public class BoardServiceImpl implements BoardService {
     @Transactional
     @Override
     public void updateComment(CommentUpdateRequestDTO commentUpdateRequestDTO) {
-        Comment comment = commentRepository.findById(commentUpdateRequestDTO.getId()).orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
-        //삭제된 댓글 수정 불가 처리
+        Comment comment = commentRepository.findById(commentUpdateRequestDTO.getId())
+                .orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
+        // 삭제된 댓글 수정 불가 처리
         if (!comment.isActive()) {
             throw new BoardException(BoardErrorCode.COMMENT_NOT_FOUND);
         }
@@ -228,8 +274,9 @@ public class BoardServiceImpl implements BoardService {
     @Transactional
     @Override
     public void deleteComment(Long id) {
-        Comment comment = commentRepository.findById(id).orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
-        //삭제된 댓글 재삭제 불가 처리
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
+        // 삭제된 댓글 재삭제 불가 처리
         if (!comment.isActive()) {
             throw new BoardException(BoardErrorCode.COMMENT_NOT_FOUND);
         }
@@ -239,9 +286,11 @@ public class BoardServiceImpl implements BoardService {
     @Transactional
     @Override
     public void recommendComment(Long commentId, Long userId) {
-        Account account = accountRepository.findById(userId).get();
-        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
-        //삭제된 댓글 추천 불가 처리
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다. ID: " + userId));
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
+        // 삭제된 댓글 추천 불가 처리
         if (!comment.isActive()) {
             throw new BoardException(BoardErrorCode.COMMENT_NOT_FOUND);
         }
@@ -266,13 +315,12 @@ public class BoardServiceImpl implements BoardService {
             throw new BoardException(BoardErrorCode.NOT_RECOMMEND_COMMENT);
         }
 
-
         commentRecommendRepository.delete(commentRecommend);
     }
 
     @Override
     public BoardAttach uploadFile(MultipartFile file) {
-        //s3 bucket upload code
+        // s3 bucket upload code
         String fileURL = s3Service.uploadFile(file, "board", FileType.FileTypeEnum.BOARD_ATTACH);
         return BoardAttach.builder().originalFilename(file.getOriginalFilename()).realFilename(fileURL).build();
     }

@@ -48,6 +48,8 @@ public class FileType {
     private String boardAttachContentTypesStr;
     @Value("${file.upload.board-attach.max-size}")
     private long boardAttachMaxSize;
+    @Value("${file.upload.board-attach.max-count}")
+    private int boardAttachMaxCount;
 
     // 과정 이미지 설정 (course_image 테이블)
     @Value("${file.upload.course-image.extensions}")
@@ -87,7 +89,8 @@ public class FileType {
         Set<String> boardExts = parseSet(boardAttachExtensionsStr);
         Set<String> boardTypes = parseSet(boardAttachContentTypesStr);
         validateFileTypeConfig("BOARD_ATTACH", boardExts, boardTypes, boardAttachMaxSize);
-        configs.put(FileTypeEnum.BOARD_ATTACH, new FileTypeConfig(boardExts, boardTypes, boardAttachMaxSize));
+        configs.put(FileTypeEnum.BOARD_ATTACH,
+                new FileTypeConfig(boardExts, boardTypes, boardAttachMaxSize, boardAttachMaxCount));
 
         Set<String> courseExts = parseSet(courseImageExtensionsStr);
         Set<String> courseTypes = parseSet(courseImageContentTypesStr);
@@ -168,12 +171,19 @@ public class FileType {
         private final Set<String> allowedExtensions;
         private final Set<String> allowedContentTypes;
         private final long maxFileSize;
+        private final int maxCount;
 
         public FileTypeConfig(Set<String> allowedExtensions, Set<String> allowedContentTypes, long maxFileSize) {
+            this(allowedExtensions, allowedContentTypes, maxFileSize, 0); // 0 = 무제한
+        }
+
+        public FileTypeConfig(Set<String> allowedExtensions, Set<String> allowedContentTypes, long maxFileSize,
+                int maxCount) {
             // 방어적 복사 및 불변성 보장 (검증은 @PostConstruct에서 수행)
             this.allowedExtensions = Collections.unmodifiableSet(new HashSet<>(allowedExtensions));
             this.allowedContentTypes = Collections.unmodifiableSet(new HashSet<>(allowedContentTypes));
             this.maxFileSize = maxFileSize;
+            this.maxCount = maxCount;
         }
 
         public boolean isExtensionAllowed(String extension) {
@@ -192,6 +202,10 @@ public class FileType {
 
         public boolean isFileSizeValid(long fileSize) {
             return fileSize > 0 && fileSize <= maxFileSize;
+        }
+
+        public boolean isFileCountValid(int fileCount) {
+            return maxCount <= 0 || fileCount <= maxCount; // maxCount가 0이면 무제한
         }
 
         public long getMaxFileSizeMB() {
