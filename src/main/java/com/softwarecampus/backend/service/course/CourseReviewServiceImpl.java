@@ -84,6 +84,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 CategoryType categoryType = course.getCategoryType();
                 if (categoryType == null) {
                         // 카테고리 타입이 없는 경우 기본값 설정
+                        log.warn("Course(id={})에 카테고리 타입이 설정되어 있지 않아 기본값(JOB_SEEKER)을 사용합니다.", courseId);
                         categoryType = CategoryType.JOB_SEEKER;
                 }
 
