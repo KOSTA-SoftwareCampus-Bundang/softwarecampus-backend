@@ -58,7 +58,7 @@ class ProfileServiceImplTest {
     @DisplayName("ID로 계정 조회 - 성공")
     void getAccountById_성공() {
         // Given
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));
+        when(accountRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(testAccount));
 
         // When
         AccountResponse response = profileService.getAccountById(1L);
@@ -69,21 +69,21 @@ class ProfileServiceImplTest {
         assertThat(response.email()).isEqualTo("user@example.com");
         assertThat(response.userName()).isEqualTo("홍길동");
 
-        verify(accountRepository).findById(1L);
+        verify(accountRepository).findByIdAndIsDeletedFalse(1L);
     }
 
     @Test
     @DisplayName("ID로 계정 조회 - 계정 없음")
     void getAccountById_계정없음() {
         // Given
-        when(accountRepository.findById(999L)).thenReturn(Optional.empty());
+        when(accountRepository.findByIdAndIsDeletedFalse(999L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> profileService.getAccountById(999L))
                 .isInstanceOf(AccountNotFoundException.class)
                 .hasMessage("계정을 찾을 수 없습니다.");
 
-        verify(accountRepository).findById(999L);
+        verify(accountRepository).findByIdAndIsDeletedFalse(999L);
     }
 
     @Test

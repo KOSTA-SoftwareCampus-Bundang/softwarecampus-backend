@@ -296,10 +296,16 @@ public class ProfileServiceImpl implements ProfileService {
     public MyStatsResponseDTO getMyStats(Long accountId) {
         log.info("활동 통계 조회: accountId={}", accountId);
 
-        Long totalPosts = boardRepository.countByAccountId(accountId);
-        Long totalComments = commentRepository.countByAccountId(accountId);
-        Long totalBookmarks = courseFavoriteRepository.countByAccount_Id(accountId);
-        Long totalViews = boardRepository.sumHitsByAccountId(accountId);
+        // Repository 결과가 null일 수 있으므로 null-safe 처리
+        Long totalPosts = java.util.Objects.requireNonNullElse(
+                boardRepository.countByAccountId(accountId), 0L);
+        Long totalComments = java.util.Objects.requireNonNullElse(
+                commentRepository.countByAccountId(accountId), 0L);
+        Long totalBookmarks = java.util.Objects.requireNonNullElse(
+                courseFavoriteRepository.countByAccount_Id(accountId), 0L);
+        // sumHitsByAccountId는 이미 COALESCE 적용되어 있지만 방어적 처리
+        Long totalViews = java.util.Objects.requireNonNullElse(
+                boardRepository.sumHitsByAccountId(accountId), 0L);
 
         return MyStatsResponseDTO.builder()
                 .totalPosts(totalPosts)
