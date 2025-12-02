@@ -60,6 +60,9 @@ class AuthControllerTest {
         @MockBean
         private com.softwarecampus.backend.service.auth.TokenService tokenService;
 
+        @MockBean
+        private com.softwarecampus.backend.service.user.profile.ProfileService profileService;
+
         // Security Filter Mock
         @MockBean
         private com.softwarecampus.backend.security.RateLimitFilter rateLimitFilter;
