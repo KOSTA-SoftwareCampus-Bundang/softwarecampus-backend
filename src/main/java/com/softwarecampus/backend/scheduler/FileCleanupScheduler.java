@@ -24,9 +24,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Soft-Delete된 파일 정리 스케줄러
+ * Soft-Delete된 파일 및 고아 파일 정리 스케줄러
  * - 매일 새벽 5시 실행
  * - 삭제된 지 1일(설정값) 지난 파일 영구 삭제 (DB & S3)
+ * - 고아 파일(임시 업로드 후 미확정) 정리
  */
 @Slf4j
 @Component
@@ -42,6 +43,10 @@ public class FileCleanupScheduler {
 
     @Value("${app.file.cleanup.days:1}")
     private int cleanupDays;
+
+    /** 고아 파일 정리 기준 시간 (시간 단위, 기본 24시간) */
+    @Value("${app.file.orphan.cleanup.hours:24}")
+    private int orphanCleanupHours;
 
     @Scheduled(cron = "0 0 5 * * ?") // 매일 새벽 5시
     @Transactional
@@ -97,7 +102,60 @@ public class FileCleanupScheduler {
         totalDeleted += result5[0];
         totalFailed += result5[1];
 
+        // 6. 고아 파일 정리 (임시 업로드 후 미확정된 파일)
+        var result6 = cleanupOrphanedFiles();
+        totalDeleted += result6[0];
+        totalFailed += result6[1];
+
         log.info("파일 정리 완료 - 전체 성공: {}, 전체 실패: {}", totalDeleted, totalFailed);
+    }
+
+    /**
+     * 고아 파일 정리 (임시 업로드 후 Q&A 생성을 완료하지 않은 파일)
+     * - categoryId가 null인 파일 중 생성된 지 일정 시간이 지난 파일 삭제
+     * - 사용자가 파일 업로드 후 글 작성을 취소하거나 세션이 만료된 경우 발생
+     * 
+     * @return [성공 개수, 실패 개수]
+     */
+    @Transactional
+    public int[] cleanupOrphanedFiles() {
+        LocalDateTime threshold = LocalDateTime.now().minusHours(orphanCleanupHours);
+        List<Attachment> orphanedFiles = attachmentRepository.findOrphanedFiles(threshold);
+
+        log.info("[OrphanedFiles] 고아 파일 삭제 대상: {}건 ({}시간 이전 임시 업로드)", 
+                orphanedFiles.size(), orphanCleanupHours);
+
+        int deletedCount = 0;
+        int failedCount = 0;
+
+        for (Attachment file : orphanedFiles) {
+            try {
+                // 1. S3 파일 삭제
+                String fileUrl = file.getFilename();
+                if (fileUrl != null && !fileUrl.isBlank()) {
+                    try {
+                        s3Service.deleteFile(fileUrl);
+                    } catch (Exception e) {
+                        log.warn("[OrphanedFiles] S3 파일 삭제 실패 (또는 이미 없음) - URL: {}, Error: {}",
+                                fileUrl, e.getMessage());
+                    }
+                }
+
+                // 2. DB 영구 삭제
+                attachmentRepository.delete(file);
+                deletedCount++;
+
+                log.debug("[OrphanedFiles] 고아 파일 삭제 완료 - id: {}, originName: {}", 
+                        file.getId(), file.getOriginName());
+
+            } catch (Exception e) {
+                log.error("[OrphanedFiles] 고아 파일 삭제 실패 - id: {}", file.getId(), e);
+                failedCount++;
+            }
+        }
+
+        log.info("[OrphanedFiles] 고아 파일 정리 완료 - 성공: {}, 실패: {}", deletedCount, failedCount);
+        return new int[] { deletedCount, failedCount };
     }
 
     /**
