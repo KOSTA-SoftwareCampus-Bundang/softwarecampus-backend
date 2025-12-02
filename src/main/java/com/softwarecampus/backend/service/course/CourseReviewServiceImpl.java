@@ -33,7 +33,6 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         /**
          * 1. 리뷰 리스트 조회 (Pageable)
          * - 승인된 후기(APPROVED)만 조회
-         * - 작성자 본인은 자신의 대기 중(PENDING) 후기도 조회 가능
          */
         @Override
         public Page<CourseReviewResponse> getReviews(Long courseId, Pageable pageable, Long accountId) {
@@ -150,6 +149,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
 
         /**
          * 4. 리뷰 수정
+         * Soft Delete 준수: findByIdAndIsDeletedFalse 사용
          */
         @Override
         @Transactional
@@ -161,7 +161,8 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                         throw new EntityNotFoundException("Course not found");
                 }
 
-                CourseReview review = reviewRepository.findById(reviewId)
+                // Soft Delete 준수: 삭제되지 않은 리뷰만 조회
+                CourseReview review = reviewRepository.findByIdAndIsDeletedFalse(reviewId)
                                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
 
                 if (!review.getCourse().getId().equals(courseId)) {
@@ -170,10 +171,6 @@ public class CourseReviewServiceImpl implements CourseReviewService {
 
                 if (!review.getWriter().getId().equals(accountId)) {
                         throw new ForbiddenException("본인이 작성한 리뷰만 수정할 수 있습니다.");
-                }
-
-                if (review.getIsDeleted()) {
-                        throw new BadRequestException("이미 삭제된 리뷰는 수정할 수 없습니다.");
                 }
 
                 review.setComment(request.getComment());
@@ -200,19 +197,18 @@ public class CourseReviewServiceImpl implements CourseReviewService {
 
         /**
          * 5. 리뷰 삭제 (소프트 삭제)
+         * Soft Delete 준수: findByIdAndIsDeletedFalse 사용
          */
         @Override
         @Transactional
         public void deleteReview(@NonNull Long courseId, @NonNull Long reviewId, @NonNull Long accountId) {
 
-                if (courseId == null) {
-                        throw new IllegalArgumentException("Course ID cannot be null");
-                }
                 if (!courseRepository.existsById(courseId)) {
                         throw new EntityNotFoundException("Course not found");
                 }
 
-                CourseReview review = reviewRepository.findById(reviewId)
+                // Soft Delete 준수: 삭제되지 않은 리뷰만 조회
+                CourseReview review = reviewRepository.findByIdAndIsDeletedFalse(reviewId)
                                 .orElseThrow(() -> new EntityNotFoundException("Review not found"));
 
                 if (!review.getCourse().getId().equals(courseId)) {
@@ -253,7 +249,12 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 review.requestDelete(); // 삭제 요청 상태로 변경 (도메인에서 구현 필요)
         }
 
+        /**
+         * 관리자용 리뷰 목록 조회
+         * 읽기 전용 트랜잭션으로 설정
+         */
         @Override
+        @Transactional(readOnly = true)
         public Page<CourseReviewResponse> getAdminReviews(ApprovalStatus status, String keyword, Pageable pageable) {
                 Page<CourseReview> reviewPage = reviewRepository.searchAdminReviews(status, keyword, pageable);
                 return reviewPage.map(review -> toDto(review, null));
