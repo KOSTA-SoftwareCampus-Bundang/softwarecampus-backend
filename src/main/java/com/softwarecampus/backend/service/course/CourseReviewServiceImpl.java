@@ -6,6 +6,7 @@ import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.course.*;
 import com.softwarecampus.backend.exception.course.BadRequestException;
 import com.softwarecampus.backend.exception.course.ForbiddenException;
+import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.repository.course.CourseRepository;
 import com.softwarecampus.backend.repository.course.CourseReviewRepository;
 import com.softwarecampus.backend.repository.course.ReviewSectionRepository;
@@ -27,6 +28,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         private final AccountRepository accountRepository;
         private final CourseRepository courseRepository;
         private final ReviewSectionRepository reviewSectionRepository;
+        private final AcademyRepository academyRepository;
 
         /**
          * 1. 리뷰 리스트 조회 (Pageable)
@@ -296,8 +298,12 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         }
 
         @Override
-        public Page<CourseReviewResponse> getInstitutionReviews(Long academyId, ApprovalStatus status, String keyword,
+        @Transactional
+        public Page<CourseReviewResponse> getInstitutionReviews(@NonNull Long academyId, ApprovalStatus status, String keyword,
                         Pageable pageable) {
+                if (!academyRepository.existsById(academyId)) {
+                        throw new EntityNotFoundException("기관을 찾을 수 없습니다");
+                }
                 Page<CourseReview> reviewPage = reviewRepository.searchInstitutionReviews(academyId, status, keyword,
                                 pageable);
                 return reviewPage.map(review -> toDto(review, null));
