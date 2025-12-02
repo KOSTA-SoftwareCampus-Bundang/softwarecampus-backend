@@ -5,6 +5,7 @@ import com.softwarecampus.backend.dto.board.*;
 import com.softwarecampus.backend.exception.board.BoardException;
 import com.softwarecampus.backend.security.CustomUserDetails;
 import com.softwarecampus.backend.service.board.BoardService;
+import com.softwarecampus.backend.util.ClientIpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,23 +33,29 @@ public class BoardController {
     private static final Logger logger = LoggerFactory.getLogger(BoardController.class);
 
     private final BoardService boardService;
+    private final ClientIpUtils clientIpUtils;
 
     // 게시글 목록 조회, 목록 검색기능
     @GetMapping
     public ResponseEntity<?> getBoards(@RequestParam(defaultValue = "1") int pageNo, BoardCategory category,
-            @RequestParam(required = false) String searchType, @RequestParam(required = false) String searchText) {
+            @RequestParam(required = false) String searchType, @RequestParam(required = false) String searchText,
+            @RequestParam(required = false, defaultValue = "latest") String sortType) {
 
-        Page<BoardListResponseDTO> boards = boardService.getBoards(pageNo, category, searchType, searchText);
+        Page<BoardListResponseDTO> boards = boardService.getBoards(pageNo, category, searchType, searchText, sortType);
         return ResponseEntity.ok(boards);
     }
 
     // 게시글 하나 조회 with 댓글
     @GetMapping("/{boardId:\\d+}")
     public ResponseEntity<?> getBoard(@PathVariable Long boardId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request) {
+
+        Long userId = userDetails != null ? userDetails.getId() : null;
+        String clientIp = clientIpUtils.getClientIp(request);
 
         // 게시글 하나 조회 service 메서드 호출
-        BoardResponseDTO board = boardService.getBoardById(boardId, userDetails != null ? userDetails.getId() : null);
+        BoardResponseDTO board = boardService.getBoardById(boardId, userId, clientIp);
         return ResponseEntity.ok(board);
     }
 

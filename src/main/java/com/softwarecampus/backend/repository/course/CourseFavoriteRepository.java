@@ -18,4 +18,7 @@ public interface CourseFavoriteRepository extends JpaRepository<CourseFavorite, 
 
     /** 특정 회원이 특정 과정을 찜했는지 여부 확인 */
     boolean existsByAccount_IdAndCourse_Id(Long accountId, Long courseId);
+
+    /** 특정 회원이 찜한 과정 수 (마이페이지 통계용) */
+    Long countByAccount_Id(Long accountId);
 }

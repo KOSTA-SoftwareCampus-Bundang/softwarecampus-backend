@@ -31,7 +31,7 @@ public class SoftwarecampusBackendApplicationBoardTests {
     @DisplayName("게시글 하나 조회 테스트")
     void getBoard() throws JsonProcessingException {
 
-        BoardResponseDTO dto = boardService.getBoardById(2L, 1L);
+        BoardResponseDTO dto = boardService.getBoardById(2L, 1L, "127.0.0.1");
         String json = objectMapper.writeValueAsString(dto);
         System.out.println(json);
 
@@ -41,11 +41,11 @@ public class SoftwarecampusBackendApplicationBoardTests {
     @DisplayName("게시글 여러개 조회 테스트")
     void getBoards() throws JsonProcessingException {
 
-        Page<BoardListResponseDTO> dto = boardService.getBoards(1, BoardCategory.NOTICE, "title", null);
+        Page<BoardListResponseDTO> dto = boardService.getBoards(1, BoardCategory.NOTICE, "title", null, "latest");
         // Page<BoardListResponseDTO> dto = boardService.getBoards(1,
-        // BoardCategory.COURSE_STORY,null,"안녕");
+        // BoardCategory.COURSE_STORY,null,"안녕", "latest");
         // Page<BoardListResponseDTO> dto = boardService.getBoards(1,
-        // BoardCategory.COURSE_STORY,"title+text","제목3");
+        // BoardCategory.COURSE_STORY,"title+text","제목3", "popular");
         String json = objectMapper.writeValueAsString(dto);
         System.out.println(json);
 

@@ -1,9 +1,14 @@
 package com.softwarecampus.backend.service.user.profile;
 
+import com.softwarecampus.backend.dto.mypage.MyCommentResponseDTO;
+import com.softwarecampus.backend.dto.mypage.MyPostResponseDTO;
+import com.softwarecampus.backend.dto.mypage.MyStatsResponseDTO;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.ResetPasswordRequest;
 import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * 계정 조회 및 프로필 관리 Service 인터페이스
@@ -109,4 +114,32 @@ public interface ProfileService {
      *                                                                                     초과
      */
     void changePassword(String email, ChangePasswordRequest request);
+
+    // ===== 마이페이지 활동 내역 =====
+
+    /**
+     * 내가 쓴 글 목록 조회
+     *
+     * @param accountId 계정 ID
+     * @param pageable  페이징 정보
+     * @return 내가 쓴 글 목록
+     */
+    Page<MyPostResponseDTO> getMyPosts(Long accountId, Pageable pageable);
+
+    /**
+     * 내가 쓴 댓글 목록 조회
+     *
+     * @param accountId 계정 ID
+     * @param pageable  페이징 정보
+     * @return 내가 쓴 댓글 목록
+     */
+    Page<MyCommentResponseDTO> getMyComments(Long accountId, Pageable pageable);
+
+    /**
+     * 활동 통계 조회
+     *
+     * @param accountId 계정 ID
+     * @return 활동 통계 (글 수, 댓글 수, 찜 수, 조회수)
+     */
+    MyStatsResponseDTO getMyStats(Long accountId);
 }
