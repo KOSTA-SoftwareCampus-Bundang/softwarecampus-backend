@@ -114,6 +114,8 @@ public class FileCleanupScheduler {
      * 고아 파일 정리 (임시 업로드 후 Q&A 생성을 완료하지 않은 파일)
      * - categoryId가 null인 파일 중 생성된 지 일정 시간이 지난 파일 삭제
      * - 사용자가 파일 업로드 후 글 작성을 취소하거나 세션이 만료된 경우 발생
+     * - **주의**: 이 메서드는 soft delete를 거치지 않고 즉시 영구 삭제(hard delete)합니다.
+     * 완전한 임시 리소스이므로 복구 필요성이 없기 때문입니다.
      * 
      * @return [성공 개수, 실패 개수]
      */
@@ -122,7 +124,7 @@ public class FileCleanupScheduler {
         LocalDateTime threshold = LocalDateTime.now().minusHours(orphanCleanupHours);
         List<Attachment> orphanedFiles = attachmentRepository.findOrphanedFiles(threshold);
 
-        log.info("[OrphanedFiles] 고아 파일 삭제 대상: {}건 ({}시간 이전 임시 업로드)", 
+        log.info("[OrphanedFiles] 고아 파일 삭제 대상: {}건 ({}시간 이전 임시 업로드)",
                 orphanedFiles.size(), orphanCleanupHours);
 
         int deletedCount = 0;
@@ -130,26 +132,23 @@ public class FileCleanupScheduler {
 
         for (Attachment file : orphanedFiles) {
             try {
-                // 1. S3 파일 삭제
+                // 1. S3 파일 삭제 (실패 시 예외 발생 → DB 삭제 건너뜀)
                 String fileUrl = file.getFilename();
                 if (fileUrl != null && !fileUrl.isBlank()) {
-                    try {
-                        s3Service.deleteFile(fileUrl);
-                    } catch (Exception e) {
-                        log.warn("[OrphanedFiles] S3 파일 삭제 실패 (또는 이미 없음) - URL: {}, Error: {}",
-                                fileUrl, e.getMessage());
-                    }
+                    s3Service.deleteFile(fileUrl);
                 }
 
-                // 2. DB 영구 삭제
+                // 2. DB 영구 삭제 (S3 삭제 성공 시에만 실행)
                 attachmentRepository.delete(file);
                 deletedCount++;
 
-                log.debug("[OrphanedFiles] 고아 파일 삭제 완료 - id: {}, originName: {}", 
+                log.debug("[OrphanedFiles] 고아 파일 삭제 완료 - id: {}, originName: {}",
                         file.getId(), file.getOriginName());
 
             } catch (Exception e) {
-                log.error("[OrphanedFiles] 고아 파일 삭제 실패 - id: {}", file.getId(), e);
+                // S3 삭제 실패 시 DB도 삭제하지 않고 다음 스케줄링 주기에 재시도
+                log.error("[OrphanedFiles] 고아 파일 삭제 실패 (다음 주기에 재시도) - id: {}, url: {}",
+                        file.getId(), file.getFilename(), e);
                 failedCount++;
             }
         }
