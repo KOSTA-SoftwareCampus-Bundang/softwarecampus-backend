@@ -37,6 +37,7 @@ public class CourseDetailResponseDTO {
     private LocalDate courseEnd;
 
     private Integer cost;
+    private Integer capacity;
     private String classDay;
     private String location;
 
@@ -139,6 +140,7 @@ public class CourseDetailResponseDTO {
                 .courseStart(course.getCourseStart())
                 .courseEnd(course.getCourseEnd())
                 .cost(course.getCost())
+                .capacity(course.getCapacity())
                 .classDay(course.getClassDay())
                 .location(course.getLocation())
                 .isKdt(course.isKdt())

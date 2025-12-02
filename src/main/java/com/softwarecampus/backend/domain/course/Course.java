@@ -51,6 +51,10 @@ public class Course extends BaseSoftDeleteSupportEntity {
     private String classDay;
     private String location;
 
+    /** 모집 정원 (기본값: 30) */
+    @Builder.Default
+    private Integer capacity = 30;
+
     private boolean isKdt;
     private boolean isNailbaeum;
     private boolean isOffline = true;
