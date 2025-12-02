@@ -4,6 +4,7 @@ import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
 import com.softwarecampus.backend.domain.course.CourseImage;
+import com.softwarecampus.backend.domain.course.CourseImageType;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.course.CourseImageResponse;
 import com.softwarecampus.backend.exception.course.ForbiddenException;
@@ -42,33 +43,41 @@ public class CourseImageServiceImpl implements CourseImageService {
             CategoryType type,
             Long courseId,
             MultipartFile file,
-            boolean isThumbnail) {
+            CourseImageType imageType) {
         // 1) Course 검증
         Course course = courseRepository.findByIdAndCategory_CategoryType(courseId, type)
                 .orElseThrow(() -> new IllegalArgumentException("Course not found for type: " + type));
 
-        // 2) DB에 placeholder로 저장 (URL 없음)
-        CourseImage image = courseImageRepository.save(
-                CourseImage.builder()
-                        .course(course)
-                        .isThumbnail(isThumbnail)
-                        .build());
+        // 2) THUMBNAIL 또는 HEADER 타입인 경우, 기존 동일 타입 이미지를 CONTENT로 변경 (1개만 유지)
+        if (imageType == CourseImageType.THUMBNAIL || imageType == CourseImageType.HEADER) {
+            final CourseImageType targetType = imageType;
+            course.getImages().stream()
+                    .filter(img -> img.isActive() && img.getImageType() == targetType)
+                    .forEach(img -> img.setImageType(CourseImageType.CONTENT));
+        }
 
+        // 3) S3 업로드 먼저 수행
+        String url;
         try {
-            // 3) S3 업로드
-            String url = s3Service.uploadFile(
+            url = s3Service.uploadFile(
                     file,
                     S3Folder.COURSE.getPath(),
                     FileType.FileTypeEnum.COURSE_IMAGE);
-
-            // 4) 업로드 성공 시 DB 레코드 URL 업데이트
-            image.setImageUrl(url);
-
         } catch (Exception e) {
-            // 5) 업로드 실패 시 placeholder 삭제
-            courseImageRepository.delete(image);
             throw new RuntimeException("S3 업로드 실패: " + e.getMessage(), e);
         }
+
+        // 4) 업로드 성공 후 CourseImage 엔티티 생성
+        CourseImage image = CourseImage.builder()
+                .imageUrl(url)
+                .originalFilename(file.getOriginalFilename())
+                .imageType(imageType)
+                .isThumbnail(imageType == CourseImageType.THUMBNAIL) // 하위 호환
+                .build();
+
+        // 5) 양방향 관계 설정 및 저장 (편의 메서드 사용)
+        course.addImage(image);
+        courseImageRepository.save(image);
 
         return CourseImageResponse.from(image);
     }
