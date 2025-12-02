@@ -171,12 +171,10 @@ public class Course extends BaseSoftDeleteSupportEntity {
         this.approvedAt = LocalDateTime.now();
     }
 
-    public void reject() {
-        this.isApproved = ApprovalStatus.REJECTED;
-        this.approvedAt = null;
-        this.rejectionReason = null;
-    }
-
+    /**
+     * 과정 거절 처리
+     * @param reason 거절 사유 (필수)
+     */
     public void reject(String reason) {
         this.isApproved = ApprovalStatus.REJECTED;
         this.approvedAt = null;
