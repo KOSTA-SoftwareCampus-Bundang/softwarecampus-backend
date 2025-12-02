@@ -5,6 +5,7 @@ import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.board.*;
 import com.softwarecampus.backend.exception.board.BoardErrorCode;
 import com.softwarecampus.backend.exception.board.BoardException;
+import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.repository.board.*;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import com.softwarecampus.backend.service.common.FileType;
@@ -17,8 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -104,7 +107,7 @@ public class BoardServiceImpl implements BoardService {
         }
         // 로그인한 사용자 조회
         Account account = accountRepository.findById(userId)
-                .orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
+                .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다. ID: " + userId));
         // 조회된 사용자 boardEntity에 세팅 후 save로 저장
         board.setAccount(account);
         boardRepository.save(board);
@@ -129,11 +132,13 @@ public class BoardServiceImpl implements BoardService {
         // 1. 선택적 파일 삭제 (deleteAttachIds에 있는 파일만 삭제)
         List<Long> deleteAttachIds = boardUpdateRequestDTO.getDeleteAttachIds();
         if (deleteAttachIds != null && !deleteAttachIds.isEmpty()) {
+            // Set으로 변환하여 조회 성능 O(1)으로 개선
+            Set<Long> deleteAttachIdSet = new HashSet<>(deleteAttachIds);
             for (BoardAttach boardAttach : boardAttachList) {
-                if (boardAttach.isActive() && deleteAttachIds.contains(boardAttach.getId())) {
+                if (boardAttach.isActive() && deleteAttachIdSet.contains(boardAttach.getId())) {
                     deleteFile(boardAttach);
                     boardAttach.markDeleted();
-                    boardAttachRepository.save(boardAttach);
+                    // @Transactional 내에서 managed 엔티티는 dirty checking으로 자동 반영되므로 save 호출 불필요
                 }
             }
         }
@@ -194,7 +199,8 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public void recommendBoard(Long boardId, Long userId) {
 
-        Account account = accountRepository.findById(userId).get();
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다. ID: " + userId));
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
         // 삭제된 글 조회 불가 처리
@@ -236,7 +242,7 @@ public class BoardServiceImpl implements BoardService {
         }
         // 로그인한 사용자 조회
         Account account = accountRepository.findById(userId)
-                .orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
+                .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다. ID: " + userId));
         Comment comment = commentCreateRequestDTO.toEntity(board, account);
 
         if (commentCreateRequestDTO.getTopCommentId() != null) {
@@ -280,7 +286,8 @@ public class BoardServiceImpl implements BoardService {
     @Transactional
     @Override
     public void recommendComment(Long commentId, Long userId) {
-        Account account = accountRepository.findById(userId).get();
+        Account account = accountRepository.findById(userId)
+                .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다. ID: " + userId));
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new BoardException(BoardErrorCode.COMMENT_NOT_FOUND));
         // 삭제된 댓글 추천 불가 처리
