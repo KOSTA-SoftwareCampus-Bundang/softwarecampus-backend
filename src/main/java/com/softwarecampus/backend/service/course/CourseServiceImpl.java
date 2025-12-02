@@ -161,6 +161,12 @@ public class CourseServiceImpl implements CourseService {
                 course.setCourseEnd(dto.getCourseEnd());
                 course.setRequirement(dto.getRequirement());
 
+                // 거부된 항목 수정 시 대기 상태로 변경 (재심사 요청)
+                if (course.getIsApproved() == ApprovalStatus.REJECTED) {
+                        course.setIsApproved(ApprovalStatus.PENDING);
+                        course.setRejectionReason(null); // 거부 사유 초기화
+                }
+
                 return CourseResponseDTO.fromEntity(course);
         }
 

@@ -45,6 +45,7 @@ public class CourseResponseDTO {
 
     private ApprovalStatus approvalStatus;
     private LocalDateTime approvedAt;
+    private String rejectionReason;
 
     private Double rating;
     private Integer reviewCount;
@@ -128,6 +129,7 @@ public class CourseResponseDTO {
                 .requirement(course.getRequirement())
                 .approvalStatus(course.getIsApproved())
                 .approvedAt(course.getApprovedAt())
+                .rejectionReason(course.getRejectionReason())
                 .rating(rating)
                 .reviewCount(reviewCount)
                 .requesterId(course.getRequester() != null ? course.getRequester().getId() : null)

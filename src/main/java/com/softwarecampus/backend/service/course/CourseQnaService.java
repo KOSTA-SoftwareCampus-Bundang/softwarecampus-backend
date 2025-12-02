@@ -18,13 +18,17 @@ public interface CourseQnaService {
 
     QnaResponse updateQuestion(Long qnaId, Long writerId, QnaUpdateRequest request);
 
-    void deleteQuestion(Long qnaId, Long writerId);
+    /** 질문 삭제 (질문자 본인 또는 관리자만 가능) */
+    void deleteQuestion(Long qnaId, Long userId);
 
-    QnaResponse answerQuestion(Long qnaId, Long adminId, QnaAnswerRequest request);
+    /** 답변 등록 (관리자 또는 해당 과정 기관 담당자) */
+    QnaResponse answerQuestion(Long qnaId, Long responderId, QnaAnswerRequest request);
 
-    QnaResponse updateAnswer(Long qnaId, Long adminId, QnaAnswerRequest request);
+    /** 답변 수정 (관리자 또는 본인이 작성한 답변만) */
+    QnaResponse updateAnswer(Long qnaId, Long responderId, QnaAnswerRequest request);
 
-    void deleteAnswer(Long qnaId, Long adminId);
+    /** 답변 삭제 (관리자 또는 본인이 작성한 답변만) */
+    void deleteAnswer(Long qnaId, Long responderId);
 
     /**
      * 과정 존재 여부 검증 (파일 업로드 등에서 사용)

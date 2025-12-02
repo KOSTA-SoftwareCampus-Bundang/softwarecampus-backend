@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.service.course;
 
+import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.course.Course;
 import com.softwarecampus.backend.domain.course.CourseQna;
 import com.softwarecampus.backend.domain.user.Account;
@@ -115,10 +116,17 @@ public class CourseQnaServiceImpl implements CourseQnaService {
 
     @Override
     @Transactional
-    public void deleteQuestion(Long qnaId, Long writerId) {
+    public void deleteQuestion(Long qnaId, Long userId) {
         CourseQna qna = validateQna(qnaId);
-        if (!qna.getAccount().getId().equals(writerId)) {
-            throw new ForbiddenException("본인의 질문만 삭제할 수 있습니다.");
+        Account user = accountRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+        
+        // 질문자 본인 또는 관리자만 삭제 가능
+        boolean isOwner = qna.getAccount().getId().equals(userId);
+        boolean isAdmin = user.getAccountType() == AccountType.ADMIN;
+        
+        if (!isOwner && !isAdmin) {
+            throw new ForbiddenException("질문자 본인 또는 관리자만 삭제할 수 있습니다.");
         }
 
         // 연결된 첨부파일 Soft Delete (물리적 삭제는 스케줄러에 위임)
@@ -129,24 +137,27 @@ public class CourseQnaServiceImpl implements CourseQnaService {
 
     @Override
     @Transactional
-    public QnaResponse answerQuestion(Long qnaId, Long adminId, QnaAnswerRequest request) {
+    public QnaResponse answerQuestion(Long qnaId, Long responderId, QnaAnswerRequest request) {
         CourseQna qna = validateQna(qnaId);
 
         if (qna.isAnswered()) {
             throw new ForbiddenException("이미 답변이 완료된 질문입니다.");
         }
 
-        Account admin = accountRepository.findById(adminId)
-                .orElseThrow(() -> new NotFoundException("관리자를 찾을 수 없습니다."));
+        Account responder = accountRepository.findById(responderId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
-        qna.writeAnswer(request.getAnswerText(), admin);
+        // 권한 검증: 관리자 또는 해당 과정 기관 담당자만 답변 가능
+        validateAnswerPermission(responder, qna);
+
+        qna.writeAnswer(request.getAnswerText(), responder);
 
         return toDto(qna);
     }
 
     @Override
     @Transactional
-    public QnaResponse updateAnswer(Long qnaId, Long adminId, QnaAnswerRequest request) {
+    public QnaResponse updateAnswer(Long qnaId, Long responderId, QnaAnswerRequest request) {
         CourseQna qna = validateQna(qnaId);
 
         if (request.getAnswerText() == null || request.getAnswerText().trim().isEmpty()) {
@@ -157,32 +168,65 @@ public class CourseQnaServiceImpl implements CourseQnaService {
             throw new NotFoundException("수정할 답변이 존재하지 않습니다.");
         }
 
-        Account admin = accountRepository.findById(adminId)
-                .orElseThrow(() -> new NotFoundException("관리자를 찾을 수 없습니다."));
+        Account responder = accountRepository.findById(responderId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
-        if (qna.getAnsweredBy() != null && !qna.getAnsweredBy().getId().equals(adminId)) {
+        // 권한 검증: 관리자이거나 본인이 작성한 답변만 수정 가능
+        boolean isAdmin = responder.getAccountType() == AccountType.ADMIN;
+        boolean isAnswerOwner = qna.getAnsweredBy() != null && qna.getAnsweredBy().getId().equals(responderId);
+        
+        if (!isAdmin && !isAnswerOwner) {
             throw new ForbiddenException("본인의 답변만 수정할 수 있습니다.");
         }
 
-        qna.writeAnswer(request.getAnswerText(), admin);
+        qna.writeAnswer(request.getAnswerText(), responder);
         return toDto(qna);
     }
 
     @Override
     @Transactional
-    public void deleteAnswer(Long qnaId, Long adminId) {
+    public void deleteAnswer(Long qnaId, Long responderId) {
         CourseQna qna = validateQna(qnaId);
 
         if (!qna.isAnswered()) {
             throw new NotFoundException("삭제할 답변이 존재하지 않습니다.");
         }
 
-        if (qna.getAnsweredBy() != null && !qna.getAnsweredBy().getId().equals(adminId)) {
+        Account responder = accountRepository.findById(responderId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 권한 검증: 관리자이거나 본인이 작성한 답변만 삭제 가능
+        boolean isAdmin = responder.getAccountType() == AccountType.ADMIN;
+        boolean isAnswerOwner = qna.getAnsweredBy() != null && qna.getAnsweredBy().getId().equals(responderId);
+        
+        if (!isAdmin && !isAnswerOwner) {
             throw new ForbiddenException("본인의 답변만 삭제할 수 있습니다.");
         }
-        qna.setAnswerText(null);
-        qna.setAnsweredBy(null);
-        qna.setAnswered(false);
+
+        qna.clearAnswer();
+    }
+
+    /**
+     * 답변 권한 검증
+     * - 관리자(ADMIN): 모든 Q&A에 답변 가능
+     * - 기관회원(ACADEMY): 자기 기관의 과정 Q&A에만 답변 가능
+     */
+    private void validateAnswerPermission(Account responder, CourseQna qna) {
+        if (responder.getAccountType() == AccountType.ADMIN) {
+            return; // 관리자는 모든 Q&A에 답변 가능
+        }
+        
+        if (responder.getAccountType() == AccountType.ACADEMY) {
+            // 기관회원은 자기 기관의 과정 Q&A에만 답변 가능
+            Long responderAcademyId = responder.getAcademyId();
+            Long courseAcademyId = qna.getCourse().getAcademy() != null ? qna.getCourse().getAcademy().getId() : null;
+            
+            if (responderAcademyId != null && responderAcademyId.equals(courseAcademyId)) {
+                return; // 같은 기관이면 답변 가능
+            }
+        }
+        
+        throw new ForbiddenException("해당 Q&A에 답변할 권한이 없습니다.");
     }
 
     @Override
@@ -226,6 +270,7 @@ public class CourseQnaServiceImpl implements CourseQnaService {
                 qna.isAnswered(),
                 qna.getCreatedAt(),
                 qna.getUpdatedAt(),
+                qna.getAnsweredAt(),
                 files);
     }
 }

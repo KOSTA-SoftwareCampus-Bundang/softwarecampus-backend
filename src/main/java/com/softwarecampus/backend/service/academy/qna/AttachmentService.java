@@ -3,6 +3,7 @@ package com.softwarecampus.backend.service.academy.qna;
 import com.softwarecampus.backend.domain.academy.qna.Attachment;
 import com.softwarecampus.backend.domain.common.AttachmentCategoryType;
 import com.softwarecampus.backend.dto.academy.qna.QAFileDetail;
+import com.softwarecampus.backend.service.common.S3Folder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,9 +12,14 @@ import java.util.List;
 public interface AttachmentService {
 
     /**
-     *  파일 업로드 및 임시 저장 후 FileDetail 반환
+     *  파일 업로드 및 임시 저장 후 FileDetail 반환 (기본 폴더: ACADEMY)
      */
     List<QAFileDetail> uploadFiles(List<MultipartFile> files);
+
+    /**
+     *  파일 업로드 및 임시 저장 후 FileDetail 반환 (폴더 지정 가능)
+     */
+    List<QAFileDetail> uploadFiles(List<MultipartFile> files, S3Folder folder);
 
     /**
      * Q/A ID와 연결하여 최종 확정

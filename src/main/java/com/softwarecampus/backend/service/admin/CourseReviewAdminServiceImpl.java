@@ -81,6 +81,7 @@ public class CourseReviewAdminServiceImpl implements CourseReviewAdminService {
                                 .courseName(review.getCourse().getName())
                                 .comment(review.getComment())
                                 .approvalStatus(review.getApprovalStatus().name())
+                                .rejectionReason(review.getRejectionReason())
                                 .averageScore(review.calculateAverageScore())
                                 .sections(review.getSections().stream()
                                                 .filter(section -> !section.getIsDeleted())

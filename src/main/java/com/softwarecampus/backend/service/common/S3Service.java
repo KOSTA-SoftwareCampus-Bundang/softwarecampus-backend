@@ -366,5 +366,40 @@ public class S3Service {
             throw new S3UploadException("S3 파일 다운로드에 실패했습니다.", e);
         }
     }
+
+    /**
+     * S3 파일의 메타데이터(크기 등)를 조회합니다.
+     * 에디터에서 업로드된 이미지의 크기 정보를 가져올 때 사용합니다.
+     *
+     * @param fileUrl S3 파일의 전체 URL
+     * @return 파일 크기 (bytes), 조회 실패 시 0 반환
+     */
+    public long getFileSize(String fileUrl) {
+        try {
+            // URL 검증
+            validateFileUrl(fileUrl);
+
+            // key 디코딩 및 보안 검증
+            String key = extractKeyFromUrl(fileUrl);
+            validateS3Key(key);
+
+            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+
+            HeadObjectResponse response = s3Client.headObject(headObjectRequest);
+            long fileSize = response.contentLength();
+            log.debug("Retrieved file size for {}: {} bytes", key, fileSize);
+            return fileSize;
+
+        } catch (S3Exception e) {
+            log.warn("Failed to get file size from S3: {}", e.awsErrorDetails().errorMessage());
+            return 0L; // 실패 시 0 반환 (기존 동작 유지)
+        } catch (Exception e) {
+            log.warn("Failed to get file size: {}", e.getMessage());
+            return 0L;
+        }
+    }
 }
 

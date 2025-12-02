@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.service.board;
 
 import com.softwarecampus.backend.domain.board.*;
+import com.softwarecampus.backend.domain.common.AccountType;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.board.*;
 import com.softwarecampus.backend.exception.board.BoardErrorCode;
@@ -92,8 +93,17 @@ public class BoardServiceImpl implements BoardService {
         if (!board.isActive()) {
             throw new BoardException(BoardErrorCode.BOARD_NOT_FOUND);
         }
-        if (board.isSecret() && (userId == null || !userId.equals(board.getAccount().getId()))) {
-            throw new BoardException(BoardErrorCode.CANNOT_READ_BOARD);
+        // 비밀글 접근 권한 체크: 작성자 본인 또는 관리자만 접근 가능
+        if (board.isSecret()) {
+            if (userId == null) {
+                throw new BoardException(BoardErrorCode.CANNOT_READ_BOARD);
+            }
+            Account viewer = accountRepository.findById(userId).orElse(null);
+            boolean isOwner = userId.equals(board.getAccount().getId());
+            boolean isAdmin = viewer != null && viewer.getAccountType() == AccountType.ADMIN;
+            if (!isOwner && !isAdmin) {
+                throw new BoardException(BoardErrorCode.CANNOT_READ_BOARD);
+            }
         }
 
         // 조회수 증가 로직 (중복 방지)
@@ -151,21 +161,48 @@ public class BoardServiceImpl implements BoardService {
 
         Board board = boardCreateRequestDTO.toEntity();
 
-        // 파일 개수 검증
+        // 파일 개수 검증 (새로 업로드할 파일 + 이미 업로드된 파일)
+        int totalFileCount = (files != null ? files.length : 0) +
+                (boardCreateRequestDTO.getUploadedFileUrls() != null
+                        ? boardCreateRequestDTO.getUploadedFileUrls().size()
+                        : 0);
+
         FileType.FileTypeConfig config = fileType.getConfig(FileType.FileTypeEnum.BOARD_ATTACH);
-        if (files != null && files.length > 0) {
-            if (!config.isFileCountValid(files.length)) {
+        if (totalFileCount > 0) {
+            if (!config.isFileCountValid(totalFileCount)) {
                 throw new BoardException(BoardErrorCode.FILE_COUNT_EXCEEDED);
             }
         }
 
-        // 파일업로드 코드 작성
         List<BoardAttach> boardAttachList = board.getBoardAttaches();
+
+        // 1. 새로 업로드할 파일 처리
         if (files != null && files.length > 0) {
             for (MultipartFile file : files) {
                 BoardAttach boardAttach = uploadFile(file);
                 boardAttachList.add(boardAttach);
                 boardAttach.setBoard(board);
+            }
+        }
+
+        // 2. 이미 S3에 업로드된 파일 처리 (에디터에서 업로드한 이미지)
+        if (boardCreateRequestDTO.getUploadedFileUrls() != null
+                && !boardCreateRequestDTO.getUploadedFileUrls().isEmpty()) {
+            for (String uploadedUrl : boardCreateRequestDTO.getUploadedFileUrls()) {
+                // URL에서 파일명 추출
+                String fileName = extractFileNameFromUrl(uploadedUrl);
+                
+                // S3에서 파일 크기 조회 (실패 시 0 반환)
+                long fileSize = s3Service.getFileSize(uploadedUrl);
+
+                BoardAttach boardAttach = BoardAttach.builder()
+                        .originalFilename(fileName)
+                        .realFilename(uploadedUrl)
+                        .fileSize(fileSize)
+                        .board(board)
+                        .build();
+
+                boardAttachList.add(boardAttach);
             }
         }
         // 로그인한 사용자 조회
@@ -176,6 +213,19 @@ public class BoardServiceImpl implements BoardService {
         boardRepository.save(board);
 
         return board.getId();
+    }
+
+    /**
+     * S3 URL에서 파일명 추출
+     * 예: https://swcampus-s3.s3.ap-northeast-2.amazonaws.com/board/abc123.png ->
+     * abc123.png
+     */
+    private String extractFileNameFromUrl(String url) {
+        try {
+            return url.substring(url.lastIndexOf('/') + 1);
+        } catch (Exception e) {
+            return "uploaded-file.dat";
+        }
     }
 
     // 게시글 수정
@@ -249,9 +299,17 @@ public class BoardServiceImpl implements BoardService {
         if (!boardId.equals(boardAttach.getBoard().getId()) || !boardAttach.isActive()) {
             throw new BoardException(BoardErrorCode.FILE_NOT_FOUND);
         }
-        if (boardAttach.getBoard().isSecret()
-                && (userId == null || !userId.equals(boardAttach.getBoard().getAccount().getId()))) {
-            throw new BoardException(BoardErrorCode.FILE_ACCESS_FORBIDDEN);
+        // 비밀글 첨부파일 접근 권한 체크: 작성자 본인 또는 관리자만 접근 가능
+        if (boardAttach.getBoard().isSecret()) {
+            if (userId == null) {
+                throw new BoardException(BoardErrorCode.FILE_ACCESS_FORBIDDEN);
+            }
+            Account viewer = accountRepository.findById(userId).orElse(null);
+            boolean isOwner = userId.equals(boardAttach.getBoard().getAccount().getId());
+            boolean isAdmin = viewer != null && viewer.getAccountType() == AccountType.ADMIN;
+            if (!isOwner && !isAdmin) {
+                throw new BoardException(BoardErrorCode.FILE_ACCESS_FORBIDDEN);
+            }
         }
 
         byte[] fileBytes = s3Service.downloadFile(boardAttach.getRealFilename());
@@ -385,7 +443,11 @@ public class BoardServiceImpl implements BoardService {
     public BoardAttach uploadFile(MultipartFile file) {
         // s3 bucket upload code
         String fileURL = s3Service.uploadFile(file, "board", FileType.FileTypeEnum.BOARD_ATTACH);
-        return BoardAttach.builder().originalFilename(file.getOriginalFilename()).realFilename(fileURL).build();
+        return BoardAttach.builder()
+                .originalFilename(file.getOriginalFilename())
+                .realFilename(fileURL)
+                .fileSize(file.getSize())
+                .build();
     }
 
     @Override

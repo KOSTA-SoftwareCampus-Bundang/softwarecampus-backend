@@ -34,7 +34,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
 
         /**
          * 1. 리뷰 리스트 조회 (Pageable)
-         * - 승인된 후기(APPROVED)만 조회
+         * - 승인된 후기(APPROVED) + 본인이 작성한 미승인/거부 후기도 함께 조회
          */
         @Override
         public Page<CourseReviewResponse> getReviews(Long courseId, Pageable pageable, Long accountId) {
@@ -46,10 +46,17 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                         throw new EntityNotFoundException("Course not found");
                 }
 
-                // 승인된 후기만 조회
-                Page<CourseReview> reviewPage = reviewRepository
-                                .findByCourseIdAndApprovalStatusAndIsDeletedFalse(
-                                                courseId, ApprovalStatus.APPROVED, pageable);
+                Page<CourseReview> reviewPage;
+                
+                if (accountId != null) {
+                        // 로그인한 경우: 승인된 리뷰 + 본인이 작성한 모든 리뷰
+                        reviewPage = reviewRepository.findByCourseIdWithMyReviews(courseId, accountId, pageable);
+                } else {
+                        // 비로그인: 승인된 후기만 조회
+                        reviewPage = reviewRepository
+                                        .findByCourseIdAndApprovalStatusAndIsDeletedFalse(
+                                                        courseId, ApprovalStatus.APPROVED, pageable);
+                }
 
                 return reviewPage.map(review -> toDto(review, accountId));
         }
@@ -137,6 +144,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                                 .courseName(review.getCourse().getName()) // 추가: 과정 이름
                                 .comment(review.getComment())
                                 .approvalStatus(review.getApprovalStatus().name())
+                                .rejectionReason(review.getRejectionReason())
                                 .averageScore(review.calculateAverageScore())
                                 .sections(review.getSections().stream()
                                                 .map(sec -> ReviewSectionResponse.builder()
@@ -185,6 +193,12 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 }
 
                 review.setComment(request.getComment());
+
+                // 거부된 리뷰 수정 시 대기 상태로 변경 (재심사 요청)
+                if (review.getApprovalStatus() == ApprovalStatus.REJECTED) {
+                        review.setApprovalStatus(ApprovalStatus.PENDING);
+                        review.setRejectionReason(null); // 거부 사유 초기화
+                }
 
                 // 기존 섹션 삭제 후 다시 생성
                 review.getSections().clear();

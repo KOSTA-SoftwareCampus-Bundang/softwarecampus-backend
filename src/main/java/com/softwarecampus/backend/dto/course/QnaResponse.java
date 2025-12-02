@@ -16,8 +16,9 @@ public record QnaResponse(
                 Long answeredById,
                 String answeredByName,
                 boolean isAnswered,
-                LocalDateTime createdAt,
-                LocalDateTime updatedAt,
+                LocalDateTime createdAt,      // 질문 작성일
+                LocalDateTime updatedAt,      // 질문 수정일
+                LocalDateTime answeredAt,     // 답변 작성일 (2025-12-03 추가)
                 /** 첨부파일 목록 */
                 List<QnaFileDetail> files) {
     
@@ -27,9 +28,9 @@ public record QnaResponse(
     public static QnaResponse withoutFiles(
             Long id, String title, String questionText, String answerText,
             Long accountId, String writerName, Long answeredById, String answeredByName,
-            boolean isAnswered, LocalDateTime createdAt, LocalDateTime updatedAt) {
+            boolean isAnswered, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime answeredAt) {
         return new QnaResponse(id, title, questionText, answerText,
                 accountId, writerName, answeredById, answeredByName,
-                isAnswered, createdAt, updatedAt, List.of());
+                isAnswered, createdAt, updatedAt, answeredAt, List.of());
     }
 }

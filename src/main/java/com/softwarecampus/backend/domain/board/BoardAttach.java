@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @Getter
 @Setter
-public class BoardAttach extends BaseSoftDeleteSupportEntity{
+public class BoardAttach extends BaseSoftDeleteSupportEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +22,10 @@ public class BoardAttach extends BaseSoftDeleteSupportEntity{
     @Column(nullable = false)
     private String realFilename;
 
+    @Column(nullable = false)
+    private Long fileSize; // 파일 크기 (bytes)
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="board_id",nullable = false)
+    @JoinColumn(name = "board_id", nullable = false)
     private Board board;
 }
