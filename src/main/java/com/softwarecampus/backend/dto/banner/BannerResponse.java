@@ -12,6 +12,7 @@ public class BannerResponse {
 
     private Long id;
     private String title;
+    private String description; // 배너 부제목/설명
     private String imageUrl;
     private String linkUrl;
     private Integer sequence;
@@ -25,6 +26,7 @@ public class BannerResponse {
         return BannerResponse.builder()
                 .id(banner.getId())
                 .title(banner.getTitle())
+                .description(banner.getDescription())
                 .imageUrl(banner.getImageUrl())
                 .linkUrl(banner.getLinkUrl())
                 .sequence(banner.getSequence())

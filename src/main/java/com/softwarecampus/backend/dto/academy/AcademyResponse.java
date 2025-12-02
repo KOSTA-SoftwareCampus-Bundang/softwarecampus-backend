@@ -23,6 +23,12 @@ public class AcademyResponse {
     private String businessNumber;
     private String email;
     private String phoneNumber;
+
+    // 기관 추가 정보 (작성일: 2025-12-02)
+    private String description;
+    private String logoUrl;
+    private String website;
+
     private ApprovalStatus isApproved;
     private LocalDateTime approvedAt;
     private LocalDateTime createdAt;
@@ -109,6 +115,9 @@ public class AcademyResponse {
                 .businessNumber(academy.getBusinessNumber())
                 .email(academy.getEmail())
                 .phoneNumber(academy.getPhoneNumber())
+                .description(academy.getDescription())
+                .logoUrl(academy.getLogoUrl())
+                .website(academy.getWebsite())
                 .isApproved(academy.getIsApproved())
                 .approvedAt(academy.getApprovedAt())
                 .createdAt(academy.getCreatedAt())

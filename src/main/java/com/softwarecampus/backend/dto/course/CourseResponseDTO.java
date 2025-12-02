@@ -51,6 +51,9 @@ public class CourseResponseDTO {
     private Long requesterId;
     private String requesterName;
 
+    // 과정 이미지 (썸네일)
+    private String imageUrl;
+
     /**
      * Entity → DTO 변환
      */
@@ -75,6 +78,13 @@ public class CourseResponseDTO {
                 rating = Math.round(rating * 10.0) / 10.0;
             }
         }
+
+        // 썸네일 이미지 추출 (@Builder.Default로 초기화되어 null이 아님)
+        String imageUrl = course.getImages().stream()
+                .filter(img -> img.isActive() && img.isThumbnail())
+                .findFirst()
+                .map(com.softwarecampus.backend.domain.course.CourseImage::getImageUrl)
+                .orElse(null);
 
         return CourseResponseDTO.builder()
                 .id(course.getId())
@@ -101,6 +111,7 @@ public class CourseResponseDTO {
                 .reviewCount(reviewCount)
                 .requesterId(course.getRequester() != null ? course.getRequester().getId() : null)
                 .requesterName(course.getRequester() != null ? course.getRequester().getUserName() : null)
+                .imageUrl(imageUrl)
                 .build();
     }
 }

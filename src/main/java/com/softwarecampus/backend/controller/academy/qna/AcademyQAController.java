@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,6 +48,23 @@ public class AcademyQAController {
     }
 
     private static final int MAX_PAGE_SIZE = 100;
+
+    /**
+     * Q/A 질문 등록
+     */
+    @PostMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<QAResponse> createQuestion(
+            @PathVariable Long academyId,
+            @Valid @RequestBody QACreateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        log.info("Q/A 질문 등록 요청 수신. academyId={}, userId={}", academyId, userDetails.getId());
+        QAResponse response = academyQAService.createQuestion(academyId, request, userDetails.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
     /**
      * Q/A 조회 (페이징 및 검색 지원)
