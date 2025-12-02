@@ -54,7 +54,10 @@ public class BoardResponseDTO {
                 .likeCount(board.getBoardRecommends().size())
                 .createdAt(board.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .userNickName(board.getAccount().getUserName()).accountId(board.getAccount().getId()).build();
-        boardResponseDTO.setBoardAttachs(board.getBoardAttaches().stream().map(BoardAttachResponseDTO::from).toList());
+        // 첨부파일: soft delete된 항목 제외 (isActive() 필터 적용)
+        boardResponseDTO.setBoardAttachs(board.getBoardAttaches().stream()
+                .filter(attach -> attach.isActive())
+                .map(BoardAttachResponseDTO::from).toList());
         // topComment가 null인 원댓글만 반환 (대댓글은 subComments로 포함됨)
         boardResponseDTO.setBoardComments(board.getComments().stream()
                 .filter(comment -> comment.isActive() && comment.getTopComment() == null)

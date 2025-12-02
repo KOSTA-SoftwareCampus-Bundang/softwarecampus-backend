@@ -1,5 +1,7 @@
 package com.softwarecampus.backend.controller.board;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.softwarecampus.backend.domain.board.BoardCategory;
 import com.softwarecampus.backend.dto.board.*;
 import com.softwarecampus.backend.exception.board.BoardException;
@@ -23,6 +25,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -65,7 +68,20 @@ public class BoardController {
     @PostMapping
     public ResponseEntity<?> createBoard(@Valid BoardCreateRequestDTO boardCreateRequestDTO,
             @RequestParam(required = false) MultipartFile[] files,
+            @RequestParam(required = false) String uploadedFileUrls,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        // uploadedFileUrls가 JSON 문자열로 전달되면 파싱하여 DTO에 설정
+        if (uploadedFileUrls != null && !uploadedFileUrls.trim().isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                List<String> urls = mapper.readValue(uploadedFileUrls, new TypeReference<List<String>>() {
+                });
+                boardCreateRequestDTO.setUploadedFileUrls(urls);
+            } catch (Exception e) {
+                logger.warn("uploadedFileUrls 파싱 실패: {}", uploadedFileUrls, e);
+            }
+        }
 
         // 게시글 생성 service 메서드 호출
         Long boardId = boardService.createBoard(boardCreateRequestDTO, files, userDetails.getId());

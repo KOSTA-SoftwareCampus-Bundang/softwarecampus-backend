@@ -4,8 +4,9 @@ import com.softwarecampus.backend.domain.board.Board;
 import com.softwarecampus.backend.domain.board.BoardCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -25,9 +26,14 @@ public class BoardCreateRequestDTO {
 
     private boolean secret;
 
+    /**
+     * 이미 S3에 업로드된 파일의 URL 목록 (에디터에서 업로드한 이미지)
+     * 중복 업로드를 방지하기 위해 사용
+     */
+    private List<String> uploadedFileUrls;
+
     public Board toEntity() {
         return Board.builder().category(this.category).title(this.title).text(this.text).secret(this.secret).build();
     }
-
 
 }

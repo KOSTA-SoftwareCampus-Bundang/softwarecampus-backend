@@ -13,7 +13,6 @@ import java.time.format.DateTimeFormatter;
 @Builder
 public class BoardAttachResponseDTO {
 
-
     private Long id;
 
     private Long boardId;
@@ -22,12 +21,19 @@ public class BoardAttachResponseDTO {
 
     private String realFilename;
 
+    private Long fileSize; // 파일 크기 (bytes)
+
     private String createdAt;
 
     public static BoardAttachResponseDTO from(BoardAttach boardAttach) {
-        return BoardAttachResponseDTO.builder().id(boardAttach.getId()).boardId(boardAttach.getBoard().getId()).
-                originalFilename(boardAttach.getOriginalFilename()).realFilename(boardAttach.getRealFilename()).
-                createdAt(boardAttach.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).build();
+        return BoardAttachResponseDTO.builder()
+                .id(boardAttach.getId())
+                .boardId(boardAttach.getBoard().getId())
+                .originalFilename(boardAttach.getOriginalFilename())
+                .realFilename(boardAttach.getRealFilename())
+                .fileSize(boardAttach.getFileSize())
+                .createdAt(boardAttach.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .build();
     }
 
 }
