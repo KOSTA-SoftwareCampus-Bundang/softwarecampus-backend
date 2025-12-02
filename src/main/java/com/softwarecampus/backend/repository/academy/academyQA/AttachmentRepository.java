@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
@@ -43,5 +43,24 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
         /**
          * 스케줄러용: 삭제된 지 일정 기간이 지난 파일 조회
          */
-        List<Attachment> findByIsDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime threshold);
+        List<Attachment> findByIsDeletedTrueAndDeletedAtBefore(LocalDateTime threshold);
+
+        /**
+         * 고아 파일 정리용: categoryId가 null이고 생성된 지 일정 기간이 지난 임시 파일 조회
+         * - 파일 업로드 후 Q&A 생성을 완료하지 않은 경우 발생
+         */
+        @Query("SELECT a FROM Attachment a WHERE a.categoryId IS NULL AND a.isDeleted = FALSE AND a.createdAt < :threshold")
+        List<Attachment> findOrphanedFiles(@Param("threshold") LocalDateTime threshold);
+
+        /**
+         * N+1 쿼리 최적화: 여러 Q&A의 첨부파일을 한 번에 조회
+         * 
+         * @param categoryType 카테고리 타입
+         * @param categoryIds  Q&A ID 목록
+         * @return 첨부파일 목록
+         */
+        @Query("SELECT a FROM Attachment a WHERE a.categoryType = :type AND a.categoryId IN :ids AND a.isDeleted = FALSE")
+        List<Attachment> findByCategoryTypeAndCategoryIdInAndIsDeletedFalse(
+                        @Param("type") AttachmentCategoryType categoryType,
+                        @Param("ids") List<Long> categoryIds);
 }

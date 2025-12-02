@@ -4,7 +4,9 @@ import com.softwarecampus.backend.domain.course.Course;
 import com.softwarecampus.backend.domain.course.CourseQna;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.course.QnaAnswerRequest;
+import com.softwarecampus.backend.dto.course.QnaFileDetail;
 import com.softwarecampus.backend.dto.course.QnaRequest;
+import com.softwarecampus.backend.dto.course.QnaUpdateRequest;
 import com.softwarecampus.backend.dto.course.QnaResponse;
 import com.softwarecampus.backend.exception.course.BadRequestException;
 import com.softwarecampus.backend.exception.course.ForbiddenException;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -28,10 +31,11 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     private final CourseQnaRepository qnaRepository;
     private final CourseRepository courseRepository;
     private final AccountRepository accountRepository;
+    private final CourseQnaAttachmentService attachmentService;
 
     @Override
     public Page<QnaResponse> getQnaList(Long courseId, String keyword, Pageable pageable) {
-        Course course = validateCourse(courseId);
+        validateCourse(courseId);
 
         Page<CourseQna> qnaPage;
         if (keyword != null && !keyword.isBlank()) {
@@ -63,19 +67,49 @@ public class CourseQnaServiceImpl implements CourseQnaService {
                 .questionText(request.getQuestionText())
                 .build();
 
-        return toDto(qnaRepository.save(qna));
+        CourseQna savedQna = qnaRepository.save(qna);
+
+        // 첨부파일 확정 (임시 저장된 파일을 Q&A에 연결)
+        if (request.getFileDetails() != null && !request.getFileDetails().isEmpty()) {
+            attachmentService.confirmAttachments(request.getFileDetails(), savedQna.getId());
+        }
+
+        return toDto(savedQna);
     }
 
     @Override
     @Transactional
-    public QnaResponse updateQuestion(Long qnaId, Long writerId, QnaRequest request) {
+    public QnaResponse updateQuestion(Long qnaId, Long writerId, QnaUpdateRequest request) {
         CourseQna qna = validateQna(qnaId);
         if (!qna.getAccount().getId().equals(writerId)) {
             throw new ForbiddenException("본인의 질문만 수정할 수 있습니다.");
         }
 
-        qna.setTitle(request.getTitle());
-        qna.setQuestionText(request.getQuestionText());
+        // 제목/내용이 제공된 경우에만 업데이트 (null이 아닌 경우)
+        if (request.getTitle() != null) {
+            if (request.getTitle().isBlank()) {
+                throw new BadRequestException("제목을 입력해주세요");
+            }
+            qna.setTitle(request.getTitle());
+        }
+
+        if (request.getQuestionText() != null) {
+            if (request.getQuestionText().isBlank()) {
+                throw new BadRequestException("질문 내용을 입력해주세요");
+            }
+            qna.setQuestionText(request.getQuestionText());
+        }
+
+        // 새로 추가된 파일 확정 (예외 가능성이 있는 작업을 먼저 수행)
+        if (request.getFileDetails() != null && !request.getFileDetails().isEmpty()) {
+            attachmentService.confirmAttachments(request.getFileDetails(), qnaId);
+        }
+
+        // 삭제 요청된 파일 처리 (Soft Delete, 물리적 삭제는 스케줄러에 위임)
+        if (request.getDeletedFileIds() != null && !request.getDeletedFileIds().isEmpty()) {
+            attachmentService.softDeleteFiles(request.getDeletedFileIds(), qnaId);
+        }
+
         return toDto(qna);
     }
 
@@ -86,6 +120,10 @@ public class CourseQnaServiceImpl implements CourseQnaService {
         if (!qna.getAccount().getId().equals(writerId)) {
             throw new ForbiddenException("본인의 질문만 삭제할 수 있습니다.");
         }
+
+        // 연결된 첨부파일 Soft Delete (물리적 삭제는 스케줄러에 위임)
+        attachmentService.softDeleteAllByQnaId(qnaId);
+
         qna.markDeleted();
     }
 
@@ -147,6 +185,11 @@ public class CourseQnaServiceImpl implements CourseQnaService {
         qna.setAnswered(false);
     }
 
+    @Override
+    public void validateCourseExists(Long courseId) {
+        validateCourse(courseId);
+    }
+
     private Course validateCourse(Long courseId) {
         Objects.requireNonNull(courseId, "Course ID must not be null");
         Course course = courseRepository.findById(courseId)
@@ -168,6 +211,9 @@ public class CourseQnaServiceImpl implements CourseQnaService {
     }
 
     private QnaResponse toDto(CourseQna qna) {
+        // 첨부파일 목록 조회
+        List<QnaFileDetail> files = attachmentService.getFilesByQnaId(qna.getId());
+
         return new QnaResponse(
                 qna.getId(),
                 qna.getTitle(),
@@ -179,6 +225,7 @@ public class CourseQnaServiceImpl implements CourseQnaService {
                 qna.getAnsweredBy() != null ? qna.getAnsweredBy().getUserName() : null,
                 qna.isAnswered(),
                 qna.getCreatedAt(),
-                qna.getUpdatedAt());
+                qna.getUpdatedAt(),
+                files);
     }
 }

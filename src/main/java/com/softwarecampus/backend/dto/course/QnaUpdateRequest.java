@@ -1,6 +1,5 @@
 package com.softwarecampus.backend.dto.course;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,18 +7,18 @@ import lombok.Setter;
 import java.util.List;
 
 /**
- * Course Q&A 질문 생성/수정 요청 DTO
+ * Course Q&A 질문 수정 요청 DTO
+ * - 수정 시에는 변경된 필드만 전달 가능
+ * - 필수 입력 검증은 서비스 레이어에서 수행
  */
 @Getter
 @Setter
-public class QnaRequest {
-    /** 질문 제목 */
-    @NotBlank(message = "제목을 입력해주세요")
+public class QnaUpdateRequest {
+    /** 질문 제목 (변경 시에만 전달) */
     @Size(max = 200, message = "제목은 200자를 초과할 수 없습니다")
     private String title;
 
-    /** 질문 내용 */
-    @NotBlank(message = "질문 내용을 입력해주세요")
+    /** 질문 내용 (변경 시에만 전달) */
     @Size(max = 5000, message = "질문 내용은 5000자를 초과할 수 없습니다")
     private String questionText;
 

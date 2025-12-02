@@ -8,6 +8,7 @@ import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.course.QnaAnswerRequest;
 import com.softwarecampus.backend.dto.course.QnaRequest;
 import com.softwarecampus.backend.dto.course.QnaResponse;
+import com.softwarecampus.backend.dto.course.QnaUpdateRequest;
 import com.softwarecampus.backend.exception.course.ForbiddenException;
 import com.softwarecampus.backend.exception.course.NotFoundException;
 import com.softwarecampus.backend.repository.course.CourseQnaRepository;
@@ -162,7 +163,7 @@ class CourseQnaServiceImplTest {
     @DisplayName("질문 수정 성공")
     void updateQuestion_success() {
         // given
-        QnaRequest request = new QnaRequest();
+        QnaUpdateRequest request = new QnaUpdateRequest();
         request.setTitle("Updated Title");
         request.setQuestionText("Updated Content");
 
