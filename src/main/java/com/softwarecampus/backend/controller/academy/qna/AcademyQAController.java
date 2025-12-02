@@ -49,6 +49,19 @@ public class AcademyQAController {
     private static final int MAX_PAGE_SIZE = 100;
 
     /**
+     * Q/A 질문 등록
+     */
+    @PostMapping
+    public ResponseEntity<QAResponse> createQuestion(
+            @PathVariable Long academyId,
+            @Valid @RequestBody QACreateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("Q/A 질문 등록 요청 수신. academyId={}, userId={}", academyId, userDetails.getId());
+        QAResponse response = academyQAService.createQuestion(academyId, request, userDetails.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
      * Q/A 조회 (페이징 및 검색 지원)
      */
     @GetMapping
