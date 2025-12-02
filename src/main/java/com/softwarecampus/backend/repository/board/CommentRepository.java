@@ -21,8 +21,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             "WHERE c.account.id = :accountId AND c.isDeleted = false AND c.board.isDeleted = false", countQuery = "SELECT COUNT(c) FROM Comment c WHERE c.account.id = :accountId AND c.isDeleted = false AND c.board.isDeleted = false")
     Page<MyCommentResponseDTO> findMyComments(@Param("accountId") Long accountId, Pageable pageable);
 
-    // 내가 쓴 댓글 수
-    @Query("SELECT COUNT(c) FROM Comment c WHERE c.account.id = :accountId AND c.isDeleted = false")
+    // 내가 쓴 댓글 수 (삭제되지 않은 게시글의 댓글만 카운트)
+    @Query("SELECT COUNT(c) FROM Comment c WHERE c.account.id = :accountId AND c.isDeleted = false AND c.board.isDeleted = false")
     Long countByAccountId(@Param("accountId") Long accountId);
 
     // 권한 체크용: Account만 Fetch Join (삭제되지 않은 댓글과 계정만 조회)
