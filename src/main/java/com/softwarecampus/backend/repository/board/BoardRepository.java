@@ -3,6 +3,7 @@ package com.softwarecampus.backend.repository.board;
 import com.softwarecampus.backend.domain.board.Board;
 import com.softwarecampus.backend.domain.board.BoardCategory;
 import com.softwarecampus.backend.dto.board.BoardListResponseDTO;
+import com.softwarecampus.backend.dto.mypage.MyPostResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,12 +14,29 @@ import java.util.Optional;
 
 public interface BoardRepository extends JpaRepository<Board, Long> {
 
-        // 게시글 상세 조회용: Account + Recommends + Attaches + Comments 한번에 조회
+        // ===== 마이페이지용 쿼리 =====
+
+        // 내가 쓴 글 목록 조회
+        @Query(value = "SELECT new com.softwarecampus.backend.dto.mypage.MyPostResponseDTO(" +
+                        "b.id, b.title, b.category, b.hits, " +
+                        "(SELECT COUNT(c) FROM Comment c WHERE c.board = b AND c.isDeleted = false), " +
+                        "(SELECT COUNT(r) FROM BoardRecommend r WHERE r.board = b), " +
+                        "b.createdAt) " +
+                        "FROM Board b WHERE b.account.id = :accountId AND b.isDeleted = false", countQuery = "SELECT COUNT(b) FROM Board b WHERE b.account.id = :accountId AND b.isDeleted = false")
+        Page<MyPostResponseDTO> findMyPosts(@Param("accountId") Long accountId, Pageable pageable);
+
+        // 내가 쓴 글 수
+        @Query("SELECT COUNT(b) FROM Board b WHERE b.account.id = :accountId AND b.isDeleted = false")
+        Long countByAccountId(@Param("accountId") Long accountId);
+
+        // 내 글들의 총 조회수
+        @Query("SELECT COALESCE(SUM(b.hits), 0) FROM Board b WHERE b.account.id = :accountId AND b.isDeleted = false")
+        Long sumHitsByAccountId(@Param("accountId") Long accountId);
+
+        // 게시글 상세 조회용: Account + Attaches 조회 (Recommends는 BatchSize로 처리)
         @Query("SELECT DISTINCT b FROM Board b " +
                         "LEFT JOIN FETCH b.account " +
                         "LEFT JOIN FETCH b.boardAttaches " +
-                        "LEFT JOIN FETCH b.boardRecommends br " +
-                        "LEFT JOIN FETCH br.account " +
                         "WHERE b.id = :id")
         Optional<Board> findByIdWithDetails(@Param("id") Long id);
 

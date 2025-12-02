@@ -2,6 +2,9 @@ package com.softwarecampus.backend.service.user.profile;
 
 import com.softwarecampus.backend.domain.common.VerificationType;
 import com.softwarecampus.backend.domain.user.Account;
+import com.softwarecampus.backend.dto.mypage.MyCommentResponseDTO;
+import com.softwarecampus.backend.dto.mypage.MyPostResponseDTO;
+import com.softwarecampus.backend.dto.mypage.MyStatsResponseDTO;
 import com.softwarecampus.backend.dto.user.AccountResponse;
 import com.softwarecampus.backend.dto.user.ChangePasswordRequest;
 import com.softwarecampus.backend.dto.user.EmailVerificationCodeRequest;
@@ -10,6 +13,9 @@ import com.softwarecampus.backend.dto.user.UpdateProfileRequest;
 import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.exception.user.InvalidInputException;
 import com.softwarecampus.backend.exception.user.PhoneNumberAlreadyExistsException;
+import com.softwarecampus.backend.repository.board.BoardRepository;
+import com.softwarecampus.backend.repository.board.CommentRepository;
+import com.softwarecampus.backend.repository.course.CourseFavoriteRepository;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import com.softwarecampus.backend.repository.user.EmailVerificationRepository;
 import com.softwarecampus.backend.security.CustomUserDetailsService;
@@ -17,6 +23,8 @@ import com.softwarecampus.backend.service.user.email.EmailVerificationService;
 import com.softwarecampus.backend.util.EmailUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +46,9 @@ public class ProfileServiceImpl implements ProfileService {
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
     private final CustomUserDetailsService customUserDetailsService;
+    private final BoardRepository boardRepository;
+    private final CommentRepository commentRepository;
+    private final CourseFavoriteRepository courseFavoriteRepository;
 
     /**
      * ID로 계정 조회
@@ -199,7 +210,8 @@ public class ProfileServiceImpl implements ProfileService {
                 .orElseThrow(() -> new AccountNotFoundException("계정을 찾을 수 없습니다."));
 
         // 3. 이메일 인증 코드 검증 (PASSWORD_CHANGE 타입)
-        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email, request.getVerificationCode());
+        EmailVerificationCodeRequest codeRequest = new EmailVerificationCodeRequest(email,
+                request.getVerificationCode());
         emailVerificationService.verifyChangeCode(codeRequest);
 
         // 4. 비밀번호 변경
@@ -255,5 +267,45 @@ public class ProfileServiceImpl implements ProfileService {
                 account.getAffiliation(),
                 account.getPosition(),
                 account.getProfileImage());
+    }
+
+    // ===== 마이페이지 활동 내역 =====
+
+    /**
+     * 내가 쓴 글 목록 조회
+     */
+    @Override
+    public Page<MyPostResponseDTO> getMyPosts(Long accountId, Pageable pageable) {
+        log.info("내가 쓴 글 목록 조회: accountId={}", accountId);
+        return boardRepository.findMyPosts(accountId, pageable);
+    }
+
+    /**
+     * 내가 쓴 댓글 목록 조회
+     */
+    @Override
+    public Page<MyCommentResponseDTO> getMyComments(Long accountId, Pageable pageable) {
+        log.info("내가 쓴 댓글 목록 조회: accountId={}", accountId);
+        return commentRepository.findMyComments(accountId, pageable);
+    }
+
+    /**
+     * 활동 통계 조회
+     */
+    @Override
+    public MyStatsResponseDTO getMyStats(Long accountId) {
+        log.info("활동 통계 조회: accountId={}", accountId);
+
+        Long totalPosts = boardRepository.countByAccountId(accountId);
+        Long totalComments = commentRepository.countByAccountId(accountId);
+        Long totalBookmarks = courseFavoriteRepository.countByAccount_Id(accountId);
+        Long totalViews = boardRepository.sumHitsByAccountId(accountId);
+
+        return MyStatsResponseDTO.builder()
+                .totalPosts(totalPosts)
+                .totalComments(totalComments)
+                .totalBookmarks(totalBookmarks)
+                .totalViews(totalViews)
+                .build();
     }
 }
