@@ -6,6 +6,7 @@ import com.softwarecampus.backend.dto.course.CourseImageResponse;
 import com.softwarecampus.backend.service.course.CourseImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +28,7 @@ public class CourseImageController {
      * @param isThumbnail (deprecated) 하위 호환을 위한 파라미터, imageType 사용 권장
      */
     @PostMapping("/{courseId}/images")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CourseImageResponse> uploadCourseImage(
             @PathVariable("type") CategoryType type,
             @PathVariable Long courseId,
