@@ -1,5 +1,6 @@
 package com.softwarecampus.backend.dto.course;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.softwarecampus.backend.domain.academy.Academy;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
@@ -43,9 +44,13 @@ public class CourseRequestDTO {
     
     private String location;
 
+    @JsonProperty("isKdt")
     private boolean isKdt;
+    
+    @JsonProperty("isNailbaeum")
     private boolean isNailbaeum;
     
+    @JsonProperty("isOffline")
     @Builder.Default
     private boolean isOffline = true; // 기본값: 오프라인
 

@@ -175,6 +175,7 @@ public class CourseServiceImpl implements CourseService {
         /**
          * 과정 상세 조회 (조회수 증가 포함)
          * 수정일: 2025-12-02 - @Transactional 추가 (viewCount 증가 반영을 위해)
+         * 수정일: 2025-12-02 - curriculums 초기화 추가 (MultipleBagFetchException 방지)
          */
         @Override
         @Transactional
@@ -184,6 +185,9 @@ public class CourseServiceImpl implements CourseService {
 
                 // 조회수 증가
                 course.incrementViewCount();
+
+                // curriculums 초기화 (Lazy Loading - MultipleBagFetchException 방지)
+                org.hibernate.Hibernate.initialize(course.getCurriculums());
 
                 return CourseDetailResponseDTO.fromEntity(course);
         }

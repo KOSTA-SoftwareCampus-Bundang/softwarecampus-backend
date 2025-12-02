@@ -26,7 +26,7 @@ public interface AcademyRepository extends JpaRepository<Academy, Long> {
             "AND (:status IS NULL OR a.isApproved = :status) " +
             "AND (:keyword IS NULL OR LOWER(a.name) LIKE CONCAT('%', LOWER(:keyword), '%') OR LOWER(a.address) LIKE CONCAT('%', LOWER(:keyword), '%'))")
     org.springframework.data.domain.Page<Academy> searchAcademies(
-            @org.springframework.data.repository.query.Param("status") com.softwarecampus.backend.domain.common.ApprovalStatus status,
+            @org.springframework.data.repository.query.Param("status") com.softwarecampus.backend.domain.academy.ApprovalStatus status,
             @org.springframework.data.repository.query.Param("keyword") String keyword,
             org.springframework.data.domain.Pageable pageable);
 }
