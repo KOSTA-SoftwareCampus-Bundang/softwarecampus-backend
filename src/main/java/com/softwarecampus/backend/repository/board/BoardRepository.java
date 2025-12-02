@@ -22,6 +22,35 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
                         "WHERE b.id = :id")
         Optional<Board> findByIdWithDetails(@Param("id") Long id);
 
+        // ===== 기본 조회 (정렬별) =====
+        // 최신순 (기본)
+        @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(distinct case when c.isDeleted=false then c.id end),MAX(b.hits),count(distinct r.id),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a "
+                        +
+                        "WHERE (:category IS NULL OR b.category=:category) and b.isDeleted = false GROUP BY b.id ORDER BY MAX(b.createdAt) DESC, b.id DESC", countQuery = "select count(b) from Board b WHERE (:category IS NULL OR b.category=:category) and b.isDeleted=false")
+        Page<BoardListResponseDTO> findBoardsByCategoryOrderByLatest(@Param("category") BoardCategory category,
+                        Pageable pageable);
+
+        // 추천순
+        @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(distinct case when c.isDeleted=false then c.id end),MAX(b.hits),count(distinct r.id),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a "
+                        +
+                        "WHERE (:category IS NULL OR b.category=:category) and b.isDeleted = false GROUP BY b.id ORDER BY count(distinct r.id) DESC, b.id DESC", countQuery = "select count(b) from Board b WHERE (:category IS NULL OR b.category=:category) and b.isDeleted=false")
+        Page<BoardListResponseDTO> findBoardsByCategoryOrderByPopular(@Param("category") BoardCategory category,
+                        Pageable pageable);
+
+        // 조회순
+        @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(distinct case when c.isDeleted=false then c.id end),MAX(b.hits),count(distinct r.id),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a "
+                        +
+                        "WHERE (:category IS NULL OR b.category=:category) and b.isDeleted = false GROUP BY b.id ORDER BY MAX(b.hits) DESC, b.id DESC", countQuery = "select count(b) from Board b WHERE (:category IS NULL OR b.category=:category) and b.isDeleted=false")
+        Page<BoardListResponseDTO> findBoardsByCategoryOrderByViews(@Param("category") BoardCategory category,
+                        Pageable pageable);
+
+        // 댓글순
+        @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(distinct case when c.isDeleted=false then c.id end),MAX(b.hits),count(distinct r.id),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a "
+                        +
+                        "WHERE (:category IS NULL OR b.category=:category) and b.isDeleted = false GROUP BY b.id ORDER BY count(distinct case when c.isDeleted=false then c.id end) DESC, b.id DESC", countQuery = "select count(b) from Board b WHERE (:category IS NULL OR b.category=:category) and b.isDeleted=false")
+        Page<BoardListResponseDTO> findBoardsByCategoryOrderByComments(@Param("category") BoardCategory category,
+                        Pageable pageable);
+
         @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(distinct case when c.isDeleted=false then c.id end),MAX(b.hits),count(distinct r.id),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a "
                         +
                         "WHERE (:category IS NULL OR b.category=:category) and b.isDeleted = false GROUP BY b.id", countQuery = "select count(b) from Board b WHERE (:category IS NULL OR b.category=:category) and b.isDeleted=false")

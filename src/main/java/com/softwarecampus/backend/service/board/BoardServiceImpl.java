@@ -40,13 +40,28 @@ public class BoardServiceImpl implements BoardService {
     @Transactional(readOnly = true)
     @Override
     public Page<BoardListResponseDTO> getBoards(int pageNo, BoardCategory category, String searchType,
-            String searchText) {
+            String searchText, String sortType) {
         int pageIndex = Math.max(pageNo - 1, 0);
-        PageRequest pageRequest = PageRequest.of(pageIndex, 10, Sort.by("id").descending());
+        PageRequest pageRequest = PageRequest.of(pageIndex, 10);
 
+        // 정렬 타입 기본값 설정
+        String effectiveSortType = (sortType != null && !sortType.isEmpty()) ? sortType : "latest";
+
+        // 검색어 없으면 정렬만 적용
         if (searchType == null || "".equals(searchType) || searchText == null || "".equals(searchText)) {
-            return boardRepository.findBoardsByCategory(category, pageRequest);
+            switch (effectiveSortType) {
+                case "popular":
+                    return boardRepository.findBoardsByCategoryOrderByPopular(category, pageRequest);
+                case "views":
+                    return boardRepository.findBoardsByCategoryOrderByViews(category, pageRequest);
+                case "comments":
+                    return boardRepository.findBoardsByCategoryOrderByComments(category, pageRequest);
+                case "latest":
+                default:
+                    return boardRepository.findBoardsByCategoryOrderByLatest(category, pageRequest);
+            }
         } else {
+            // 검색 + 정렬 (검색 시에는 최신순 고정 - 추후 확장 가능)
             String searchPattern = "%" + searchText + "%";
             switch (searchType) {
                 case "title":
@@ -65,9 +80,8 @@ public class BoardServiceImpl implements BoardService {
                     throw new BoardException(BoardErrorCode.SEARCHTYPE_MISSMATCH);
             }
         }
-    }
+    } //
 
-    //
     @Transactional
     @Override
     public BoardResponseDTO getBoardById(Long id, Long userId, String clientIp) {

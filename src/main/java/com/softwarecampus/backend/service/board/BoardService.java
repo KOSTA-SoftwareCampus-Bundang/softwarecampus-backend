@@ -14,9 +14,9 @@ public interface BoardService {
 
     public void deleteFile(BoardAttach boardAttach);
 
-    // 전체 게시글 조회
+    // 전체 게시글 조회 (정렬 옵션 포함)
     public Page<BoardListResponseDTO> getBoards(int pageNo, BoardCategory category, String searchType,
-            String searchText);
+            String searchText, String sortType);
 
     // 게시글 하나 조회 (조회수 중복 방지 포함)
     public BoardResponseDTO getBoardById(Long id, Long userId, String clientIp);

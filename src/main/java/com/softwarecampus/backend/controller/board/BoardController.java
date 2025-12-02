@@ -36,9 +36,10 @@ public class BoardController {
     // 게시글 목록 조회, 목록 검색기능
     @GetMapping
     public ResponseEntity<?> getBoards(@RequestParam(defaultValue = "1") int pageNo, BoardCategory category,
-            @RequestParam(required = false) String searchType, @RequestParam(required = false) String searchText) {
+            @RequestParam(required = false) String searchType, @RequestParam(required = false) String searchText,
+            @RequestParam(required = false, defaultValue = "latest") String sortType) {
 
-        Page<BoardListResponseDTO> boards = boardService.getBoards(pageNo, category, searchType, searchText);
+        Page<BoardListResponseDTO> boards = boardService.getBoards(pageNo, category, searchType, searchText, sortType);
         return ResponseEntity.ok(boards);
     }
 
