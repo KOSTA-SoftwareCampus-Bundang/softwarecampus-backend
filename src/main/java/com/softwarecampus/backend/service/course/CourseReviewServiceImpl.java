@@ -80,11 +80,19 @@ public class CourseReviewServiceImpl implements CourseReviewService {
                 Account writer = accountRepository.findById(accountId)
                                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
+                // Course의 카테고리 타입을 리뷰에 설정 (필수 필드)
+                CategoryType categoryType = course.getCategoryType();
+                if (categoryType == null) {
+                        // 카테고리 타입이 없는 경우 기본값 설정
+                        categoryType = CategoryType.JOB_SEEKER;
+                }
+
                 CourseReview review = CourseReview.builder()
                                 .course(course)
                                 .writer(writer)
                                 .comment(request.getComment())
                                 .approvalStatus(ApprovalStatus.PENDING)
+                                .type(categoryType)
                                 .build();
 
                 // 섹션 추가

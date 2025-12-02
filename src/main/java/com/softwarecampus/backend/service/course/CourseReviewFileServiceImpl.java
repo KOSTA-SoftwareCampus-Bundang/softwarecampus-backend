@@ -45,25 +45,24 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
         CourseReview review = courseReviewRepository.findByIdAndCourseIdAndIsDeletedFalse(reviewId, courseId)
                 .orElseThrow(() -> new NotFoundException("해당 리뷰가 존재하지 않거나 코스/카테고리가 일치하지 않습니다."));
 
-        // 4 DB에 placeholder로 저장
-        CourseReviewFile reviewFile = CourseReviewFile.builder()
-                .reviewId(review.getId())
-                .uploader(uploader)
-                .build();
-        reviewFileRepository.save(reviewFile);
-
+        // 4 S3 업로드를 먼저 수행 (file_url이 NOT NULL이므로)
+        String url;
         try {
-            // 5 S3 업로드
-            String url = s3Service.uploadFile(
+            url = s3Service.uploadFile(
                     file,
                     S3Folder.REVIEW.getPath(),
                     FileType.FileTypeEnum.REVIEW_FILE);
-            reviewFile.setFileUrl(url);
-
         } catch (Exception e) {
-            // reviewFileRepository.delete(reviewFile); // 트랜잭션 롤백으로 인해 불필요
             throw new RuntimeException("S3 업로드 실패: " + e.getMessage(), e);
         }
+
+        // 5 S3 업로드 성공 후 DB에 저장
+        CourseReviewFile reviewFile = CourseReviewFile.builder()
+                .reviewId(review.getId())
+                .uploader(uploader)
+                .fileUrl(url)
+                .build();
+        reviewFileRepository.save(reviewFile);
 
         return ReviewFileResponse.from(reviewFile);
     }
