@@ -1,11 +1,14 @@
 package com.softwarecampus.backend.controller.course;
 
 import com.softwarecampus.backend.dto.course.QnaAnswerRequest;
+import com.softwarecampus.backend.dto.course.QnaFileDetail;
 import com.softwarecampus.backend.dto.course.QnaRequest;
 import com.softwarecampus.backend.dto.course.QnaResponse;
+import com.softwarecampus.backend.service.course.CourseQnaAttachmentService;
 import com.softwarecampus.backend.service.course.CourseQnaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,15 +16,50 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/courses")
+@Slf4j
 public class CourseQnaController {
 
     private final CourseQnaService qnaService;
+    private final CourseQnaAttachmentService attachmentService;
+
+    /**
+     * Q&A 첨부파일 임시 업로드 (단일 파일)
+     * - 파일을 S3에 업로드하고 DB에 임시 저장
+     * - Q&A 생성/수정 시 fileDetails로 전달하여 확정
+     */
+    @PostMapping("/{courseId}/qna/files/upload")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<QnaFileDetail> uploadQnaFile(
+            @PathVariable Long courseId,
+            @RequestParam("file") MultipartFile file) {
+
+        log.info("Course Q&A 첨부파일 임시 업로드 요청 - courseId: {}, fileName: {}", courseId, file.getOriginalFilename());
+        List<QnaFileDetail> fileDetails = attachmentService.uploadFiles(List.of(file));
+        return ResponseEntity.ok(fileDetails.get(0));
+    }
+
+    /**
+     * Q&A 첨부파일 임시 업로드 (복수 파일)
+     * - 파일을 S3에 업로드하고 DB에 임시 저장
+     * - Q&A 생성/수정 시 fileDetails로 전달하여 확정
+     */
+    @PostMapping("/{courseId}/qna/files/upload-multiple")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<QnaFileDetail>> uploadQnaFiles(
+            @PathVariable Long courseId,
+            @RequestParam("files") List<MultipartFile> files) {
+
+        log.info("Course Q&A 첨부파일 {}건 임시 업로드 요청 - courseId: {}", files.size(), courseId);
+        List<QnaFileDetail> fileDetails = attachmentService.uploadFiles(files);
+        return ResponseEntity.ok(fileDetails);
+    }
 
     /** Q&A 목록 조회 (페이징 및 검색 지원) */
     @GetMapping("/{courseId}/qna")
