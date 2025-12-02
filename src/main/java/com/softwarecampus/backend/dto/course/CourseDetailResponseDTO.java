@@ -4,6 +4,7 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
 import com.softwarecampus.backend.domain.course.CourseCurriculum;
+import com.softwarecampus.backend.domain.course.CourseImageType;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -48,6 +49,12 @@ public class CourseDetailResponseDTO {
     private ApprovalStatus approvalStatus;
     private LocalDateTime approvedAt;
 
+    // 과정 이미지 (썸네일 - 목록 표시용)
+    private String imageUrl;
+    
+    // 과정 헤더 이미지 (상세 페이지 배경)
+    private String headerImageUrl;
+
     // 상세 정보 추가
     private List<CurriculumDTO> curriculums;
 
@@ -75,6 +82,20 @@ public class CourseDetailResponseDTO {
     public static CourseDetailResponseDTO fromEntity(Course course) {
         var academy = course.getAcademy();
         var category = course.getCategory();
+
+        // 썸네일 이미지 추출 (THUMBNAIL 타입 또는 기존 isThumbnail=true)
+        String imageUrl = course.getImages() != null ? course.getImages().stream()
+                .filter(img -> img.isActive() && img.isThumbnail())
+                .findFirst()
+                .map(com.softwarecampus.backend.domain.course.CourseImage::getImageUrl)
+                .orElse(null) : null;
+
+        // 헤더 이미지 추출 (HEADER 타입)
+        String headerImageUrl = course.getImages() != null ? course.getImages().stream()
+                .filter(img -> img.isActive() && img.getImageType() == CourseImageType.HEADER)
+                .findFirst()
+                .map(com.softwarecampus.backend.domain.course.CourseImage::getImageUrl)
+                .orElse(null) : null;
 
         // 평점 계산 (삭제되지 않은 승인된 리뷰들의 평균)
         double rating = 0.0;
@@ -118,6 +139,8 @@ public class CourseDetailResponseDTO {
                 .requirement(course.getRequirement())
                 .approvalStatus(course.getIsApproved())
                 .approvedAt(course.getApprovedAt())
+                .imageUrl(imageUrl)
+                .headerImageUrl(headerImageUrl)
                 .rating(rating)
                 .reviewCount(reviewCount)
                 .curriculums(course.getCurriculums() != null
