@@ -118,43 +118,43 @@ public class CourseQnaController {
         return ResponseEntity.ok(qnaService.updateQuestion(qnaId, writerId, request));
     }
 
-    /** 질문 삭제 */
+    /** 질문 삭제 (질문자 본인 또는 관리자만 가능) */
     @DeleteMapping("/qna/{qnaId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteQuestion(
             @PathVariable Long qnaId,
-            @RequestAttribute("userId") Long writerId) {
-        qnaService.deleteQuestion(qnaId, writerId);
+            @RequestAttribute("userId") Long userId) {
+        qnaService.deleteQuestion(qnaId, userId);
         return ResponseEntity.noContent().build();
     }
 
-    /** 답변 등록 */
+    /** 답변 등록 (관리자 또는 해당 과정 기관 담당자) */
     @PostMapping("/qna/{qnaId}/answer")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMY')")
     public ResponseEntity<QnaResponse> answerQuestion(
             @PathVariable Long qnaId,
             @RequestBody @Valid QnaAnswerRequest request,
-            @RequestAttribute("userId") Long adminId) {
-        return ResponseEntity.ok(qnaService.answerQuestion(qnaId, adminId, request));
+            @RequestAttribute("userId") Long responderId) {
+        return ResponseEntity.ok(qnaService.answerQuestion(qnaId, responderId, request));
     }
 
-    /** 답변 수정 */
+    /** 답변 수정 (관리자 또는 해당 과정 기관 담당자) */
     @PutMapping("/qna/{qnaId}/answer")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMY')")
     public ResponseEntity<QnaResponse> updateAnswer(
             @PathVariable Long qnaId,
             @RequestBody @Valid QnaAnswerRequest request,
-            @RequestAttribute("userId") Long adminId) {
-        return ResponseEntity.ok(qnaService.updateAnswer(qnaId, adminId, request));
+            @RequestAttribute("userId") Long responderId) {
+        return ResponseEntity.ok(qnaService.updateAnswer(qnaId, responderId, request));
     }
 
-    /** 답변 삭제 */
+    /** 답변 삭제 (관리자 또는 해당 과정 기관 담당자) */
     @DeleteMapping("/qna/{qnaId}/answer")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMY')")
     public ResponseEntity<Void> deleteAnswer(
             @PathVariable Long qnaId,
-            @RequestAttribute("userId") Long adminId) {
-        qnaService.deleteAnswer(qnaId, adminId);
+            @RequestAttribute("userId") Long responderId) {
+        qnaService.deleteAnswer(qnaId, responderId);
         return ResponseEntity.noContent().build();
     }
 }

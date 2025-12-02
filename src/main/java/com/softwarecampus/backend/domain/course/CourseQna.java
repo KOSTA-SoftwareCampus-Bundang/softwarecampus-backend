@@ -5,6 +5,8 @@ import com.softwarecampus.backend.domain.user.Account;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 /**
  * 과정 Q&A 엔티티
  * - 질문과 답변을 하나의 테이블로 관리
@@ -45,7 +47,7 @@ public class CourseQna extends BaseSoftDeleteSupportEntity {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    /** 답변 작성자 (관리자 또는 강사) */
+    /** 답변 작성자 (관리자 또는 기관 담당자) */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "answered_by_id")
     private Account answeredBy;
@@ -55,10 +57,23 @@ public class CourseQna extends BaseSoftDeleteSupportEntity {
     @Builder.Default
     private boolean isAnswered = false;
 
+    /** 답변 작성 시간 */
+    @Column(name = "answered_at")
+    private LocalDateTime answeredAt;
+
     /** 답변 등록 메서드 */
     public void writeAnswer(String answerText, Account answeredBy) {
         this.answerText = answerText;
         this.answeredBy = answeredBy;
         this.isAnswered = true;
+        this.answeredAt = LocalDateTime.now();
+    }
+
+    /** 답변 삭제 메서드 */
+    public void clearAnswer() {
+        this.answerText = null;
+        this.answeredBy = null;
+        this.isAnswered = false;
+        this.answeredAt = null;
     }
 }
