@@ -1,6 +1,7 @@
 package com.softwarecampus.backend.service.admin;
 
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
+import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.admin.DashboardStatsResponse;
 import com.softwarecampus.backend.dto.admin.InstitutionDashboardStatsResponse;
 import com.softwarecampus.backend.repository.course.CourseRepository;
@@ -67,5 +68,23 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 .totalReviews(totalReviews)
                 .pendingReviews(pendingReviews)
                 .build();
+    }
+
+    /**
+     * 계정 ID로 기관 ID 조회
+     * 레이어 규칙 준수를 위해 컨트롤러에서 서비스로 이동
+     * 
+     * @param accountId 계정 ID
+     * @return 기관 ID
+     * @throws IllegalArgumentException 사용자를 찾을 수 없거나 기관 정보가 없는 경우
+     */
+    @Override
+    public Long getAcademyIdByAccountId(Long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        if (account.getAcademyId() == null) {
+            throw new IllegalArgumentException("기관 정보가 없는 계정입니다.");
+        }
+        return account.getAcademyId();
     }
 }

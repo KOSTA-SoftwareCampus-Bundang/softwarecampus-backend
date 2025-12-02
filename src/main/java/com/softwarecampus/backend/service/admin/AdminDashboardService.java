@@ -26,4 +26,13 @@ public interface AdminDashboardService {
      * @return 기관용 대시보드 통계 응답 DTO
      */
     InstitutionDashboardStatsResponse getInstitutionDashboardStats(Long academyId);
+
+    /**
+     * 계정 ID로 기관 ID 조회
+     * 
+     * @param accountId 계정 ID
+     * @return 기관 ID
+     * @throws IllegalArgumentException 사용자를 찾을 수 없거나 기관 정보가 없는 경우
+     */
+    Long getAcademyIdByAccountId(Long accountId);
 }

@@ -1,11 +1,9 @@
 package com.softwarecampus.backend.controller.institution;
 
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
-import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.admin.InstitutionDashboardStatsResponse;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
 import com.softwarecampus.backend.dto.course.CourseReviewResponse;
-import com.softwarecampus.backend.repository.user.AccountRepository;
 import com.softwarecampus.backend.security.CustomUserDetails;
 import com.softwarecampus.backend.service.admin.AdminDashboardService;
 import com.softwarecampus.backend.service.course.CourseReviewService;
@@ -34,15 +32,13 @@ public class InstitutionController {
     private final CourseService courseService;
     private final CourseReviewService courseReviewService;
     private final AdminDashboardService adminDashboardService;
-    private final AccountRepository accountRepository;
 
+    /**
+     * 현재 로그인 사용자의 기관 ID 조회
+     * 레이어 규칙 준수를 위해 서비스 계층을 통해 조회
+     */
     private Long getAcademyId(CustomUserDetails userDetails) {
-        Account account = accountRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-        if (account.getAcademyId() == null) {
-            throw new IllegalArgumentException("기관 정보가 없는 계정입니다.");
-        }
-        return account.getAcademyId();
+        return adminDashboardService.getAcademyIdByAccountId(userDetails.getId());
     }
 
     /**
