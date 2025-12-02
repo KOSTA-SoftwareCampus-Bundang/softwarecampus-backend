@@ -48,7 +48,13 @@ public class CourseQnaController {
         qnaService.validateCourseExists(courseId);
 
         List<QnaFileDetail> fileDetails = attachmentService.uploadFiles(List.of(file));
-        return ResponseEntity.ok(fileDetails.get(0));
+
+        // 업로드 결과 방어적 검증
+        QnaFileDetail uploadedFile = fileDetails.stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("파일 업로드에 실패했습니다."));
+
+        return ResponseEntity.ok(uploadedFile);
     }
 
     /**
