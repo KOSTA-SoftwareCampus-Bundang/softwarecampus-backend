@@ -58,13 +58,16 @@ public class Course extends BaseSoftDeleteSupportEntity {
     @Column(columnDefinition = "TEXT")
     private String requirement;
 
+    /**
+     * 조회수 - 필드 레벨 초기화로 JPA no-args 생성자에서도 null 방지
+     */
     @Column(nullable = false)
     @Builder.Default
-    private Long viewCount = 0L;
+    private long viewCount = 0L;
 
     /**
      * 조회수 증가
-     * @Builder.Default로 0L 초기화되므로 null 체크 불필요
+     * primitive long 타입 사용으로 null 검사 불필요
      */
     public void incrementViewCount() {
         this.viewCount++;
