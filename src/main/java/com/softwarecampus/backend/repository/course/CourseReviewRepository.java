@@ -81,12 +81,12 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
                         @Param("keyword") String keyword,
                         Pageable pageable);
 
-        // 기관별 리뷰 수
+        // 기관별 리뷰 수 (삭제되지 않은 리뷰만)
         @Query("SELECT COUNT(r) FROM CourseReview r WHERE r.deletedAt IS NULL AND r.course.academy.id = :academyId")
-        long countByAcademyId(@Param("academyId") Long academyId);
+        long countByAcademyIdAndDeletedAtIsNull(@Param("academyId") Long academyId);
 
-        // 기관별 승인 대기 리뷰 수
+        // 기관별 승인 대기 리뷰 수 (삭제되지 않은 리뷰만)
         @Query("SELECT COUNT(r) FROM CourseReview r WHERE r.deletedAt IS NULL AND r.course.academy.id = :academyId AND r.approvalStatus = :status")
-        long countByAcademyIdAndApprovalStatus(@Param("academyId") Long academyId,
+        long countByAcademyIdAndApprovalStatusAndDeletedAtIsNull(@Param("academyId") Long academyId,
                         @Param("status") ApprovalStatus status);
 }

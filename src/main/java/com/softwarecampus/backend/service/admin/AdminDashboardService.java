@@ -30,9 +30,12 @@ public interface AdminDashboardService {
     /**
      * 계정 ID로 기관 ID 조회
      * 
+     * Soft Delete 준수: 삭제된 계정은 조회 불가
+     * 
      * @param accountId 계정 ID
      * @return 기관 ID
-     * @throws IllegalArgumentException 사용자를 찾을 수 없거나 기관 정보가 없는 경우
+     * @throws AccountNotFoundException 사용자를 찾을 수 없는 경우 (삭제된 계정 포함)
+     * @throws BadRequestException 기관 정보가 없는 계정인 경우
      */
     Long getAcademyIdByAccountId(Long accountId);
 }

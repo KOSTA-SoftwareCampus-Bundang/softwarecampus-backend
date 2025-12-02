@@ -4,6 +4,8 @@ import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.user.Account;
 import com.softwarecampus.backend.dto.admin.DashboardStatsResponse;
 import com.softwarecampus.backend.dto.admin.InstitutionDashboardStatsResponse;
+import com.softwarecampus.backend.exception.course.BadRequestException;
+import com.softwarecampus.backend.exception.user.AccountNotFoundException;
 import com.softwarecampus.backend.repository.course.CourseRepository;
 import com.softwarecampus.backend.repository.course.CourseReviewRepository;
 import com.softwarecampus.backend.repository.user.AccountRepository;
@@ -53,14 +55,16 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
      * 기관 대시보드 통계 조회
      * - 기관 소속 과정 수, 리뷰 수
      * - 승인 대기 중인 과정 및 리뷰 수
+     * - Soft Delete 준수: 삭제되지 않은 데이터만 집계
      */
     @Override
     public InstitutionDashboardStatsResponse getInstitutionDashboardStats(Long academyId) {
         long totalCourses = courseRepository.countByAcademyIdAndDeletedAtIsNull(academyId);
         long pendingCourses = courseRepository.countByAcademyIdAndIsApprovedAndDeletedAtIsNull(
                 academyId, ApprovalStatus.PENDING);
-        long totalReviews = reviewRepository.countByAcademyId(academyId);
-        long pendingReviews = reviewRepository.countByAcademyIdAndApprovalStatus(academyId, ApprovalStatus.PENDING);
+        long totalReviews = reviewRepository.countByAcademyIdAndDeletedAtIsNull(academyId);
+        long pendingReviews = reviewRepository.countByAcademyIdAndApprovalStatusAndDeletedAtIsNull(
+                academyId, ApprovalStatus.PENDING);
 
         return InstitutionDashboardStatsResponse.builder()
                 .totalCourses(totalCourses)
@@ -74,16 +78,20 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
      * 계정 ID로 기관 ID 조회
      * 레이어 규칙 준수를 위해 컨트롤러에서 서비스로 이동
      * 
+     * Soft Delete 준수: 삭제된 계정은 조회 불가
+     * 
      * @param accountId 계정 ID
      * @return 기관 ID
-     * @throws IllegalArgumentException 사용자를 찾을 수 없거나 기관 정보가 없는 경우
+     * @throws AccountNotFoundException 사용자를 찾을 수 없는 경우 (삭제된 계정 포함)
+     * @throws BadRequestException 기관 정보가 없는 계정인 경우
      */
     @Override
     public Long getAcademyIdByAccountId(Long accountId) {
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        // Soft Delete 준수: 삭제되지 않은 계정만 조회
+        Account account = accountRepository.findByIdAndIsDeletedFalse(accountId)
+                .orElseThrow(() -> new AccountNotFoundException("사용자를 찾을 수 없습니다."));
         if (account.getAcademyId() == null) {
-            throw new IllegalArgumentException("기관 정보가 없는 계정입니다.");
+            throw new BadRequestException("기관 정보가 없는 계정입니다.");
         }
         return account.getAcademyId();
     }
