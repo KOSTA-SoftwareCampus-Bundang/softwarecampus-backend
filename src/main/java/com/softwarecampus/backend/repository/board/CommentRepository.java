@@ -25,14 +25,15 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.account.id = :accountId AND c.isDeleted = false")
     Long countByAccountId(@Param("accountId") Long accountId);
 
-    // 권한 체크용: Account만 Fetch Join
-    @Query("SELECT c FROM Comment c JOIN FETCH c.account WHERE c.id = :id")
+    // 권한 체크용: Account만 Fetch Join (삭제되지 않은 댓글과 계정만 조회)
+    @Query("SELECT c FROM Comment c JOIN FETCH c.account a WHERE c.id = :id AND c.isDeleted = false AND a.isDeleted = false")
     Optional<Comment> findByIdWithAccount(@Param("id") Long id);
 
     // 댓글 조회용: Account + 대댓글 Fetch Join
+    // 주의: LEFT JOIN FETCH로 조회된 subComments 중 삭제된 것은 서비스 레이어에서 필터링 필요
     @Query("SELECT c FROM Comment c " +
-            "JOIN FETCH c.account " +
+            "JOIN FETCH c.account a " +
             "LEFT JOIN FETCH c.subComments sc " +
-            "WHERE c.id = :id")
+            "WHERE c.id = :id AND c.isDeleted = false AND a.isDeleted = false")
     Optional<Comment> findByIdWithAccountAndSubComments(@Param("id") Long id);
 }
