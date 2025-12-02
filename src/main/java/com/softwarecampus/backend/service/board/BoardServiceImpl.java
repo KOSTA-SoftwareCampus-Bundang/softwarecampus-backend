@@ -47,14 +47,22 @@ public class BoardServiceImpl implements BoardService {
         if (searchType == null || "".equals(searchType) || searchText == null || "".equals(searchText)) {
             return boardRepository.findBoardsByCategory(category, pageRequest);
         } else {
-            if ("title".equals(searchType)) {
-                return boardRepository.findBoardsByTitle(category, "%" + searchText + "%", pageRequest);
-            } else if ("text".equals(searchType)) {
-                return boardRepository.findBoardsByText(category, "%" + searchText + "%", pageRequest);
-            } else if ("title+text".equals(searchType)) {
-                return boardRepository.findBoardsByTitleAndText(category, "%" + searchText + "%", pageRequest);
-            } else {
-                throw new BoardException(BoardErrorCode.SEARCHTYPE_MISSMATCH);
+            String searchPattern = "%" + searchText + "%";
+            switch (searchType) {
+                case "title":
+                    return boardRepository.findBoardsByTitle(category, searchPattern, pageRequest);
+                case "content":
+                    return boardRepository.findBoardsByText(category, searchPattern, pageRequest);
+                case "title_content":
+                    return boardRepository.findBoardsByTitleAndText(category, searchPattern, pageRequest);
+                case "author":
+                    return boardRepository.findBoardsByAuthor(category, searchPattern, pageRequest);
+                case "comment":
+                    return boardRepository.findBoardsByComment(category, searchPattern, pageRequest);
+                case "all":
+                    return boardRepository.findBoardsByAll(category, searchPattern, pageRequest);
+                default:
+                    throw new BoardException(BoardErrorCode.SEARCHTYPE_MISSMATCH);
             }
         }
     }

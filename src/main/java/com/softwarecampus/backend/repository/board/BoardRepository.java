@@ -34,6 +34,27 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
         Page<BoardListResponseDTO> findBoardsByTitleAndText(@Param("category") BoardCategory category,
                         @Param("searchText") String searchText, Pageable pageable);
 
+        // 글쓴이(작성자) 검색
+        @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(distinct case when c.isDeleted=false then c.id end),MAX(b.hits),count(distinct r.id),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a "
+                        +
+                        "WHERE (:category IS NULL OR b.category=:category) and a.userName like :searchText and b.isDeleted=false GROUP BY b.id", countQuery = "select count(b) from Board b join b.account a WHERE (:category IS NULL OR b.category=:category) and a.userName like :searchText and b.isDeleted=false")
+        Page<BoardListResponseDTO> findBoardsByAuthor(@Param("category") BoardCategory category,
+                        @Param("searchText") String searchText, Pageable pageable);
+
+        // 댓글 내용 검색
+        @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(distinct case when c.isDeleted=false then c.id end),MAX(b.hits),count(distinct r.id),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a "
+                        +
+                        "WHERE (:category IS NULL OR b.category=:category) and c.text like :searchText and c.isDeleted=false and b.isDeleted=false GROUP BY b.id", countQuery = "select count(distinct b) from Board b left join b.comments c WHERE (:category IS NULL OR b.category=:category) and c.text like :searchText and c.isDeleted=false and b.isDeleted=false")
+        Page<BoardListResponseDTO> findBoardsByComment(@Param("category") BoardCategory category,
+                        @Param("searchText") String searchText, Pageable pageable);
+
+        // 전체 검색 (제목 + 내용 + 글쓴이)
+        @Query(value = "SELECT new com.softwarecampus.backend.dto.board.BoardListResponseDTO(b.id,MAX(b.category),MAX(b.title),MAX(b.secret),MAX(a.userName),MAX(a.id),count(distinct case when c.isDeleted=false then c.id end),MAX(b.hits),count(distinct r.id),max(b.createdAt)) from Board b left join b.boardRecommends r left join b.comments c join b.account a "
+                        +
+                        "WHERE (:category IS NULL OR b.category=:category) and (b.title like :searchText OR b.text like :searchText OR a.userName like :searchText) and b.isDeleted=false GROUP BY b.id", countQuery = "select count(b) from Board b join b.account a WHERE (:category IS NULL OR b.category=:category) and (b.title like :searchText OR b.text like :searchText OR a.userName like :searchText) and b.isDeleted=false")
+        Page<BoardListResponseDTO> findBoardsByAll(@Param("category") BoardCategory category,
+                        @Param("searchText") String searchText, Pageable pageable);
+
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "account" })
         Page<Board> findByIsDeletedFalse(Pageable pageable);
 }
