@@ -45,11 +45,33 @@ public class BoardController {
     // 게시글 하나 조회 with 댓글
     @GetMapping("/{boardId:\\d+}")
     public ResponseEntity<?> getBoard(@PathVariable Long boardId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request) {
+
+        Long userId = userDetails != null ? userDetails.getId() : null;
+        String clientIp = getClientIp(request);
 
         // 게시글 하나 조회 service 메서드 호출
-        BoardResponseDTO board = boardService.getBoardById(boardId, userDetails != null ? userDetails.getId() : null);
+        BoardResponseDTO board = boardService.getBoardById(boardId, userId, clientIp);
         return ResponseEntity.ok(board);
+    }
+
+    /**
+     * 클라이언트 IP 추출 (프록시 환경 대응)
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // X-Forwarded-For에 여러 IP가 있을 경우 첫 번째가 클라이언트 IP
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
     }
 
     // 게시글 생성 with 첨부파일

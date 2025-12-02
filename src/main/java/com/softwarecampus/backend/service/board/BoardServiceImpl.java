@@ -31,6 +31,7 @@ public class BoardServiceImpl implements BoardService {
     private final FileType fileType;
     private final BoardRepository boardRepository;
     private final BoardAttachRepository boardAttachRepository;
+    private final BoardViewRepository boardViewRepository;
     private final AccountRepository accountRepository;
     private final CommentRepository commentRepository;
     private final BoardRecommendRepository boardRecommendRepository;
@@ -61,7 +62,7 @@ public class BoardServiceImpl implements BoardService {
     //
     @Transactional
     @Override
-    public BoardResponseDTO getBoardById(Long id, Long userId) {
+    public BoardResponseDTO getBoardById(Long id, Long userId, String clientIp) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new BoardException(BoardErrorCode.BOARD_NOT_FOUND));
         // 삭제된 글 조회 불가 처리
@@ -71,7 +72,10 @@ public class BoardServiceImpl implements BoardService {
         if (board.isSecret() && (userId == null || !userId.equals(board.getAccount().getId()))) {
             throw new BoardException(BoardErrorCode.CANNOT_READ_BOARD);
         }
-        board.setHits(board.getHits() + 1);
+
+        // 조회수 증가 로직 (중복 방지)
+        incrementHitsIfAllowed(board, userId, clientIp);
+
         BoardResponseDTO boardResponseDTO = BoardResponseDTO.from(board, userId);
         if (userId != null) {
             boardResponseDTO.setLike(
@@ -79,6 +83,42 @@ public class BoardServiceImpl implements BoardService {
             boardResponseDTO.setOwner(userId.equals(board.getAccount().getId()));
         }
         return boardResponseDTO;
+    }
+
+    /**
+     * 조회수 증가 (중복 방지)
+     * - 작성자 본인: 증가 안함
+     * - 로그인 사용자: 오늘 첫 조회일 때만 +1 (account_id 기준)
+     * - 비로그인 사용자: 오늘 첫 조회일 때만 +1 (IP 기준)
+     */
+    private void incrementHitsIfAllowed(Board board, Long userId, String clientIp) {
+        // 1. 작성자 본인이면 증가 안함
+        if (userId != null && userId.equals(board.getAccount().getId())) {
+            return;
+        }
+
+        boolean alreadyViewed;
+
+        if (userId != null) {
+            // 2. 로그인 사용자: account_id 기준
+            alreadyViewed = boardViewRepository.existsTodayViewByAccount(board.getId(), userId);
+        } else {
+            // 3. 비로그인 사용자: IP 기준
+            alreadyViewed = boardViewRepository.existsTodayViewByIp(board.getId(), clientIp);
+        }
+
+        if (!alreadyViewed) {
+            // 조회수 증가
+            board.setHits(board.getHits() + 1);
+
+            // 조회 기록 저장
+            BoardView boardView = BoardView.builder()
+                    .board(board)
+                    .account(userId != null ? accountRepository.getReferenceById(userId) : null)
+                    .ipAddress(userId == null ? clientIp : null)
+                    .build();
+            boardViewRepository.save(boardView);
+        }
     }
 
     // 게시글 생성
