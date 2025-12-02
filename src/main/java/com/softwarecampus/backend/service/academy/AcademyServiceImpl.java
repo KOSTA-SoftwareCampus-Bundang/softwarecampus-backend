@@ -222,7 +222,7 @@ public class AcademyServiceImpl implements AcademyService {
      */
     @Override
     public org.springframework.data.domain.Page<AcademyResponse> getAdminAcademies(
-            com.softwarecampus.backend.domain.common.ApprovalStatus status,
+            com.softwarecampus.backend.domain.academy.ApprovalStatus status,
             String keyword,
             org.springframework.data.domain.Pageable pageable) {
         org.springframework.data.domain.Page<Academy> academyPage = academyRepository.searchAcademies(status, keyword,

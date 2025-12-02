@@ -43,7 +43,7 @@ public interface AcademyService {
      * 관리자용 기관 목록 조회 (검색, 필터링, 페이징)
      */
     org.springframework.data.domain.Page<AcademyResponse> getAdminAcademies(
-            com.softwarecampus.backend.domain.common.ApprovalStatus status,
+            com.softwarecampus.backend.domain.academy.ApprovalStatus status,
             String keyword,
             org.springframework.data.domain.Pageable pageable);
 }
