@@ -19,10 +19,13 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
         // 내가 쓴 글 목록 조회
         @Query(value = "SELECT new com.softwarecampus.backend.dto.mypage.MyPostResponseDTO(" +
                         "b.id, b.title, b.category, b.hits, " +
-                        "(SELECT COUNT(c) FROM Comment c WHERE c.board = b AND c.isDeleted = false), " +
-                        "(SELECT COUNT(r) FROM BoardRecommend r WHERE r.board = b), " +
-                        "b.createdAt) " +
-                        "FROM Board b WHERE b.account.id = :accountId AND b.isDeleted = false", countQuery = "SELECT COUNT(b) FROM Board b WHERE b.account.id = :accountId AND b.isDeleted = false")
+                        "count(distinct c.id), count(distinct r.id), b.createdAt) " +
+                        "FROM Board b " +
+                        "LEFT JOIN b.comments c ON c.isDeleted = false " +
+                        "LEFT JOIN b.boardRecommends r " +
+                        "WHERE b.account.id = :accountId AND b.isDeleted = false " +
+                        "GROUP BY b.id, b.title, b.category, b.hits, b.createdAt",
+                countQuery = "SELECT COUNT(b) FROM Board b WHERE b.account.id = :accountId AND b.isDeleted = false")
         Page<MyPostResponseDTO> findMyPosts(@Param("accountId") Long accountId, Pageable pageable);
 
         // 내가 쓴 글 수
