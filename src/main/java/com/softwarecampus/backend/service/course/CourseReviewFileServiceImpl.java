@@ -62,7 +62,17 @@ public class CourseReviewFileServiceImpl implements CourseReviewFileService {
                 .uploader(uploader)
                 .fileUrl(url)
                 .build();
-        reviewFileRepository.save(reviewFile);
+        try {
+            reviewFileRepository.save(reviewFile);
+        } catch (Exception e) {
+            log.warn("리뷰 파일 DB 저장에 실패하여 S3에 업로드된 파일을 삭제합니다. URL: {}", url);
+            try {
+                s3Service.deleteFile(url);
+            } catch (Exception s3Ex) {
+                log.error("DB 저장 실패 후 S3 파일 삭제에도 실패했습니다. 고아 파일이 남을 수 있습니다. URL: {}", url, s3Ex);
+            }
+            throw new RuntimeException("리뷰 파일 정보 저장에 실패했습니다.", e);
+        }
 
         return ReviewFileResponse.from(reviewFile);
     }
