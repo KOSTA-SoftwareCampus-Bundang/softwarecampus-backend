@@ -11,6 +11,7 @@ import com.softwarecampus.backend.exception.banner.BannerErrorCode;
 import com.softwarecampus.backend.exception.banner.BannerException;
 import com.softwarecampus.backend.repository.banner.BannerRepository;
 import com.softwarecampus.backend.service.academy.qna.AttachmentService;
+import com.softwarecampus.backend.service.common.S3Folder;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class BannerServiceImpl implements BannerService {
         private final AttachmentService attachmentService;
 
         private static final AttachmentCategoryType BANNER_TYPE = AttachmentCategoryType.BANNER;
+        private static final S3Folder BANNER_S3_FOLDER = S3Folder.BANNER;
 
         /**
          * 배너 등록
@@ -48,17 +50,19 @@ public class BannerServiceImpl implements BannerService {
                 Banner savedBanner = bannerRepository.save(banner);
 
                 String finalImageUrl = null;
-                QAFileDetail imageAttachment = request.getImageAttachment();
+                MultipartFile imageFile = request.getImageFile();
 
-                if (imageAttachment != null) {
-                        // 단일 파일이지만 List로 감싸서 호출
-                        attachmentService.confirmAttachments(
-                                        List.of(imageAttachment), savedBanner.getId(), BANNER_TYPE);
+                // 이미지 파일이 있으면 S3에 업로드
+                if (imageFile != null && !imageFile.isEmpty()) {
+                        List<QAFileDetail> uploadedFileDetails = attachmentService.uploadFiles(List.of(imageFile), BANNER_S3_FOLDER);
 
-                        List<QAFileDetail> confirmedFiles = attachmentService.getActiveFileDetailsByQAId(BANNER_TYPE,
-                                        savedBanner.getId());
-                        if (!confirmedFiles.isEmpty()) {
-                                finalImageUrl = confirmedFiles.get(0).getFilename();
+                        if (!uploadedFileDetails.isEmpty()) {
+                                QAFileDetail imageAttachment = uploadedFileDetails.get(0);
+                                
+                                attachmentService.confirmAttachments(
+                                                List.of(imageAttachment), savedBanner.getId(), BANNER_TYPE);
+
+                                finalImageUrl = imageAttachment.getFilename();
                         }
                 }
 
@@ -92,7 +96,7 @@ public class BannerServiceImpl implements BannerService {
 
                 // 새로운 배너 등록된 경우
                 if (newImageFile != null && !newImageFile.isEmpty()) {
-                        List<QAFileDetail> uploadedFileDetails = attachmentService.uploadFiles(List.of(newImageFile));
+                        List<QAFileDetail> uploadedFileDetails = attachmentService.uploadFiles(List.of(newImageFile), BANNER_S3_FOLDER);
 
                         if (!uploadedFileDetails.isEmpty()) {
                                 QAFileDetail newFileDetail = uploadedFileDetails.get(0);
