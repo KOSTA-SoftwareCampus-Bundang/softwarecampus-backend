@@ -55,8 +55,14 @@ public class CourseResponseDTO {
     // 과정 이미지 (썸네일 - 목록 표시용)
     private String imageUrl;
     
+    // 썸네일 이미지 ID (삭제 API 호출용)
+    private Long thumbnailImageId;
+    
     // 과정 헤더 이미지 (상세 페이지 배경)
     private String headerImageUrl;
+    
+    // 헤더 이미지 ID (삭제 API 호출용)
+    private Long headerImageId;
 
     /**
      * Entity → DTO 변환
@@ -84,18 +90,20 @@ public class CourseResponseDTO {
         }
 
         // 썸네일 이미지 추출 (THUMBNAIL 타입 또는 기존 isThumbnail=true)
-        String imageUrl = course.getImages().stream()
+        var thumbnailImage = course.getImages().stream()
                 .filter(img -> img.isActive() && img.isThumbnail())
                 .findFirst()
-                .map(com.softwarecampus.backend.domain.course.CourseImage::getImageUrl)
                 .orElse(null);
+        String imageUrl = thumbnailImage != null ? thumbnailImage.getImageUrl() : null;
+        Long thumbnailImageId = thumbnailImage != null ? thumbnailImage.getId() : null;
 
         // 헤더 이미지 추출 (HEADER 타입)
-        String headerImageUrl = course.getImages().stream()
+        var headerImage = course.getImages().stream()
                 .filter(img -> img.isActive() && img.getImageType() == CourseImageType.HEADER)
                 .findFirst()
-                .map(com.softwarecampus.backend.domain.course.CourseImage::getImageUrl)
                 .orElse(null);
+        String headerImageUrl = headerImage != null ? headerImage.getImageUrl() : null;
+        Long headerImageId = headerImage != null ? headerImage.getId() : null;
 
         return CourseResponseDTO.builder()
                 .id(course.getId())
@@ -123,7 +131,9 @@ public class CourseResponseDTO {
                 .requesterId(course.getRequester() != null ? course.getRequester().getId() : null)
                 .requesterName(course.getRequester() != null ? course.getRequester().getUserName() : null)
                 .imageUrl(imageUrl)
+                .thumbnailImageId(thumbnailImageId)
                 .headerImageUrl(headerImageUrl)
+                .headerImageId(headerImageId)
                 .build();
     }
 }
