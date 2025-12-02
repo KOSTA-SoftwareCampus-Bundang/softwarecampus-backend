@@ -3,6 +3,7 @@ package com.softwarecampus.backend.controller.course;
 import com.softwarecampus.backend.dto.course.QnaAnswerRequest;
 import com.softwarecampus.backend.dto.course.QnaFileDetail;
 import com.softwarecampus.backend.dto.course.QnaRequest;
+import com.softwarecampus.backend.dto.course.QnaUpdateRequest;
 import com.softwarecampus.backend.dto.course.QnaResponse;
 import com.softwarecampus.backend.service.course.CourseQnaAttachmentService;
 import com.softwarecampus.backend.service.course.CourseQnaService;
@@ -33,6 +34,7 @@ public class CourseQnaController {
      * Q&A 첨부파일 임시 업로드 (단일 파일)
      * - 파일을 S3에 업로드하고 DB에 임시 저장
      * - Q&A 생성/수정 시 fileDetails로 전달하여 확정
+     * - courseId는 과정 존재 여부 검증 및 로깅 목적으로 사용
      */
     @PostMapping("/{courseId}/qna/files/upload")
     @PreAuthorize("isAuthenticated()")
@@ -41,6 +43,10 @@ public class CourseQnaController {
             @RequestParam("file") MultipartFile file) {
 
         log.info("Course Q&A 첨부파일 임시 업로드 요청 - courseId: {}, fileName: {}", courseId, file.getOriginalFilename());
+
+        // courseId 유효성 검증 (존재하지 않는 과정에 대한 파일 업로드 방지)
+        qnaService.validateCourseExists(courseId);
+
         List<QnaFileDetail> fileDetails = attachmentService.uploadFiles(List.of(file));
         return ResponseEntity.ok(fileDetails.get(0));
     }
@@ -49,6 +55,7 @@ public class CourseQnaController {
      * Q&A 첨부파일 임시 업로드 (복수 파일)
      * - 파일을 S3에 업로드하고 DB에 임시 저장
      * - Q&A 생성/수정 시 fileDetails로 전달하여 확정
+     * - courseId는 과정 존재 여부 검증 및 로깅 목적으로 사용
      */
     @PostMapping("/{courseId}/qna/files/upload-multiple")
     @PreAuthorize("isAuthenticated()")
@@ -57,6 +64,10 @@ public class CourseQnaController {
             @RequestParam("files") List<MultipartFile> files) {
 
         log.info("Course Q&A 첨부파일 {}건 임시 업로드 요청 - courseId: {}", files.size(), courseId);
+
+        // courseId 유효성 검증 (존재하지 않는 과정에 대한 파일 업로드 방지)
+        qnaService.validateCourseExists(courseId);
+
         List<QnaFileDetail> fileDetails = attachmentService.uploadFiles(files);
         return ResponseEntity.ok(fileDetails);
     }
@@ -96,7 +107,7 @@ public class CourseQnaController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<QnaResponse> updateQuestion(
             @PathVariable Long qnaId,
-            @RequestBody @Valid QnaRequest request,
+            @RequestBody @Valid QnaUpdateRequest request,
             @RequestAttribute("userId") Long writerId) {
         return ResponseEntity.ok(qnaService.updateQuestion(qnaId, writerId, request));
     }
