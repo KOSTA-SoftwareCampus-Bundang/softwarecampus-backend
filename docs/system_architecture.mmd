@@ -1,0 +1,45 @@
+graph TD
+    subgraph Client ["Client Side (Frontend)"]
+        User[User / Browser]
+        
+        subgraph ReactApp ["React SPA (Vite)"]
+            UI[UI Components<br/>(Tailwind CSS + Radix UI)]
+            State[Global State<br/>(Zustand)]
+            Query[Server State<br/>(TanStack Query)]
+            Router[Routing<br/>(React Router v7)]
+            Axios[HTTP Client<br/>(Axios)]
+        end
+    end
+
+    subgraph Server ["Server Side (Backend)"]
+        subgraph SpringBoot ["Spring Boot Application"]
+            Security[Spring Security<br/>(JWT Filter / CORS)]
+            Controller[Controller Layer<br/>(REST API)]
+            Service[Service Layer<br/>(Business Logic)]
+            Repository[Repository Layer<br/>(JPA / Hibernate)]
+            
+            DTO[DTO / Mapper]
+        end
+    end
+
+    subgraph Infrastructure ["Infrastructure & External Services"]
+        MySQL[(MySQL Database)]
+        Redis[(Redis Cache)]
+        S3[AWS S3<br/>(File Storage)]
+    end
+
+    %% Flows
+    User -->|Interaction| UI
+    UI -->|Action| State
+    UI -->|Navigate| Router
+    UI -->|Fetch Data| Query
+    Query -->|Request| Axios
+    Axios -->|REST API (JSON)| Security
+    
+    Security -->|Authorized| Controller
+    Controller -->|DTO| Service
+    Service -->|Entity| Repository
+    
+    Repository -->|SQL| MySQL
+    Service -->|Cache| Redis
+    Service -->|File Upload/Download| S3
