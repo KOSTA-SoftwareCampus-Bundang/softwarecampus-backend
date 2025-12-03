@@ -69,6 +69,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // SecurityContext에 인증 정보 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 
+                // CustomUserDetails인 경우 userId를 request attribute로 설정
+                // @RequestAttribute("userId")를 사용하는 컨트롤러에서 사용
+                if (userDetails instanceof CustomUserDetails customUserDetails) {
+                    request.setAttribute("userId", customUserDetails.getId());
+                    log.debug("userId attribute 설정: {}", customUserDetails.getId());
+                }
+                
                 log.debug("JWT 인증 성공: {}", email);
             }
         } catch (Exception e) {

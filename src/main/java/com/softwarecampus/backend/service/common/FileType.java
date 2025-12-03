@@ -67,13 +67,21 @@ public class FileType {
     @Value("${file.upload.academy-file.max-size}")
     private long academyFileMaxSize;
 
-    // 후기 첨부파일 설정 (course_review_file 테이블)
+    // 후기 첨부파일 설정 (course_review_file 테이블) - 수료증 이미지
     @Value("${file.upload.review-file.extensions}")
     private String reviewFileExtensionsStr;
     @Value("${file.upload.review-file.content-types}")
     private String reviewFileContentTypesStr;
     @Value("${file.upload.review-file.max-size}")
     private long reviewFileMaxSize;
+
+    // 기관 프로필 이미지 설정 (academy 테이블 - logo_url) - 작성일: 2025-12-03
+    @Value("${file.upload.academy-profile.extensions}")
+    private String academyProfileExtensionsStr;
+    @Value("${file.upload.academy-profile.content-types}")
+    private String academyProfileContentTypesStr;
+    @Value("${file.upload.academy-profile.max-size}")
+    private long academyProfileMaxSize;
 
     // 파싱된 설정을 저장하는 Map
     private final Map<FileTypeEnum, FileTypeConfig> configs = new HashMap<>();
@@ -106,6 +114,12 @@ public class FileType {
         Set<String> reviewTypes = parseSet(reviewFileContentTypesStr);
         validateFileTypeConfig("REVIEW_FILE", reviewExts, reviewTypes, reviewFileMaxSize);
         configs.put(FileTypeEnum.REVIEW_FILE, new FileTypeConfig(reviewExts, reviewTypes, reviewFileMaxSize));
+
+        // 기관 프로필 이미지 설정 (작성일: 2025-12-03)
+        Set<String> academyProfileExts = parseSet(academyProfileExtensionsStr);
+        Set<String> academyProfileTypes = parseSet(academyProfileContentTypesStr);
+        validateFileTypeConfig("ACADEMY_PROFILE", academyProfileExts, academyProfileTypes, academyProfileMaxSize);
+        configs.put(FileTypeEnum.ACADEMY_PROFILE, new FileTypeConfig(academyProfileExts, academyProfileTypes, academyProfileMaxSize));
 
         log.info("FileType configurations initialized: {}", configs.keySet());
     }
@@ -160,7 +174,9 @@ public class FileType {
         /** 기관 첨부파일 (academy_files 테이블) */
         ACADEMY_FILE,
         /** 후기 첨부파일 (course_review_file 테이블) - 수료증 */
-        REVIEW_FILE
+        REVIEW_FILE,
+        /** 기관 프로필 이미지 (academy 테이블 - logo_url) - 작성일: 2025-12-03 */
+        ACADEMY_PROFILE
     }
 
     /**
