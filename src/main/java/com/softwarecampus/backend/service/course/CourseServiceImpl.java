@@ -3,12 +3,14 @@ package com.softwarecampus.backend.service.course;
 import com.softwarecampus.backend.domain.common.ApprovalStatus;
 import com.softwarecampus.backend.domain.course.CategoryType;
 import com.softwarecampus.backend.domain.course.Course;
+import com.softwarecampus.backend.domain.course.CourseCurriculum;
 import com.softwarecampus.backend.dto.course.CourseCategoryDTO;
 import com.softwarecampus.backend.dto.course.CourseDetailResponseDTO;
 import com.softwarecampus.backend.dto.course.CourseRequestDTO;
 import com.softwarecampus.backend.dto.course.CourseResponseDTO;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
 import com.softwarecampus.backend.repository.course.CourseCategoryRepository;
+import com.softwarecampus.backend.repository.course.CourseCurriculumRepository;
 import com.softwarecampus.backend.repository.course.CourseRepository;
 import com.softwarecampus.backend.repository.user.AccountRepository;
 import com.softwarecampus.backend.domain.course.CourseStatus;
@@ -24,7 +26,7 @@ import java.util.List;
 
 /**
  * 과정 서비스 구현체
- * 수정일: 2025-12-02 - Soft Delete 준수, @Transactional 추가, 등록자 정보 추가
+ * 수정일: 2025-12-03 - 커리큘럼 CRUD 기능 추가
  */
 @Service
 @RequiredArgsConstructor
@@ -34,6 +36,7 @@ public class CourseServiceImpl implements CourseService {
         private final CourseRepository courseRepository;
         private final AcademyRepository academyRepository;
         private final CourseCategoryRepository courseCategoryRepository;
+        private final CourseCurriculumRepository courseCurriculumRepository;
         private final AccountRepository accountRepository;
 
         /**
@@ -115,6 +118,9 @@ public class CourseServiceImpl implements CourseService {
                 course.setIsApproved(ApprovalStatus.PENDING); // 기관 유저 요청 상태
                 course.setRequester(requester); // 등록자 설정
 
+                // 커리큘럼 처리 (2025-12-03 추가)
+                addCurriculumsToCourse(course, dto.getCurriculums());
+
                 courseRepository.save(course);
                 return CourseResponseDTO.fromEntity(course);
         }
@@ -141,6 +147,9 @@ public class CourseServiceImpl implements CourseService {
                 course.setIsApproved(ApprovalStatus.APPROVED); // 관리자는 즉시 승인
                 course.setRequester(requester); // 등록자 설정
 
+                // 커리큘럼 처리 (2025-12-03 추가)
+                addCurriculumsToCourse(course, dto.getCurriculums());
+
                 courseRepository.save(course);
                 return CourseResponseDTO.fromEntity(course);
         }
@@ -161,6 +170,9 @@ public class CourseServiceImpl implements CourseService {
                 course.setCourseEnd(dto.getCourseEnd());
                 course.setRequirement(dto.getRequirement());
 
+                // 커리큘럼 업데이트 (2025-12-03 추가)
+                updateCurriculums(course, dto.getCurriculums());
+
                 // 거부된 항목 수정 시 대기 상태로 변경 (재심사 요청)
                 if (course.getIsApproved() == ApprovalStatus.REJECTED) {
                         course.setIsApproved(ApprovalStatus.PENDING);
@@ -168,6 +180,39 @@ public class CourseServiceImpl implements CourseService {
                 }
 
                 return CourseResponseDTO.fromEntity(course);
+        }
+
+        /**
+         * 과정에 커리큘럼 추가 (신규 생성 시 사용)
+         * 작성일: 2025-12-03
+         */
+        private void addCurriculumsToCourse(Course course, List<CourseRequestDTO.CurriculumRequestDTO> curriculumDtos) {
+                if (curriculumDtos == null || curriculumDtos.isEmpty()) {
+                        return;
+                }
+
+                for (CourseRequestDTO.CurriculumRequestDTO dto : curriculumDtos) {
+                        CourseCurriculum curriculum = dto.toEntity();
+                        course.addCurriculum(curriculum);
+                }
+        }
+
+        /**
+         * 커리큘럼 업데이트 (수정 시 사용)
+         * - 기존 커리큘럼 전체 삭제 후 새로 추가하는 방식
+         * 작성일: 2025-12-03
+         */
+        private void updateCurriculums(Course course, List<CourseRequestDTO.CurriculumRequestDTO> curriculumDtos) {
+                // 기존 커리큘럼 모두 제거 (orphanRemoval=true로 자동 삭제됨)
+                course.getCurriculums().clear();
+
+                // 새 커리큘럼 추가
+                if (curriculumDtos != null && !curriculumDtos.isEmpty()) {
+                        for (CourseRequestDTO.CurriculumRequestDTO dto : curriculumDtos) {
+                                CourseCurriculum curriculum = dto.toEntity();
+                                course.addCurriculum(curriculum);
+                        }
+                }
         }
 
         @Override
