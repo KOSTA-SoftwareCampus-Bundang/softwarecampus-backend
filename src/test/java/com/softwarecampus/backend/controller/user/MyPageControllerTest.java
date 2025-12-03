@@ -83,7 +83,11 @@ class MyPageControllerTest {
                 "서울시 강남구",
                 "소프트캔퍼스",
                 "개발자",
-                null);
+                null,
+                null,
+                null,
+                0,
+                0);
 
         when(profileService.getAccountByEmail("user@test.com")).thenReturn(response);
 
@@ -152,7 +156,11 @@ class MyPageControllerTest {
                 "부산시 해운대구",
                 "부산대학교",
                 "교수",
-                null);
+                null,
+                null,
+                null,
+                0,
+                0);
 
         when(profileService.updateProfile(eq("user@test.com"), any(UpdateProfileRequest.class)))
                 .thenReturn(response);
@@ -190,7 +198,11 @@ class MyPageControllerTest {
                 null,
                 null,
                 null,
-                null);
+                null,
+                null,
+                null,
+                0,
+                0);
 
         when(profileService.updateProfile(eq("user@test.com"), any(UpdateProfileRequest.class)))
                 .thenReturn(response);

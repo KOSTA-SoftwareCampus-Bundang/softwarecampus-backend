@@ -102,7 +102,11 @@ class AuthControllerTest {
                                 "서울시 강남구",
                                 null,
                                 null,
-                                null);
+                                null,
+                                null,
+                                null,
+                                0,
+                                0);
 
                 when(signupService.signup(any(SignupRequest.class))).thenReturn(response);
 
@@ -149,7 +153,11 @@ class AuthControllerTest {
                                 "서울시 서초구",
                                 "ABC학원",
                                 "수학 강사",
-                                null);
+                                null,
+                                null,
+                                null,
+                                0,
+                                0);
 
                 when(signupService.signup(any(SignupRequest.class))).thenReturn(response);
 
@@ -404,7 +412,8 @@ class AuthControllerTest {
                                 "010-1234-5678",
                                 AccountType.USER,
                                 ApprovalStatus.APPROVED,
-                                null, null, null, null);
+                                null, null, null, null,
+                                null, null, 0, 0);
 
                 when(signupService.signup(any(SignupRequest.class))).thenReturn(response);
 
@@ -438,7 +447,11 @@ class AuthControllerTest {
                                 "서울시 강남구",
                                 null,
                                 null,
-                                null);
+                                null,
+                                null,
+                                null,
+                                0,
+                                0);
 
                 LoginResponse loginResponse = LoginResponse.of(
                                 "access-token-123",

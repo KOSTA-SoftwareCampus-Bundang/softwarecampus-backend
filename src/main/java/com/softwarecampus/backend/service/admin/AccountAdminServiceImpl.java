@@ -36,6 +36,14 @@ public class AccountAdminServiceImpl implements AccountAdminService {
      * Account 엔티티를 기존 AccountResponse DTO 레코드 타입으로 변환
      */
     private AccountResponse toResponse(Account account) {
+        // 게시글 및 댓글 수 계산 (삭제되지 않은 것만)
+        int postCount = (int) account.getBoards().stream()
+                .filter(board -> !Boolean.TRUE.equals(board.getIsDeleted()))
+                .count();
+        int commentCount = (int) account.getComments().stream()
+                .filter(comment -> !Boolean.TRUE.equals(comment.getIsDeleted()))
+                .count();
+
         return new AccountResponse(
                 account.getId(),
                 account.getEmail(),
@@ -46,7 +54,11 @@ public class AccountAdminServiceImpl implements AccountAdminService {
                 account.getAddress(),
                 account.getAffiliation(),
                 account.getPosition(),
-                account.getProfileImage());
+                account.getProfileImage(),
+                account.getCreatedAt(),
+                account.getDeletedAt(),
+                postCount,
+                commentCount);
     }
 
     /**
