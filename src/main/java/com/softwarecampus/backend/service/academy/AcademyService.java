@@ -3,6 +3,7 @@ package com.softwarecampus.backend.service.academy;
 import com.softwarecampus.backend.dto.academy.AcademyCreateRequest;
 import com.softwarecampus.backend.dto.academy.AcademyResponse;
 import com.softwarecampus.backend.dto.academy.AcademyUpdateRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -46,4 +47,25 @@ public interface AcademyService {
             com.softwarecampus.backend.domain.academy.ApprovalStatus status,
             String keyword,
             org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * 기관 프로필 이미지 업로드/수정
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-12-03
+     * 
+     * @param id    기관 ID
+     * @param image 프로필 이미지 파일
+     * @return 업데이트된 기관 정보
+     */
+    AcademyResponse uploadProfileImage(Long id, MultipartFile image);
+
+    /**
+     * 기관 프로필 이미지 삭제
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-12-03
+     * 
+     * @param id 기관 ID
+     * @return 업데이트된 기관 정보
+     */
+    AcademyResponse deleteProfileImage(Long id);
 }

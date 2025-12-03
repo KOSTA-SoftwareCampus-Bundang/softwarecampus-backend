@@ -9,6 +9,9 @@ import com.softwarecampus.backend.dto.academy.AcademyUpdateRequest;
 import com.softwarecampus.backend.exception.academy.AcademyErrorCode;
 import com.softwarecampus.backend.exception.academy.AcademyException;
 import com.softwarecampus.backend.repository.academy.AcademyRepository;
+import com.softwarecampus.backend.service.common.FileType;
+import com.softwarecampus.backend.service.common.S3Folder;
+import com.softwarecampus.backend.service.common.S3Service;
 import com.softwarecampus.backend.service.user.email.EmailSendService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +36,8 @@ public class AcademyServiceImpl implements AcademyService {
     private final AcademyFileService academyFileService;
     // 이메일 발송 서비스 (작성자: GitHub Copilot, 작성일: 2025-11-28)
     private final EmailSendService emailSendService;
+    // S3 파일 업로드 서비스 (작성자: GitHub Copilot, 작성일: 2025-12-03)
+    private final S3Service s3Service;
 
     private Academy findAcademyOrThrow(Long id) {
         return academyRepository.findByIdAndDeletedAtIsNull(id)
@@ -133,6 +139,12 @@ public class AcademyServiceImpl implements AcademyService {
         if (request.getEmail() != null) {
             academy.setEmail(request.getEmail());
         }
+        if (request.getPhoneNumber() != null) {
+            academy.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getWebsite() != null) {
+            academy.setWebsite(request.getWebsite());
+        }
         return AcademyResponse.from(academy);
     }
 
@@ -228,5 +240,64 @@ public class AcademyServiceImpl implements AcademyService {
         org.springframework.data.domain.Page<Academy> academyPage = academyRepository.searchAcademies(status, keyword,
                 pageable);
         return academyPage.map(AcademyResponse::from);
+    }
+
+    /**
+     * 기관 프로필 이미지 업로드/수정
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-12-03
+     * 
+     * 기존 프로필 이미지가 있으면 S3에서 삭제 후 새 이미지 업로드
+     */
+    @Override
+    @Transactional
+    public AcademyResponse uploadProfileImage(Long id, MultipartFile image) {
+        Academy academy = findAcademyOrThrow(id);
+        
+        // 기존 프로필 이미지가 있으면 S3에서 삭제
+        String oldLogoUrl = academy.getLogoUrl();
+        if (oldLogoUrl != null && !oldLogoUrl.isBlank()) {
+            try {
+                s3Service.deleteFile(oldLogoUrl);
+                log.info("기존 기관 프로필 이미지 삭제 완료 - 기관 ID: {}", id);
+            } catch (Exception e) {
+                log.warn("기존 기관 프로필 이미지 삭제 실패 - 기관 ID: {}, URL: {}", id, oldLogoUrl, e);
+                // 삭제 실패해도 새 이미지 업로드는 진행
+            }
+        }
+        
+        // 새 프로필 이미지 업로드 (academy/{academyId} 폴더에 저장)
+        String folder = S3Folder.ACADEMY.getPath() + "/" + id + "/profile";
+        String newLogoUrl = s3Service.uploadFile(image, folder, FileType.FileTypeEnum.ACADEMY_PROFILE);
+        
+        academy.setLogoUrl(newLogoUrl);
+        log.info("기관 프로필 이미지 업로드 완료 - 기관 ID: {}, URL: {}", id, newLogoUrl);
+        
+        return AcademyResponse.from(academy);
+    }
+
+    /**
+     * 기관 프로필 이미지 삭제
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-12-03
+     */
+    @Override
+    @Transactional
+    public AcademyResponse deleteProfileImage(Long id) {
+        Academy academy = findAcademyOrThrow(id);
+        
+        String logoUrl = academy.getLogoUrl();
+        if (logoUrl != null && !logoUrl.isBlank()) {
+            try {
+                s3Service.deleteFile(logoUrl);
+                log.info("기관 프로필 이미지 삭제 완료 - 기관 ID: {}", id);
+            } catch (Exception e) {
+                log.warn("기관 프로필 이미지 S3 삭제 실패 - 기관 ID: {}, URL: {}", id, logoUrl, e);
+                // S3 삭제 실패해도 DB에서는 URL 제거
+            }
+        }
+        
+        academy.setLogoUrl(null);
+        return AcademyResponse.from(academy);
     }
 }

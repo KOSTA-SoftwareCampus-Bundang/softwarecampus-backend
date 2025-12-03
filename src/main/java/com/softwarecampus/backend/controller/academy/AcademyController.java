@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -80,6 +81,37 @@ public class AcademyController {
     public ResponseEntity<Void> deleteAcademy(@PathVariable Long id) {
         academyService.deleteAcademy(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * 기관 프로필 이미지 업로드/수정
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-12-03
+     * 
+     * @param id    기관 ID
+     * @param image 프로필 이미지 파일
+     * @return 업데이트된 기관 정보
+     */
+    @PostMapping(value = "/{id}/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AcademyResponse> uploadProfileImage(
+            @PathVariable Long id,
+            @RequestParam("image") MultipartFile image) {
+        AcademyResponse response = academyService.uploadProfileImage(id, image);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 기관 프로필 이미지 삭제
+     * 작성자: GitHub Copilot
+     * 작성일: 2025-12-03
+     * 
+     * @param id 기관 ID
+     * @return 업데이트된 기관 정보
+     */
+    @DeleteMapping("/{id}/profile-image")
+    public ResponseEntity<AcademyResponse> deleteProfileImage(@PathVariable Long id) {
+        AcademyResponse response = academyService.deleteProfileImage(id);
+        return ResponseEntity.ok(response);
     }
 
 }

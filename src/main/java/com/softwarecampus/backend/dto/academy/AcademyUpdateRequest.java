@@ -14,4 +14,6 @@ public class AcademyUpdateRequest {
     private String address;
     private String businessNumber;
     private String email;
+    private String phoneNumber;
+    private String website;
 }
