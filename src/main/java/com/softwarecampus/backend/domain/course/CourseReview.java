@@ -7,7 +7,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "course_review")
@@ -49,13 +51,15 @@ public class CourseReview extends BaseSoftDeleteSupportEntity {
     @Builder.Default
     private List<ReviewSection> sections = new ArrayList<>();
 
+    // Set으로 변경 - MultipleBagFetchException 방지 (수정일: 2025-12-03)
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<CourseReviewAttachment> attachments = new ArrayList<>();
+    private Set<CourseReviewAttachment> attachments = new HashSet<>();
 
+    // Set으로 변경 - MultipleBagFetchException 방지 (수정일: 2025-12-03)
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<ReviewLike> likes = new ArrayList<>();
+    private Set<ReviewLike> likes = new HashSet<>();
 
     /**
      * 평균 점수 계산 (Section 평균)
