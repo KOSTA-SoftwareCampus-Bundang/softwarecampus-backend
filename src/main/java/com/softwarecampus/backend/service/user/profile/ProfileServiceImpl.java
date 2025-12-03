@@ -266,7 +266,11 @@ public class ProfileServiceImpl implements ProfileService {
                 account.getAddress(),
                 account.getAffiliation(),
                 account.getPosition(),
-                account.getProfileImage());
+                account.getProfileImage(),
+                account.getCreatedAt(),
+                account.getDeletedAt(),
+                0,
+                0);
     }
 
     // ===== 마이페이지 활동 내역 =====

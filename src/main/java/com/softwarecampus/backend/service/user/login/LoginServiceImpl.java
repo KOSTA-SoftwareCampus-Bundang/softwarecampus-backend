@@ -113,7 +113,11 @@ public class LoginServiceImpl implements LoginService {
                 account.getAddress(),
                 account.getAffiliation(),
                 account.getPosition(),
-                account.getProfileImage());
+                account.getProfileImage(),
+                account.getCreatedAt(),
+                account.getDeletedAt(),
+                0,
+                0);
         Long expiresIn = jwtTokenProvider.getExpiration() / 1000; // 밀리초 → 초 변환
 
         log.info("로그인 성공: email={}, accountType={}",

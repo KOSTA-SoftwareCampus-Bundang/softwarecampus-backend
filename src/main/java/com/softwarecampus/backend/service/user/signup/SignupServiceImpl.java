@@ -204,7 +204,11 @@ public class SignupServiceImpl implements SignupService {
                 account.getAddress(),
                 account.getAffiliation(),
                 account.getPosition(),
-                account.getProfileImage());
+                account.getProfileImage(),
+                account.getCreatedAt(),
+                account.getDeletedAt(),
+                0,
+                0);
     }
 
     /**
