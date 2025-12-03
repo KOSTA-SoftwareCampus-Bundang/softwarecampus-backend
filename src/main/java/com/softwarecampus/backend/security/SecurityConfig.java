@@ -55,7 +55,9 @@ public class SecurityConfig {
                                                                 "/api/courses/**", // 강좌 목록 조회
                                                                 "/api/*/course/**", // 카테고리별 강의 조회 (JOB_SEEKER, KOAS 등)
                                                                 "/api/home/**", // 메인페이지 데이터
-                                                                "/banners" // 배너 목록 조회
+                                                                "/banners", // 배너 목록 조회
+                                                                "/api/banners", // 배너 목록 조회 (프록시 경로)
+                                                                "/api/banners/**" // 배너 상세 조회
                                                 ).permitAll()
 
                                                 // 인증 불필요 (모든 메서드 허용)
