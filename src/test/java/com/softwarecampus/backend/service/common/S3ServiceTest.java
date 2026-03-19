@@ -26,10 +26,10 @@ import static org.mockito.Mockito.*;
 
 /**
  * S3Service 단위 테스트
- * 
+ *
  * 테스트 대상:
- * - uploadFile: S3 파일 업로드
- * - deleteFile: S3 파일 삭제
+ * - uploadFile: 파일 업로드 후 key 반환
+ * - deleteFile: key 기반 파일 삭제
  * - validateFile: 파일 검증
  * - validateS3Key: S3 키 보안 검증
  */
@@ -56,7 +56,6 @@ class S3ServiceTest {
 
                 // @Value 필드 주입
                 ReflectionTestUtils.setField(s3Service, "bucketName", "test-bucket");
-                ReflectionTestUtils.setField(s3Service, "region", "ap-northeast-2");
 
                 // @PostConstruct 메서드 호출
                 ReflectionTestUtils.invokeMethod(s3Service, "validateConfiguration");
@@ -73,7 +72,7 @@ class S3ServiceTest {
         }
 
         @Test
-        @DisplayName("파일 업로드 성공")
+        @DisplayName("파일 업로드 성공 - key 반환")
         void testUploadFile_Success() throws IOException {
                 // given
                 MockMultipartFile file = new MockMultipartFile(
@@ -87,12 +86,13 @@ class S3ServiceTest {
                                 .thenReturn(putObjectResponse);
 
                 // when
-                String fileUrl = s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE);
+                String key = s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE);
 
-                // then
-                assertThat(fileUrl).isNotNull();
-                assertThat(fileUrl).startsWith("https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/");
-                assertThat(fileUrl).endsWith(".jpg");
+                // then - key 형식(folder/uuid.jpg) 반환 확인
+                assertThat(key).isNotNull();
+                assertThat(key).startsWith("profile/");
+                assertThat(key).endsWith(".jpg");
+                assertThat(key).doesNotContain("https://"); // URL이 아닌 key여야 함
 
                 verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
         }
@@ -112,11 +112,11 @@ class S3ServiceTest {
                                 .thenReturn(putObjectResponse);
 
                 // when
-                String fileUrl = s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE);
+                String key = s3Service.uploadFile(file, "profile", FileType.FileTypeEnum.PROFILE);
 
                 // then
-                assertThat(fileUrl).contains(".jpg"); // UUID로 파일명이 변경되지만 확장자는 유지됨
-                assertThat(fileUrl).doesNotContain("test image"); // 원본 파일명은 포함되지 않음
+                assertThat(key).contains(".jpg"); // UUID로 파일명이 변경되지만 확장자는 유지됨
+                assertThat(key).doesNotContain("test image"); // 원본 파일명은 포함되지 않음
                 verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
         }
 
@@ -254,17 +254,17 @@ class S3ServiceTest {
         }
 
         @Test
-        @DisplayName("파일 삭제 성공")
+        @DisplayName("파일 삭제 성공 - key 기반")
         void testDeleteFile_Success() {
                 // given
-                String fileUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test-file.jpg";
+                String key = "profile/test-file.jpg";
 
                 DeleteObjectResponse deleteObjectResponse = DeleteObjectResponse.builder().build();
                 when(s3Client.deleteObject(any(DeleteObjectRequest.class)))
                                 .thenReturn(deleteObjectResponse);
 
                 // when
-                assertThatCode(() -> s3Service.deleteFile(fileUrl))
+                assertThatCode(() -> s3Service.deleteFile(key))
                                 .doesNotThrowAnyException();
 
                 // then
@@ -277,59 +277,37 @@ class S3ServiceTest {
         }
 
         @Test
-        @DisplayName("파일 삭제 성공 - URL 인코딩된 키")
-        void testDeleteFile_EncodedKey() {
-                // given
-                String fileUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test%20file.jpg";
-
-                DeleteObjectResponse deleteObjectResponse = DeleteObjectResponse.builder().build();
-                when(s3Client.deleteObject(any(DeleteObjectRequest.class)))
-                                .thenReturn(deleteObjectResponse);
-
-                // when
-                assertThatCode(() -> s3Service.deleteFile(fileUrl))
-                                .doesNotThrowAnyException();
-
-                // then
-                ArgumentCaptor<DeleteObjectRequest> captor = ArgumentCaptor.forClass(DeleteObjectRequest.class);
-                verify(s3Client, times(1)).deleteObject(captor.capture());
-
-                DeleteObjectRequest request = captor.getValue();
-                assertThat(request.key()).isEqualTo("profile/test file.jpg"); // 디코딩됨
-        }
-
-        @Test
-        @DisplayName("파일 삭제 실패 - null URL")
-        void testDeleteFile_NullUrl() {
+        @DisplayName("파일 삭제 실패 - null key")
+        void testDeleteFile_NullKey() {
                 // when & then
                 assertThatThrownBy(() -> s3Service.deleteFile(null))
                                 .isInstanceOf(S3UploadException.class)
-                                .hasMessageContaining("파일 URL이 비어있습니다");
+                                .hasMessageContaining("S3 키가 비어있습니다");
         }
 
         @Test
-        @DisplayName("파일 삭제 실패 - 빈 URL")
-        void testDeleteFile_EmptyUrl() {
+        @DisplayName("파일 삭제 실패 - 빈 key")
+        void testDeleteFile_EmptyKey() {
                 // when & then
                 assertThatThrownBy(() -> s3Service.deleteFile(""))
                                 .isInstanceOf(S3UploadException.class)
-                                .hasMessageContaining("파일 URL이 비어있습니다");
+                                .hasMessageContaining("S3 키가 비어있습니다");
         }
 
         @Test
-        @DisplayName("파일 삭제 실패 - 잘못된 URL 형식")
-        void testDeleteFile_InvalidUrl() {
+        @DisplayName("파일 삭제 실패 - 경로 순회 공격 시도 (..)")
+        void testDeleteFile_PathTraversalKey() {
                 // when & then
-                assertThatThrownBy(() -> s3Service.deleteFile("invalid-url"))
+                assertThatThrownBy(() -> s3Service.deleteFile("../etc/passwd"))
                                 .isInstanceOf(S3UploadException.class)
-                                .hasMessageContaining("유효하지 않은 URL 형식입니다");
+                                .hasMessageContaining("잘못된 S3 키 형식입니다");
         }
 
         @Test
         @DisplayName("파일 삭제 실패 - S3 삭제 오류")
         void testDeleteFile_S3Exception() {
                 // given
-                String fileUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test-file.jpg";
+                String key = "profile/test-file.jpg";
 
                 S3Exception s3Exception = (S3Exception) S3Exception.builder()
                                 .message("S3 delete error")
@@ -343,7 +321,7 @@ class S3ServiceTest {
                                 .thenThrow(s3Exception);
 
                 // when & then
-                assertThatThrownBy(() -> s3Service.deleteFile(fileUrl))
+                assertThatThrownBy(() -> s3Service.deleteFile(key))
                                 .isInstanceOf(S3UploadException.class)
                                 .hasMessageContaining("S3 파일 삭제에 실패했습니다");
         }
@@ -432,31 +410,5 @@ class S3ServiceTest {
                 assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(s3Service, "validateS3Key", "   "))
                                 .isInstanceOf(S3UploadException.class)
                                 .hasMessageContaining("S3 키가 비어있습니다");
-        }
-
-        @Test
-        @DisplayName("URL에서 키 추출 - 정상")
-        void testExtractKeyFromUrl() throws Exception {
-                // given
-                String url = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test-file.jpg";
-
-                // when
-                String key = (String) ReflectionTestUtils.invokeMethod(s3Service, "extractKeyFromUrl", url);
-
-                // then
-                assertThat(key).isEqualTo("profile/test-file.jpg");
-        }
-
-        @Test
-        @DisplayName("URL에서 키 추출 - URL 인코딩된 키")
-        void testExtractKeyFromUrl_Encoded() throws Exception {
-                // given
-                String url = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test%20file.jpg";
-
-                // when
-                String key = (String) ReflectionTestUtils.invokeMethod(s3Service, "extractKeyFromUrl", url);
-
-                // then
-                assertThat(key).isEqualTo("profile/test file.jpg"); // 디코딩됨
         }
 }

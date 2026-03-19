@@ -50,25 +50,23 @@ public class AcademyFileServiceImpl implements AcademyFileService {
                 .orElseThrow(() -> new IllegalArgumentException("기관을 찾을 수 없습니다. ID: " + academyId));
 
         // 2. S3에 파일 업로드 (파일 검증 및 보안 체크는 S3Service에서 수행)
+        // uploadFile()은 key(예: "academy/1/uuid.pdf")를 반환합니다.
         String folder = String.format("%s/%d", S3Folder.ACADEMY.getPath(), academyId);
-        String fileUrl = s3Service.uploadFile(file, folder, FileType.FileTypeEnum.ACADEMY_FILE);
+        String key = s3Service.uploadFile(file, folder, FileType.FileTypeEnum.ACADEMY_FILE);
 
-        // 3. S3 키 생성 (URL에서 bucket URL 부분 제거)
-        String s3Key = extractS3KeyFromUrl(fileUrl, folder);
-
-        // 4. 메타데이터 엔티티 생성
+        // 3. 메타데이터 엔티티 생성 (fileUrl과 s3Key 모두 key로 저장)
         AcademyFile academyFile = AcademyFile.builder()
                 .academy(academy)
                 .originalFileName(file.getOriginalFilename())
-                .fileUrl(fileUrl)
-                .s3Key(s3Key)
+                .fileUrl(key)
+                .s3Key(key)
                 .fileSize(file.getSize())
                 .contentType(file.getContentType())
                 .build();
 
-        // 5. DB 저장
+        // 4. DB 저장
         AcademyFile savedFile = academyFileRepository.save(academyFile);
-        log.info("File uploaded successfully. File ID: {}, S3 key: {}", savedFile.getId(), s3Key);
+        log.info("File uploaded successfully. File ID: {}, S3 key: {}", savedFile.getId(), key);
 
         return savedFile;
     }
@@ -170,23 +168,6 @@ public class AcademyFileServiceImpl implements AcademyFileService {
         }
     }
 
-    /**
-     * S3 URL에서 S3 키를 추출합니다.
-     * 예: https://bucket.s3.region.amazonaws.com/academy/123/uuid-file.pdf → academy/123/uuid-file.pdf
-     *
-     * @param fileUrl S3 파일 URL
-     * @param folder 폴더 경로 (academy/123)
-     * @return S3 키
-     */
-    private String extractS3KeyFromUrl(String fileUrl, String folder) {
-        // URL 형식: https://bucket.s3.region.amazonaws.com/{folder}/{filename}
-        int folderIndex = fileUrl.indexOf(folder);
-        if (folderIndex == -1) {
-            throw new IllegalStateException("URL에서 S3 키를 추출할 수 없습니다: " + fileUrl);
-        }
-        return fileUrl.substring(folderIndex);
-    }
-    
     /**
      * S3 파일만 삭제 (DB 메타데이터는 유지)
      * 트랜잭션 롤백 시 보상 로직용으로 사용

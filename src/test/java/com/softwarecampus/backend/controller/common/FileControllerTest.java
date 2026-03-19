@@ -38,9 +38,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * FileController 단위 테스트
- * 
+ *
  * 테스트 대상:
  * - POST /api/files/upload: 파일 업로드 (인증된 사용자만)
+ * - GET /api/files/public: 공개 파일 서빙 (인증 불필요)
  * - DELETE /api/admin/files/delete: 파일 삭제 (관리자만)
  * - 인증 및 권한 검증
  * - 예외 처리 (GlobalExceptionHandler 통한 RFC 9457 ProblemDetail 응답)
@@ -84,7 +85,7 @@ class FileControllerTest {
         // ==================== 파일 업로드 테스트 ====================
 
         @Test
-        @DisplayName("파일 업로드 성공 - 인증된 일반 사용자")
+        @DisplayName("파일 업로드 성공 - 인증된 일반 사용자 (key 반환)")
         @WithMockUser(username = "testuser", roles = { "USER" })
         void testUploadFile_Success_AuthenticatedUser() throws Exception {
                 // given
@@ -94,9 +95,9 @@ class FileControllerTest {
                                 MediaType.IMAGE_JPEG_VALUE,
                                 "test image content".getBytes());
 
-                String expectedUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/uuid-test-image.jpg";
+                String expectedKey = "profile/uuid-test-image.jpg";
                 when(s3Service.uploadFile(any(), eq("profile"), eq(FileType.FileTypeEnum.PROFILE)))
-                                .thenReturn(expectedUrl);
+                                .thenReturn(expectedKey);
 
                 // when & then
                 mockMvc.perform(multipart("/api/files/upload")
@@ -106,7 +107,7 @@ class FileControllerTest {
                                 .with(csrf()))
                                 .andDo(print())
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.fileUrl").value(expectedUrl))
+                                .andExpect(jsonPath("$.fileUrl").value(expectedKey))
                                 .andExpect(jsonPath("$.message").exists());
 
                 verify(s3Service, times(1)).uploadFile(any(), eq("profile"), eq(FileType.FileTypeEnum.PROFILE));
@@ -123,9 +124,9 @@ class FileControllerTest {
                                 MediaType.IMAGE_JPEG_VALUE,
                                 "admin file content".getBytes());
 
-                String expectedUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/board/admin-file.jpg";
+                String expectedKey = "board/admin-file-uuid.jpg";
                 when(s3Service.uploadFile(any(), eq("board"), eq(FileType.FileTypeEnum.BOARD_ATTACH)))
-                                .thenReturn(expectedUrl);
+                                .thenReturn(expectedKey);
 
                 // when & then
                 mockMvc.perform(multipart("/api/files/upload")
@@ -135,12 +136,11 @@ class FileControllerTest {
                                 .with(csrf()))
                                 .andDo(print())
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.fileUrl").value(expectedUrl));
+                                .andExpect(jsonPath("$.fileUrl").value(expectedKey));
 
                 verify(s3Service, times(1)).uploadFile(any(), eq("board"), eq(FileType.FileTypeEnum.BOARD_ATTACH));
         }
 
-        // SecurityConfig 수정 완료: 비인증 사용자 업로드 차단 확인
         @Test
         @DisplayName("파일 업로드 실패 - 비로그인 사용자 (401 Unauthorized)")
         void testUploadFile_Fail_Unauthorized() throws Exception {
@@ -152,10 +152,9 @@ class FileControllerTest {
                                 "test image content".getBytes());
 
                 when(s3Service.uploadFile(any(), any(), any()))
-                                .thenReturn("https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test.jpg");
+                                .thenReturn("profile/test.jpg");
 
                 // when & then
-                // SecurityConfig에서 .anyRequest().authenticated()로 설정되었으므로 401 반환
                 mockMvc.perform(multipart("/api/files/upload")
                                 .file(file)
                                 .param("folder", "profile")
@@ -301,9 +300,9 @@ class FileControllerTest {
                                 MediaType.IMAGE_JPEG_VALUE,
                                 "test content".getBytes());
 
-                String expectedUrl = "https://test-bucket.s3.amazonaws.com/profile/file..name.jpg";
+                String expectedKey = "profile/uuid.jpg";
                 when(s3Service.uploadFile(any(), eq("profile"), eq(FileType.FileTypeEnum.PROFILE)))
-                                .thenReturn(expectedUrl);
+                                .thenReturn(expectedKey);
 
                 // when & then
                 mockMvc.perform(multipart("/api/files/upload")
@@ -365,8 +364,54 @@ class FileControllerTest {
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.title").value("Invalid Request Argument"))
-                                // TODO: 원인 파악 필요. Mock 설정은 "잘못된 파일 타입입니다."이나 실제로는 "파일 크기가 제한을 초과합니다"가 반환됨.
                                 .andExpect(jsonPath("$.detail").value("파일 크기가 제한을 초과합니다"));
+        }
+
+        // ==================== 공개 파일 서빙 테스트 ====================
+
+        @Test
+        @DisplayName("공개 파일 서빙 성공 - 인증 불필요")
+        void testGetPublicFile_Success() throws Exception {
+                // given
+                String key = "profile/test-file.jpg";
+                byte[] fileBytes = "test image content".getBytes();
+                when(s3Service.downloadFile(key)).thenReturn(fileBytes);
+                when(s3Service.getContentType(key)).thenReturn("image/jpeg");
+
+                // when & then - 인증 없이 접근 가능
+                mockMvc.perform(get("/api/files/public")
+                                .param("key", key))
+                                .andDo(print())
+                                .andExpect(status().isOk())
+                                .andExpect(content().contentType(MediaType.IMAGE_JPEG))
+                                .andExpect(content().bytes(fileBytes));
+
+                verify(s3Service, times(1)).downloadFile(key);
+                verify(s3Service, times(1)).getContentType(key);
+        }
+
+        @Test
+        @DisplayName("공개 파일 서빙 실패 - key 파라미터 없음 (400 Bad Request)")
+        void testGetPublicFile_MissingKey() throws Exception {
+                // when & then
+                mockMvc.perform(get("/api/files/public"))
+                                .andDo(print())
+                                .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("공개 파일 서빙 실패 - S3 다운로드 오류")
+        void testGetPublicFile_S3Exception() throws Exception {
+                // given
+                String key = "profile/test-file.jpg";
+                when(s3Service.downloadFile(key))
+                                .thenThrow(new S3UploadException("S3 download failed"));
+
+                // when & then
+                mockMvc.perform(get("/api/files/public")
+                                .param("key", key))
+                                .andDo(print())
+                                .andExpect(status().isInternalServerError());
         }
 
         // ==================== 파일 삭제 테스트 ====================
@@ -376,18 +421,18 @@ class FileControllerTest {
         @WithMockUser(username = "admin", roles = { "ADMIN" })
         void testDeleteFile_Success_Admin() throws Exception {
                 // given
-                String fileUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test-file.jpg";
-                doNothing().when(s3Service).deleteFile(fileUrl);
+                String key = "profile/test-file.jpg";
+                doNothing().when(s3Service).deleteFile(key);
 
                 // when & then
                 mockMvc.perform(delete("/api/admin/files/delete")
-                                .param("fileUrl", fileUrl)
+                                .param("key", key)
                                 .with(csrf()))
                                 .andDo(print())
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.message").value("파일이 성공적으로 삭제되었습니다."));
 
-                verify(s3Service, times(1)).deleteFile(fileUrl);
+                verify(s3Service, times(1)).deleteFile(key);
         }
 
         @Test
@@ -395,11 +440,11 @@ class FileControllerTest {
         @WithMockUser(username = "normaluser", roles = { "USER" })
         void testDeleteFile_Fail_Forbidden() throws Exception {
                 // given
-                String fileUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test-file.jpg";
+                String key = "profile/test-file.jpg";
 
                 // when & then
                 mockMvc.perform(delete("/api/admin/files/delete")
-                                .param("fileUrl", fileUrl)
+                                .param("key", key)
                                 .with(csrf()))
                                 .andDo(print())
                                 .andExpect(status().isForbidden());
@@ -407,17 +452,15 @@ class FileControllerTest {
                 verify(s3Service, never()).deleteFile(any());
         }
 
-        // SecurityConfig 수정 완료: 관리자 권한 체크 확인
         @Test
         @DisplayName("파일 삭제 실패 - 비로그인 사용자 (인증 필요)")
         void testDeleteFile_Fail_Unauthorized() throws Exception {
                 // given
-                String fileUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test-file.jpg";
+                String key = "profile/test-file.jpg";
 
                 // when & then
-                // 인증되지 않은 사용자는 401 Unauthorized 반환
                 mockMvc.perform(delete("/api/admin/files/delete")
-                                .param("fileUrl", fileUrl)
+                                .param("key", key)
                                 .with(csrf()))
                                 .andDo(print())
                                 .andExpect(status().isUnauthorized());
@@ -426,9 +469,9 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("파일 삭제 실패 - null URL")
+        @DisplayName("파일 삭제 실패 - null key")
         @WithMockUser(username = "admin", roles = { "ADMIN" })
-        void testDeleteFile_NullUrl() throws Exception {
+        void testDeleteFile_NullKey() throws Exception {
                 // when & then
                 mockMvc.perform(delete("/api/admin/files/delete")
                                 .with(csrf()))
@@ -437,21 +480,21 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("파일 삭제 실패 - 빈 URL")
+        @DisplayName("파일 삭제 실패 - 빈 key")
         @WithMockUser(username = "admin", roles = { "ADMIN" })
-        void testDeleteFile_EmptyUrl() throws Exception {
+        void testDeleteFile_EmptyKey() throws Exception {
                 // given
-                doThrow(new S3UploadException("파일 URL이 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR))
+                doThrow(new S3UploadException("S3 키가 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR))
                                 .when(s3Service).deleteFile("");
 
-                // when & then - Service에서 검증 후 GlobalExceptionHandler가 ProblemDetail 형식으로 응답
+                // when & then
                 mockMvc.perform(delete("/api/admin/files/delete")
-                                .param("fileUrl", "")
+                                .param("key", "")
                                 .with(csrf()))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.title").value("File Validation Error"))
-                                .andExpect(jsonPath("$.detail").value("파일 URL이 비어있습니다."))
+                                .andExpect(jsonPath("$.detail").value("S3 키가 비어있습니다."))
                                 .andExpect(jsonPath("$.reason").value("VALIDATION_ERROR"));
         }
 
@@ -460,13 +503,13 @@ class FileControllerTest {
         @WithMockUser(username = "admin", roles = { "ADMIN" })
         void testDeleteFile_S3Exception() throws Exception {
                 // given
-                String fileUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/profile/test-file.jpg";
+                String key = "profile/test-file.jpg";
                 doThrow(new S3UploadException("S3 delete failed"))
-                                .when(s3Service).deleteFile(fileUrl);
+                                .when(s3Service).deleteFile(key);
 
-                // when & then - GlobalExceptionHandler가 ProblemDetail 형식으로 응답
+                // when & then
                 mockMvc.perform(delete("/api/admin/files/delete")
-                                .param("fileUrl", fileUrl)
+                                .param("key", key)
                                 .with(csrf()))
                                 .andDo(print())
                                 .andExpect(status().isInternalServerError())
@@ -476,24 +519,24 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("파일 삭제 실패 - 유효하지 않은 URL 형식")
+        @DisplayName("파일 삭제 실패 - 잘못된 key 형식 (경로 순회)")
         @WithMockUser(username = "admin", roles = { "ADMIN" })
-        void testDeleteFile_InvalidUrlFormat() throws Exception {
+        void testDeleteFile_InvalidKeyFormat() throws Exception {
                 // given
-                String fileUrl = "invalid-url";
-                doThrow(new S3UploadException("유효하지 않은 URL 형식입니다.", S3UploadException.FailureReason.VALIDATION_ERROR))
-                                .when(s3Service).deleteFile(fileUrl);
+                String key = "../etc/passwd";
+                doThrow(new S3UploadException("잘못된 S3 키 형식입니다.", S3UploadException.FailureReason.VALIDATION_ERROR))
+                                .when(s3Service).deleteFile(key);
 
-                // when & then - Service에서 검증 후 GlobalExceptionHandler가 ProblemDetail 형식으로 응답
+                // when & then
                 mockMvc.perform(delete("/api/admin/files/delete")
-                                .param("fileUrl", fileUrl)
+                                .param("key", key)
                                 .with(csrf()))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.title").value("File Validation Error"))
-                                .andExpect(jsonPath("$.detail").value("유효하지 않은 URL 형식입니다."))
+                                .andExpect(jsonPath("$.detail").value("잘못된 S3 키 형식입니다."))
                                 .andExpect(jsonPath("$.reason").value("VALIDATION_ERROR"));
 
-                verify(s3Service, times(1)).deleteFile(fileUrl);
+                verify(s3Service, times(1)).deleteFile(key);
         }
 }

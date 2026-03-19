@@ -1,6 +1,11 @@
 /**
- * AWS S3 파일 업로드/다운로드/삭제 서비스
- * S3 버킷에 대한 파일 관리 기능을 제공합니다.
+ * 객체 스토리지(S3 호환) 파일 업로드/다운로드/삭제 서비스
+ * Cloudflare R2를 대상으로 파일 관리 기능을 제공합니다.
+ *
+ * 파일 URL 정책:
+ * - DB에는 절대 URL 대신 key(경로)를 저장합니다. (예: "profile/550e8400-e29b-41d4-a716-446655440000.jpg")
+ * - 파일 접근은 GET /api/files/public?key= 백엔드 프록시를 통해 이루어집니다.
+ * - 민감한 파일(기관 등록 서류 등)은 generatePresignedUrl()로 임시 링크를 발급합니다.
  */
 package com.softwarecampus.backend.service.common;
 
@@ -20,8 +25,6 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Set;
@@ -36,11 +39,8 @@ public class S3Service {
     private final S3Presigner s3Presigner;
     private final FileType fileType;
 
-    @Value("${aws.s3.bucket-name}")
+    @Value("${storage.object.bucket}")
     private String bucketName;
-
-    @Value("${aws.s3.region}")
-    private String region;
 
     // 허용된 폴더 목록 (S3Folder enum 기반)
     private static final Set<String> ALLOWED_FOLDERS = Arrays.stream(S3Folder.values())
@@ -54,29 +54,30 @@ public class S3Service {
     }
 
     /**
-     * 애플리케이션 시작 시 필수 설정값들을 검증합니다.
-     * bucketName과 region이 제대로 주입되었는지 확인하고,
-     * 누락된 경우 명확한 오류 메시지와 함께 애플리케이션을 빠르게 실패시킵니다.
+     * 애플리케이션 시작 시 필수 설정값 검증
      */
     @PostConstruct
     private void validateConfiguration() {
         if (!StringUtils.hasText(bucketName)) {
             throw new IllegalStateException(
-                "AWS S3 bucket name is not configured. Please set 'aws.s3.bucket-name' property.");
+                "스토리지 버킷 이름이 설정되지 않았습니다. 'storage.object.bucket' 프로퍼티를 확인하세요.");
         }
-        
-        if (!StringUtils.hasText(region)) {
-            throw new IllegalStateException(
-                "AWS S3 region is not configured. Please set 'aws.s3.region' property.");
-        }
-        
-        log.info("S3Service initialized with bucket: {} in region: {}", bucketName, region);
+        log.info("S3Service initialized with bucket: {}", bucketName);
     }
 
+    /**
+     * 파일을 업로드하고 S3 key를 반환합니다.
+     * DB에는 절대 URL이 아닌 key(예: "profile/uuid.jpg")를 저장해야 합니다.
+     *
+     * @param file         업로드할 파일
+     * @param folder       S3 폴더 경로 (S3Folder enum 기반)
+     * @param fileTypeEnum 파일 타입 (FileType 설정 조회용)
+     * @return S3 key (예: "profile/550e8400-e29b-41d4-a716-446655440000.jpg")
+     */
     public String uploadFile(MultipartFile file, String folder, FileType.FileTypeEnum fileTypeEnum) {
         // 1. 폴더 경로 순회 공격 방지 및 허용 목록 검증
         validateFolderSecurity(folder);
-        
+
         // 2. FileType 설정 조회 및 파일 검증
         FileType.FileTypeConfig config = fileType.getConfig(fileTypeEnum);
         validateFile(file, config);
@@ -94,7 +95,6 @@ public class S3Service {
 
             // 스트리밍 방식으로 파일 업로드 (메모리 효율적)
             // file.getBytes()는 전체 파일을 메모리에 로드하여 대용량 파일 시 OutOfMemoryError 발생 가능
-            // InputStream을 사용하여 스트리밍 방식으로 업로드
             try (var inputStream = file.getInputStream()) {
                 s3Client.putObject(
                     putObjectRequest,
@@ -102,105 +102,140 @@ public class S3Service {
                 );
             }
 
-            String fileUrl = getFileUrl(key);
-            log.info("File uploaded successfully to S3: {}", key);
-            return fileUrl;
+            log.info("File uploaded successfully: {}", key);
+            return key;
         } catch (IOException e) {
-            log.error("Failed to read file for S3 upload: {}", file.getOriginalFilename(), e);
+            log.error("Failed to read file for upload: {}", file.getOriginalFilename(), e);
             throw new S3UploadException("파일 읽기에 실패했습니다.", e);
         } catch (S3Exception e) {
-            log.error("S3 upload failed: {}", e.awsErrorDetails().errorMessage(), e);
+            log.error("Upload failed: {}", e.awsErrorDetails().errorMessage(), e);
             throw new S3UploadException("S3 업로드에 실패했습니다.", e);
         }
     }
 
-    public void deleteFile(String fileUrl) {
-        // 1. URL 기본 검증 (null, 형식, 길이)
-        validateFileUrl(fileUrl);
-        
-        try {
-            // 2. Key 추출 및 디코딩
-            String key = extractKeyFromUrl(fileUrl);
-            
-            // 3. 디코딩된 key에 대한 경로 순회 검증 (URL 인코딩 우회 방지)
-            validateS3Key(key);
+    /**
+     * S3 key로 파일을 삭제합니다.
+     *
+     * @param key S3 키 (예: "profile/uuid.jpg")
+     */
+    public void deleteFile(String key) {
+        validateS3Key(key);
 
+        try {
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(bucketName)
                     .key(key)
                     .build();
 
             s3Client.deleteObject(deleteObjectRequest);
-            log.info("File deleted successfully from S3: {}", key);
+            log.info("File deleted successfully: {}", key);
         } catch (S3Exception e) {
-            log.error("S3 delete failed: {}", e.awsErrorDetails().errorMessage(), e);
+            log.error("Delete failed: {}", e.awsErrorDetails().errorMessage(), e);
             throw new S3UploadException("S3 파일 삭제에 실패했습니다.", e);
         }
     }
 
     /**
-     * S3 파일에 대한 Presigned URL을 생성합니다.
-     * Presigned URL은 지정된 시간 동안만 유효한 임시 다운로드 링크입니다.
+     * S3 key로 파일 바이트를 다운로드합니다.
+     * GET /api/files/public 백엔드 프록시에서 사용합니다.
      *
-     * @param s3Key S3 객체 키 (예: "academy/123/uuid-file.pdf")
+     * @param key S3 키 (예: "profile/uuid.jpg")
+     * @return 파일 바이트 배열
+     */
+    public byte[] downloadFile(String key) {
+        validateS3Key(key);
+
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+
+            return s3Client.getObjectAsBytes(getObjectRequest).asByteArray();
+        } catch (S3Exception e) {
+            log.error("Download failed: {}", e.awsErrorDetails().errorMessage(), e);
+            throw new S3UploadException("S3 파일 다운로드에 실패했습니다.", e);
+        }
+    }
+
+    /**
+     * S3 파일의 Content-Type을 조회합니다.
+     * GET /api/files/public 엔드포인트에서 올바른 Content-Type 헤더를 반환하기 위해 사용합니다.
+     *
+     * @param key S3 키
+     * @return Content-Type 문자열 (조회 실패 시 "application/octet-stream" 반환)
+     */
+    public String getContentType(String key) {
+        try {
+            validateS3Key(key);
+            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+            return s3Client.headObject(headObjectRequest).contentType();
+        } catch (Exception e) {
+            log.warn("Failed to get content type for key: {}, defaulting to octet-stream", key);
+            return "application/octet-stream";
+        }
+    }
+
+    /**
+     * S3 파일의 메타데이터(크기)를 조회합니다.
+     *
+     * @param key S3 키 (예: "profile/uuid.jpg")
+     * @return 파일 크기 (bytes), 조회 실패 시 0 반환
+     */
+    public long getFileSize(String key) {
+        try {
+            validateS3Key(key);
+            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+            HeadObjectResponse response = s3Client.headObject(headObjectRequest);
+            long fileSize = response.contentLength();
+            log.debug("File size for {}: {} bytes", key, fileSize);
+            return fileSize;
+        } catch (S3Exception e) {
+            log.warn("Failed to get file size: {}", e.awsErrorDetails().errorMessage());
+            return 0L;
+        } catch (Exception e) {
+            log.warn("Failed to get file size: {}", e.getMessage());
+            return 0L;
+        }
+    }
+
+    /**
+     * S3 파일에 대한 Presigned URL을 생성합니다.
+     * 지정된 시간 동안만 유효한 임시 다운로드 링크입니다.
+     * 민감한 파일(기관 등록 서류 등) 접근 시 사용합니다.
+     *
+     * @param s3Key    S3 객체 키 (예: "academy/123/uuid-file.pdf")
      * @param duration URL 유효 기간
      * @return Presigned URL
-     * @throws S3UploadException Presigned URL 생성 실패 시
      */
     public String generatePresignedUrl(String s3Key, Duration duration) {
-        // 1. S3 키 검증
         validateS3Key(s3Key);
 
         try {
-            // 2. GetObject 요청 생성
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(s3Key)
                     .build();
 
-            // 3. Presigned URL 요청 생성
             GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
                     .signatureDuration(duration)
                     .getObjectRequest(getObjectRequest)
                     .build();
 
-            // 4. Presigned URL 생성
             PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
             String presignedUrl = presignedRequest.url().toString();
-            
-            log.info("Presigned URL generated for S3 key: {}, duration: {}", s3Key, duration);
+
+            log.info("Presigned URL generated for key: {}, duration: {}", s3Key, duration);
             return presignedUrl;
         } catch (S3Exception e) {
-            log.error("Failed to generate presigned URL for S3 key: {}", s3Key, e);
+            log.error("Failed to generate presigned URL for key: {}", s3Key, e);
             throw new S3UploadException("Presigned URL 생성에 실패했습니다.", e);
-        }
-    }
-
-    /**
-     * S3 URL에서 키를 추출합니다.
-     * URL에 인코딩된 키를 디코딩하여 실제 S3 객체 이름과 일치시킵니다.
-     * 공백이나 특수문자가 포함된 파일명의 경우 URL에서 %20 등으로 인코딩되어 있으므로
-     * 디코딩하지 않으면 S3 객체 조회/삭제 시 불일치가 발생합니다.
-     */
-    private String extractKeyFromUrl(String fileUrl) {
-        if (fileUrl == null || fileUrl.isBlank()) {
-            throw new S3UploadException("파일 URL이 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
-        }
-        
-        String expectedPrefix = String.format("https://%s.s3.%s.amazonaws.com/", bucketName, region);
-        if (!fileUrl.startsWith(expectedPrefix)) {
-            throw new S3UploadException("유효하지 않은 S3 URL 형식입니다: " + fileUrl, S3UploadException.FailureReason.VALIDATION_ERROR);
-        }
-        
-        // URL에서 키 부분 추출
-        String encodedKey = fileUrl.substring(expectedPrefix.length());
-        
-        // URL 디코딩 (공백, 특수문자 복원)
-        try {
-            return URLDecoder.decode(encodedKey, StandardCharsets.UTF_8.name());
-        } catch (Exception e) {
-            log.error("Failed to decode S3 key from URL: {}", fileUrl, e);
-            throw new S3UploadException("S3 URL 디코딩에 실패했습니다: " + fileUrl, e, S3UploadException.FailureReason.VALIDATION_ERROR);
         }
     }
 
@@ -208,43 +243,22 @@ public class S3Service {
         String extension = "";
         if (originalFilename != null && originalFilename.contains(".")) {
             extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            // validateFile()에서 이미 FileType enum 기반으로 확장자 검증 완료
-            // (jpg, png, pdf 등 허용된 확장자만 통과)
         }
         return UUID.randomUUID() + extension;
-    }
-
-    /**
-     * S3 키에서 URL을 생성합니다.
-     * UUID 기반 파일명과 enum 기반 폴더명은 URL-safe하므로 별도 인코딩 불필요
-     */
-    private String getFileUrl(String key) {
-        return String.format("https://%s.s3.%s.amazonaws.com/%s",
-                bucketName,
-                region,
-                key);
     }
 
     /**
      * 폴더 경로의 보안 검증
      * S3Folder enum 기반 화이트리스트 검증으로 경로 순회 공격 원천 차단
      * 서브폴더도 허용 (예: academy/100, course/images/123)
-     * 
-     * @param folder S3 내 폴더 경로
-     * @throws IllegalArgumentException 허용되지 않은 폴더인 경우
      */
     private void validateFolderSecurity(String folder) {
-        // 경로 순회 공격 패턴 사전 차단
         if (folder.contains("..") || folder.contains("//") || folder.contains("\\")) {
             log.warn("Path traversal attempt detected in folder: {}", folder);
             throw new IllegalArgumentException("허용되지 않은 폴더입니다: " + folder);
         }
-        
-        // S3Folder enum 기반 화이트리스트 검증
-        // 1) 정확히 일치하거나
-        // 2) 허용된 폴더로 시작하는 서브폴더 경로 허용 (예: "academy/100")
+
         String rootFolder = folder.contains("/") ? folder.split("/")[0] : folder;
-        
         if (!ALLOWED_FOLDERS.contains(folder) && !ALLOWED_FOLDERS.contains(rootFolder)) {
             log.warn("Invalid folder name attempted: {}", folder);
             throw new IllegalArgumentException("허용되지 않은 폴더입니다: " + folder);
@@ -252,60 +266,21 @@ public class S3Service {
     }
 
     /**
-     * 파일 URL의 기본 검증 (null, 형식, 길이)
-     * 경로 순회 검증은 디코딩 후 validateS3Key()에서 수행
-     * 
-     * @param fileUrl 검증할 파일 URL
-     * @throws IllegalArgumentException URL이 유효하지 않은 경우
-     */
-    private void validateFileUrl(String fileUrl) {
-        // 1. null 및 빈 문자열 검증
-        if (fileUrl == null || fileUrl.isBlank()) {
-            throw new S3UploadException("파일 URL이 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
-        }
-
-        // 2. URL 형식 검증 (기본 패턴 체크)
-        if (!fileUrl.startsWith("https://") && !fileUrl.startsWith("http://")) {
-            log.warn("File delete failed: invalid URL format: {}", fileUrl);
-            throw new S3UploadException("유효하지 않은 URL 형식입니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
-        }
-
-        // 3. S3 URL 패턴 검증 (amazonaws.com 포함 여부)
-        if (!fileUrl.contains(".s3.") || !fileUrl.contains(".amazonaws.com/")) {
-            log.warn("File delete failed: not a valid S3 URL: {}", fileUrl);
-            throw new S3UploadException("유효하지 않은 S3 URL입니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
-        }
-
-        // 4. URL 길이 검증 (비정상적으로 긴 URL 차단)
-        if (fileUrl.length() > 2048) {
-            log.warn("File delete failed: URL too long: {} characters", fileUrl.length());
-            throw new S3UploadException("URL이 너무 깁니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
-        }
-    }
-
-    /**
-     * 디코딩된 S3 key의 경로 순회 공격 검증
-     * URL 인코딩 우회를 방지하기 위해 디코딩 후 검증 필수
-     * 
-     * 예시:
-     * - URL: "https://bucket.s3.region.amazonaws.com/board/%2E%2E/admin/file.pdf"
-     * - 디코딩 후 key: "board/../admin/file.pdf" ← 여기서 차단
-     * 
-     * @param key 디코딩된 S3 키
-     * @throws IllegalArgumentException 경로 순회 패턴이 감지된 경우
+     * S3 key의 경로 순회 공격 검증
+     * URL 인코딩 우회를 방지하기 위해 key를 직접 검증합니다.
+     *
+     * @param key 검증할 S3 키
      */
     private void validateS3Key(String key) {
         if (key == null || key.isBlank()) {
             throw new S3UploadException("S3 키가 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
-        
-        // 경로 순회 패턴 검증 (**중요: URL 디코딩 후 검증**)
+
         if (key.contains("..") || key.contains("//") || key.contains("\\")) {
-            log.warn("Path traversal attempt detected in decoded S3 key: {}", key);
+            log.warn("Path traversal attempt detected in S3 key: {}", key);
             throw new S3UploadException("잘못된 S3 키 형식입니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
-        
-        // 추가 보안: 경로 구분자로 시작하면 안됨
+
         if (key.startsWith("/") || key.startsWith("\\")) {
             log.warn("S3 key starts with path separator: {}", key);
             throw new S3UploadException("잘못된 S3 키 형식입니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
@@ -317,17 +292,14 @@ public class S3Service {
             throw new S3UploadException("파일이 비어있습니다.", S3UploadException.FailureReason.VALIDATION_ERROR);
         }
 
-        // 파일 크기 검증
         if (!config.isFileSizeValid(file.getSize())) {
-            log.warn("File size {} exceeds maximum allowed size {}", 
-                    file.getSize(), config.getMaxFileSize());
+            log.warn("File size {} exceeds maximum allowed size {}", file.getSize(), config.getMaxFileSize());
             throw new S3UploadException(
                     String.format("파일 크기가 제한을 초과합니다. 최대 %dMB까지 업로드 가능합니다.",
                             config.getMaxFileSizeMB()),
                     S3UploadException.FailureReason.FILE_TOO_LARGE);
         }
 
-        // Content-Type 검증
         String contentType = file.getContentType();
         if (contentType == null || !config.isContentTypeAllowed(contentType)) {
             log.warn("Invalid content type attempted: {}", contentType);
@@ -336,7 +308,6 @@ public class S3Service {
                     S3UploadException.FailureReason.INVALID_FILE_TYPE);
         }
 
-        // 확장자 검증
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || !originalFilename.contains(".")) {
             throw new S3UploadException(
@@ -348,67 +319,9 @@ public class S3Service {
         if (!config.isExtensionAllowed(extension)) {
             log.warn("Invalid file extension attempted: {}", extension);
             throw new S3UploadException(
-                    String.format("허용되지 않은 파일 확장자입니다: %s (허용: %s)", 
+                    String.format("허용되지 않은 파일 확장자입니다: %s (허용: %s)",
                             extension, config.getAllowedExtensions()),
                     S3UploadException.FailureReason.INVALID_FILE_TYPE);
         }
     }
-
-    public byte[] downloadFile(String fileUrl) {
-        // URL 검증
-        validateFileUrl(fileUrl);
-
-        // key 디코딩 및 보안 검증
-        String key = extractKeyFromUrl(fileUrl);
-        validateS3Key(key);
-
-        try {
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(key)
-                    .build();
-
-            return s3Client.getObjectAsBytes(getObjectRequest).asByteArray();
-
-        } catch (S3Exception e) {
-            log.error("Failed to download file from S3: {}", e.awsErrorDetails().errorMessage(), e);
-            throw new S3UploadException("S3 파일 다운로드에 실패했습니다.", e);
-        }
-    }
-
-    /**
-     * S3 파일의 메타데이터(크기 등)를 조회합니다.
-     * 에디터에서 업로드된 이미지의 크기 정보를 가져올 때 사용합니다.
-     *
-     * @param fileUrl S3 파일의 전체 URL
-     * @return 파일 크기 (bytes), 조회 실패 시 0 반환
-     */
-    public long getFileSize(String fileUrl) {
-        try {
-            // URL 검증
-            validateFileUrl(fileUrl);
-
-            // key 디코딩 및 보안 검증
-            String key = extractKeyFromUrl(fileUrl);
-            validateS3Key(key);
-
-            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(key)
-                    .build();
-
-            HeadObjectResponse response = s3Client.headObject(headObjectRequest);
-            long fileSize = response.contentLength();
-            log.debug("Retrieved file size for {}: {} bytes", key, fileSize);
-            return fileSize;
-
-        } catch (S3Exception e) {
-            log.warn("Failed to get file size from S3: {}", e.awsErrorDetails().errorMessage());
-            return 0L; // 실패 시 0 반환 (기존 동작 유지)
-        } catch (Exception e) {
-            log.warn("Failed to get file size: {}", e.getMessage());
-            return 0L;
-        }
-    }
 }
-
