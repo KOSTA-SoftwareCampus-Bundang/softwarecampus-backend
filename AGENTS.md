@@ -203,8 +203,20 @@ service/
    - 브랜치명: 작업 내용 관련 영문, 20자 이내, 중복 금지
 2. 유의미한 변경마다 커밋 작성
 3. 커밋 형식: Conventional Commits
-   - 프리픽스: `feat:` / `fix:` / `refactor:` / `chore:` / `docs:` / `test:` / `build:`
-   - 제목: 핵심 변경 내용 / 본문: 작업 목적·내용·진행도
+   - **프리픽스**: `feat:` / `fix:` / `refactor:` / `chore:` / `docs:` / `test:` / `build:`
+   - **제목(subject)**: 50자 이내, 한국어, 마침표 없음
+   - **본문(body)**: 제목과 빈 줄로 구분, 72자 줄바꿈, 작업 목적·내용·범위 기술
+   - **푸터(footer)**: 이슈 참조 시 `Closes #123` 형식 사용
+   - 예시:
+     ```
+     feat: 수강 후기 작성 API 추가
+
+     - POST /api/reviews 엔드포인트 구현
+     - 작성자 소유권 검증 로직 포함
+     - 이미지 첨부 최대 5개 제한
+
+     Closes #42
+     ```
 4. 기능 완성 후 remote push
 5. Push 전 **fetch → 최신 main merge** 필수
 6. Conflict 발생 시 **임의 수정 금지 → 반드시 사용자에게 확인**
