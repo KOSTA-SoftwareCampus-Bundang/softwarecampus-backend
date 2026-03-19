@@ -162,7 +162,7 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           cat >> ~/.ssh/config << EOF
           Host ${{ secrets.EC2_HOST }}
-            ProxyCommand cloudflared access ssh --hostname %h
+            ProxyCommand cloudflared access ssh --hostname %h --id ${{ secrets.CF_ACCESS_CLIENT_ID }} --secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
             IdentityFile ~/.ssh/deploy_key
             StrictHostKeyChecking no
             UserKnownHostsFile /dev/null
