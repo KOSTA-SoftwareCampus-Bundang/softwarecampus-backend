@@ -25,9 +25,13 @@ on:
 # 전역 환경 변수 설정
 # --------------------------------------------------------------------------
 env:
-  # 배포 관련 경로 (secrets.DEPLOY_BASE_PATH 예: /docker/softwarecampus)
-  DEPLOY_PATH: "${{ secrets.DEPLOY_BASE_PATH }}/softwarecampus-backend"
-  TEMP_PATH: "${{ secrets.DEPLOY_BASE_PATH }}/.deploy_temp"
+  # Synology NAS 경로 분리:
+  #   SSH shell → /volume1/docker/... (실제 파일시스템 경로)
+  #   SCP(SFTP) → /docker/...        (공유 폴더 기준 가상 루트, /volume1 없음)
+  # secrets.DEPLOY_BASE_PATH     예: /volume1/docker/softwarecampus  (SSH용)
+  # secrets.DEPLOY_BASE_PATH_SCP 예: /docker/softwarecampus          (SCP용)
+  DEPLOY_PATH:     "${{ secrets.DEPLOY_BASE_PATH }}/softwarecampus-backend"
+  SCP_DEPLOY_PATH: "${{ secrets.DEPLOY_BASE_PATH_SCP }}/softwarecampus-backend"
   # Docker 네트워크 및 컨테이너 설정
   NETWORK_NAME: "softcampus-network"
   # 리소스 경로 (Repository 내)
@@ -184,14 +188,15 @@ jobs:
           } > /tmp/deploy/backend/.env
 
       # 5. NAS로 파일 전송 (SCP)
+      # SSH로 디렉토리를 먼저 생성(실제 경로)한 뒤, SCP는 SFTP 가상 경로로 전송
       - name: Copy files to server
         run: |
           ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} \
-            "mkdir -p ${{ env.TEMP_PATH }}/backend"
+            "mkdir -p ${{ env.DEPLOY_PATH }}"
           scp /tmp/deploy/backend/docker-compose.yml \
-            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:${{ env.TEMP_PATH }}/backend/
+            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:${{ env.SCP_DEPLOY_PATH }}/
           scp /tmp/deploy/backend/.env \
-            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:${{ env.TEMP_PATH }}/backend/
+            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:${{ env.SCP_DEPLOY_PATH }}/
 
       # 6. NAS에서 배포 실행 (SSH)
       - name: Deploy on server
@@ -199,17 +204,8 @@ jobs:
           ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << ENDSSH
           set -e
           DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
-          TEMP_PATH="${{ env.TEMP_PATH }}"
           NETWORK_NAME="${{ env.NETWORK_NAME }}"
 
-          # ------------------------------------------------------------------
-          # Step 1: 파일 이동
-          # ------------------------------------------------------------------
-          echo "Moving configuration files..."
-          mkdir -p \$DEPLOY_PATH
-          mv \$TEMP_PATH/backend/docker-compose.yml \$DEPLOY_PATH/
-          mv \$TEMP_PATH/backend/.env \$DEPLOY_PATH/
-          rm -rf \$TEMP_PATH
           chmod 600 \$DEPLOY_PATH/.env
 
           # ------------------------------------------------------------------
