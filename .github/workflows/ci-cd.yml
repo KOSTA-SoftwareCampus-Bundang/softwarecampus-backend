@@ -225,7 +225,7 @@ jobs:
           # ------------------------------------------------------------------
           echo "Deploying Backend..."
           cd \$DEPLOY_PATH
-          docker compose pull || true
+          docker compose pull softcampus-backend
           docker compose up -d
 
           # ------------------------------------------------------------------
