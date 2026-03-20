@@ -226,6 +226,7 @@ jobs:
           echo "Deploying Backend..."
           cd \$DEPLOY_PATH
           docker compose pull softcampus-backend
+          docker compose down --remove-orphans
           docker compose up -d --pull never
 
           # ------------------------------------------------------------------
