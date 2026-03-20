@@ -70,9 +70,6 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD}
     networks:
       - softcampus-network
-    # 보안을 위해 로컬호스트(127.0.0.1)에만 포트 노출
-    ports:
-      - "127.0.0.1:6379:6379"
 
 # --------------------------------------------------------------------------
 # Network Configuration
