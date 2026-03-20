@@ -68,7 +68,7 @@ services:
     container_name: softcampus-redis
     restart: always
     # 비밀번호 인증 활성화 (운영 환경에서 REDIS_PASSWORD를 반드시 강력한 값으로 설정할 것)
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: redis-server
     networks:
       - softcampus-network
 
