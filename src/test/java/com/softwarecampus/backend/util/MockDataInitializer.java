@@ -29,7 +29,7 @@ public class MockDataInitializer {
      * <p>
      * 실행 순서:
      * 1. clean-database.sql: 모든 테이블 데이터 삭제
-     * 2. mock-data.sql: Mock 데이터 삽입
+     * 2. mock-data-new.sql: Mock 데이터 삽입
      */
     @Transactional
     public void initialize() {
@@ -43,7 +43,7 @@ public class MockDataInitializer {
             log.info("✅ 기존 데이터 정리 완료");
 
             // 2. Mock 데이터 삽입
-            executeSqlScript("sql/mock-data.sql");
+            executeSqlScript("sql/mock-data-new.sql");
             log.info("✅ Mock 데이터 삽입 완료");
 
             // EntityManager 초기화 (캐시 제거)
@@ -77,18 +77,19 @@ public class MockDataInitializer {
      */
     private void printSummary() {
         log.info("📊 생성된 데이터 요약:");
-        log.info("  - Academy: 3개");
-        log.info("  - CourseCategory: 48개");
-        log.info("  - Account: 6개");
-        log.info("  - Course: 12개");
-        log.info("  - Board: 10개");
-        log.info("  - Comment: 8개");
-        log.info("  - CourseReview: 3개");
-        log.info("  - ReviewSection: 12개");
-        log.info("  - CourseFavorite: 8개");
-        log.info("  - CourseCurriculum: 52개");
-        log.info("  - CourseQna: 12개");
-        log.info("  - ReviewLike: 10개");
+        log.info("  - Academy: 10개");
+        log.info("  - CourseCategory: 12개");
+        log.info("  - Account: 21개");
+        log.info("  - Course: 20개");
+        log.info("  - Banner: 3개");
+        log.info("  - CourseImage: 20개");
+        log.info("  - Board: 30개");
+        log.info("  - Comment: 20개");
+        log.info("  - CourseReview: 49개");
+        log.info("  - ReviewSection: 16개");
+        log.info("  - CourseFavorite: 40개");
+        log.info("  - CourseCurriculum: 100개");
+        log.info("  - CourseQna: 7개");
     }
 }
 

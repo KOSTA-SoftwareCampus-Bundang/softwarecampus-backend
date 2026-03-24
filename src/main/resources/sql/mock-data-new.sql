@@ -14,6 +14,27 @@ VALUES (2, 'KOSTA 가산', '서울특별시 금천구 가산디지털1로 70 호
 INSERT INTO academy (id, name, address, business_number, email, phone_number, description, logo_url, website, is_approved, approved_at, created_at, updated_at, is_deleted)
 VALUES (3, 'KOSTA 분당', '경기도 성남시 성남대로 34 하나플라자 6층', '031-606-9311', 'bundang@kosta.com', '031-6070-9303', '국내 최대 규모의 융합 교육 인프라와 스타트업 연계 스탠딩 랩을 운영하는 분당 캠퍼스입니다.', 'https://assets.softwarecampus.kr/logo-bundang.svg', 'https://bundang.softwarecampus.kr', 'APPROVED', NOW(), NOW(), NOW(), false);
 
+INSERT INTO academy (id, name, address, business_number, email, phone_number, description, logo_url, website, is_approved, approved_at, created_at, updated_at, is_deleted)
+VALUES (4, '코드브릿지 강남', '서울특별시 강남구 테헤란로 145 우신빌딩 8층', '220-81-41004', 'gangnam@codebridge.kr', '02-6200-4104', '클라우드 전환과 DevOps 교육을 중심으로 기업 실무형 프로젝트를 운영하는 강남 캠퍼스입니다.', 'https://dummyimage.com/320x180/1f2937/ffffff&text=CodeBridge+Gangnam', 'https://gangnam.codebridge.kr', 'APPROVED', NOW(), NOW(), NOW(), false);
+
+INSERT INTO academy (id, name, address, business_number, email, phone_number, description, logo_url, website, is_approved, approved_at, created_at, updated_at, is_deleted)
+VALUES (5, '데이터웨이브 홍대', '서울특별시 마포구 양화로 186 LC타워 12층', '105-88-22005', 'hongdae@datawave.kr', '02-6200-4105', '데이터 분석과 BI, 데이터 엔지니어링 특화 과정을 운영하는 홍대 기반 교육기관입니다.', 'https://dummyimage.com/320x180/0f766e/ffffff&text=DataWave+Hongdae', 'https://hongdae.datawave.kr', 'APPROVED', NOW(), NOW(), NOW(), false);
+
+INSERT INTO academy (id, name, address, business_number, email, phone_number, description, logo_url, website, is_approved, approved_at, created_at, updated_at, is_deleted)
+VALUES (6, '넥스트시큐어 판교', '경기도 성남시 분당구 판교역로 235 에이치스퀘어 N동 6층', '129-86-22006', 'pangyo@nextsecure.kr', '031-6200-4106', '보안 관제와 침해 대응, 실전 취약점 분석 중심의 판교 특화 보안 교육기관입니다.', 'https://dummyimage.com/320x180/7c2d12/ffffff&text=NextSecure+Pangyo', 'https://pangyo.nextsecure.kr', 'APPROVED', NOW(), NOW(), NOW(), false);
+
+INSERT INTO academy (id, name, address, business_number, email, phone_number, description, logo_url, website, is_approved, approved_at, created_at, updated_at, is_deleted)
+VALUES (7, '모빌리티랩 송파', '서울특별시 송파구 법원로 128 문정에스케이브이원 10층', '215-81-22007', 'songpa@mobilitylab.kr', '02-6200-4107', '모바일 앱 기획과 크로스플랫폼 개발, UX 실습을 함께 다루는 송파 캠퍼스입니다.', 'https://dummyimage.com/320x180/1d4ed8/ffffff&text=MobilityLab+Songpa', 'https://songpa.mobilitylab.kr', 'APPROVED', NOW(), NOW(), NOW(), false);
+
+INSERT INTO academy (id, name, address, business_number, email, phone_number, description, logo_url, website, is_approved, approved_at, created_at, updated_at, is_deleted)
+VALUES (8, '프론티어 아카데미 영등포', '서울특별시 영등포구 경인로 775 에이스하이테크시티 2동 9층', '107-86-22008', 'yeongdeungpo@frontier.ac.kr', '02-6200-4108', '풀스택 부트캠프와 프론트엔드 실무 프로젝트를 강점으로 하는 영등포 교육기관입니다.', 'https://dummyimage.com/320x180/7e22ce/ffffff&text=Frontier+Academy', 'https://yeongdeungpo.frontier.ac.kr', 'APPROVED', NOW(), NOW(), NOW(), false);
+
+INSERT INTO academy (id, name, address, business_number, email, phone_number, description, logo_url, website, is_approved, approved_at, created_at, updated_at, is_deleted)
+VALUES (9, 'AI 캠퍼스 성수', '서울특별시 성동구 아차산로 113 삼진빌딩 7층', '206-86-22009', 'seongsu@aicampus.kr', '02-6200-4109', 'AI 서비스 기획, 챗봇 구축, 데이터/ML 엔지니어링을 연결하는 성수 기반 기관입니다.', 'https://dummyimage.com/320x180/be123c/ffffff&text=AI+Campus+Seongsu', 'https://seongsu.aicampus.kr', 'APPROVED', NOW(), NOW(), NOW(), false);
+
+INSERT INTO academy (id, name, address, business_number, email, phone_number, description, logo_url, website, is_approved, approved_at, created_at, updated_at, is_deleted)
+VALUES (10, '디지털전환 허브 수원', '경기도 수원시 영통구 광교로 156 광교비즈니스센터 11층', '124-86-22010', 'suwon@dxhub.kr', '031-6200-4110', '기업 DX와 클라우드 운영, 웹개발 취업 연계 프로그램을 함께 운영하는 수원 허브입니다.', 'https://dummyimage.com/320x180/374151/ffffff&text=DX+Hub+Suwon', 'https://suwon.dxhub.kr', 'APPROVED', NOW(), NOW(), NOW(), false);
+
 -- 2. CourseCategory (카테고리 정보)
 INSERT INTO course_category (id, category_name, category_type, created_at, updated_at, is_deleted)
 VALUES (1, '웹개발', 'JOB_SEEKER', NOW(), NOW(), false);
@@ -83,6 +104,27 @@ VALUES (14, '김은지 (가산 담당)', '$2a$10$KxYpO6W1l1L9RZyyuVwlyeO6bC3ukYq
 INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, terms_agreed_at, privacy_agreed, privacy_agreed_at, marketing_agreed, marketing_agreed_at, profile_image, created_at, updated_at, is_deleted, deleted_at)
 VALUES (15, '윤상혁 (분당 담당)', '$2a$10$KxYpO6W1l1L9RZyyuVwlyeO6bC3ukYqT/jmU5li6gTQzY/7KgTYkK', 'bundang-manager@softwarecampus.kr', '010-5656-5656', 'ACADEMY', 'KOSTA 분당', '교육지원', '경기도 성남시 분당구', 'APPROVED', 3, true, NOW(), true, NOW(), true, NOW(), NULL, NOW(), NOW(), false, NULL);
 
+INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, terms_agreed_at, privacy_agreed, privacy_agreed_at, marketing_agreed, marketing_agreed_at, profile_image, created_at, updated_at, is_deleted, deleted_at)
+VALUES (16, '서유진 (강남 담당)', '$2a$10$KxYpO6W1l1L9RZyyuVwlyeO6bC3ukYqT/jmU5li6gTQzY/7KgTYkK', 'gangnam-manager@codebridge.kr', '010-2323-2323', 'ACADEMY', '코드브릿지 강남', '프로그램 매니저', '서울특별시 강남구', 'APPROVED', 4, true, NOW(), true, NOW(), true, NOW(), NULL, NOW(), NOW(), false, NULL);
+
+INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, terms_agreed_at, privacy_agreed, privacy_agreed_at, marketing_agreed, marketing_agreed_at, profile_image, created_at, updated_at, is_deleted, deleted_at)
+VALUES (17, '오태민 (홍대 담당)', '$2a$10$KxYpO6W1l1L9RZyyuVwlyeO6bC3ukYqT/jmU5li6gTQzY/7KgTYkK', 'hongdae-manager@datawave.kr', '010-4545-4545', 'ACADEMY', '데이터웨이브 홍대', '교육운영', '서울특별시 마포구', 'APPROVED', 5, true, NOW(), true, NOW(), true, NOW(), NULL, NOW(), NOW(), false, NULL);
+
+INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, terms_agreed_at, privacy_agreed, privacy_agreed_at, marketing_agreed, marketing_agreed_at, profile_image, created_at, updated_at, is_deleted, deleted_at)
+VALUES (18, '임지후 (판교 담당)', '$2a$10$KxYpO6W1l1L9RZyyuVwlyeO6bC3ukYqT/jmU5li6gTQzY/7KgTYkK', 'pangyo-manager@nextsecure.kr', '010-6767-6767', 'ACADEMY', '넥스트시큐어 판교', '보안교육 리드', '경기도 성남시 분당구', 'APPROVED', 6, true, NOW(), true, NOW(), true, NOW(), NULL, NOW(), NOW(), false, NULL);
+
+INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, terms_agreed_at, privacy_agreed, privacy_agreed_at, marketing_agreed, marketing_agreed_at, profile_image, created_at, updated_at, is_deleted, deleted_at)
+VALUES (19, '장하린 (송파 담당)', '$2a$10$KxYpO6W1l1L9RZyyuVwlyeO6bC3ukYqT/jmU5li6gTQzY/7KgTYkK', 'songpa-manager@mobilitylab.kr', '010-7878-7878', 'ACADEMY', '모빌리티랩 송파', '커리큘럼 매니저', '서울특별시 송파구', 'APPROVED', 7, true, NOW(), true, NOW(), true, NOW(), NULL, NOW(), NOW(), false, NULL);
+
+INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, terms_agreed_at, privacy_agreed, privacy_agreed_at, marketing_agreed, marketing_agreed_at, profile_image, created_at, updated_at, is_deleted, deleted_at)
+VALUES (20, '배수현 (영등포 담당)', '$2a$10$KxYpO6W1l1L9RZyyuVwlyeO6bC3ukYqT/jmU5li6gTQzY/7KgTYkK', 'yeongdeungpo-manager@frontier.ac.kr', '010-8989-8989', 'ACADEMY', '프론티어 아카데미 영등포', '프로젝트 코치', '서울특별시 영등포구', 'APPROVED', 8, true, NOW(), true, NOW(), true, NOW(), NULL, NOW(), NOW(), false, NULL);
+
+INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, terms_agreed_at, privacy_agreed, privacy_agreed_at, marketing_agreed, marketing_agreed_at, profile_image, created_at, updated_at, is_deleted, deleted_at)
+VALUES (21, '문가온 (성수 담당)', '$2a$10$KxYpO6W1l1L9RZyyuVwlyeO6bC3ukYqT/jmU5li6gTQzY/7KgTYkK', 'seongsu-manager@aicampus.kr', '010-3131-3131', 'ACADEMY', 'AI 캠퍼스 성수', 'AI 트랙 리드', '서울특별시 성동구', 'APPROVED', 9, true, NOW(), true, NOW(), true, NOW(), NULL, NOW(), NOW(), false, NULL);
+
+INSERT INTO account (id, user_name, password, email, phone_number, account_type, affiliation, position, address, account_approved, academy_id, terms_agreed, terms_agreed_at, privacy_agreed, privacy_agreed_at, marketing_agreed, marketing_agreed_at, profile_image, created_at, updated_at, is_deleted, deleted_at)
+VALUES (22, '정서현 (수원 담당)', '$2a$10$KxYpO6W1l1L9RZyyuVwlyeO6bC3ukYqT/jmU5li6gTQzY/7KgTYkK', 'suwon-manager@dxhub.kr', '010-4141-4141', 'ACADEMY', '디지털전환 허브 수원', '산학협력 매니저', '경기도 수원시 영통구', 'APPROVED', 10, true, NOW(), true, NOW(), true, NOW(), NULL, NOW(), NOW(), false, NULL);
+
 -- 4. Course (다양한 모집/강의 조건 포함)
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
 VALUES (1, 1, 13, 7, '엔터프라이즈 Java 백엔드 아키텍처', '2025-11-10', '2025-12-05', '2026-01-06', '2026-05-31', 3600000, '화목 19:00~22:30', '온라인', false, true, false, 'Java 기초 및 객체 지향 지식', 1240, 'APPROVED', NOW(), NOW(), NOW(), false);
@@ -94,49 +136,49 @@ INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_sta
 VALUES (3, 3, 15, 9, 'AI 데이터 분석 실무', '2025-12-01', '2025-12-31', '2026-01-08', '2026-06-12', 4100000, '화목 19:30~22:00', '온라인', false, true, false, 'Python 기초 및 통계 이해', 920, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (4, 1, 13, 11, '클라우드 네이티브 인프라 설계', '2025-10-15', '2025-11-10', '2025-11-17', '2026-02-28', 3800000, '주말 09:30~17:30', '서울특별시 종로구 우정국로 2길 21', true, false, true, 'Linux/네트워크 이해', 640, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (4, 4, 16, 11, '클라우드 네이티브 인프라 설계', '2025-10-15', '2025-11-10', '2025-11-17', '2026-02-28', 3800000, '주말 09:30~17:30', '서울특별시 강남구 테헤란로 145', true, false, true, 'Linux/네트워크 이해', 640, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (5, 2, 14, 2, '모바일 앱 기획부터 배포', '2025-11-01', '2025-11-25', '2025-12-02', '2026-03-29', 2700000, '화목 19:00~22:00', '온라인', false, false, false, 'Sketch/Proto 경험', 510, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (5, 7, 19, 2, '모바일 앱 기획부터 배포', '2025-11-01', '2025-11-25', '2025-12-02', '2026-03-29', 2700000, '화목 19:00~22:00', '온라인', false, false, false, 'Sketch/Proto 경험', 510, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (6, 3, 15, 10, 'AI 엔지니어링 연구 전환 트랙', '2025-12-10', '2025-12-31', '2026-01-12', '2026-05-02', 4500000, '월수금 18:30~22:30', '온라인', false, true, false, '선형대수/통계 기초', 470, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (6, 9, 21, 10, 'AI 엔지니어링 연구 전환 트랙', '2026-03-10', '2026-04-08', '2026-04-14', '2026-08-14', 4500000, '월수금 18:30~22:30', '온라인', false, true, false, '선형대수/통계 기초', 470, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (7, 1, 13, 12, '보안 위협 대응 트레이닝', '2025-11-20', '2025-12-18', '2026-01-04', '2026-03-26', 2900000, '주말 10:00~16:00', '서울특별시 종로구 우정국로 2길 21', false, false, true, '네트워크 기본 및 Python', 620, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (7, 6, 18, 12, '보안 위협 대응 트레이닝', '2025-11-20', '2025-12-18', '2026-01-04', '2026-03-26', 2900000, '주말 10:00~16:00', '경기도 성남시 분당구 판교역로 235', false, false, true, '네트워크 기본 및 Python', 620, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (8, 2, 14, 6, '풀스택 JavaScript 부트캠프', '2025-10-05', '2025-11-05', '2025-11-10', '2026-04-25', 4000000, '월~금 09:30~18:00', '서울특별시 금천구 가산디지털1로 70', true, true, true, 'JavaScript/HTML 기초 이상', 1450, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (8, 8, 20, 6, '풀스택 JavaScript 부트캠프', '2025-10-05', '2025-11-05', '2025-11-10', '2026-04-25', 4000000, '월~금 09:30~18:00', '서울특별시 영등포구 경인로 775', true, true, true, 'JavaScript/HTML 기초 이상', 1450, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (9, 3, 15, 8, 'React + Next.js 현업 프로젝트', '2025-11-12', '2025-12-08', '2025-12-15', '2026-03-20', 3300000, '화목 19:00~22:30', '온라인', false, false, false, 'React 기본 경험', 950, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (9, 2, 14, 8, 'React + Next.js 현업 프로젝트', '2025-11-12', '2025-12-08', '2025-12-15', '2026-03-20', 3300000, '화목 19:00~22:30', '온라인', false, false, false, 'React 기본 경험', 950, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (10, 1, 13, 7, 'Spring + Kotlin 마이크로서비스', '2025-12-05', '2025-12-25', '2026-01-03', '2026-05-15', 4200000, '금 19:00~23:00', '온라인', false, true, false, 'Spring Boot 실무 경험', 780, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (10, 10, 22, 7, 'Spring + Kotlin 마이크로서비스', '2026-03-05', '2026-04-05', '2026-04-12', '2026-08-20', 4200000, '금 19:00~23:00', '온라인', false, true, false, 'Spring Boot 실무 경험', 780, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (11, 2, 14, 11, '클라우드 보안 운영 마스터', '2025-11-02', '2025-11-20', '2025-12-01', '2026-03-01', 3600000, '수금 19:00~22:30', '서울특별시 금천구 가산디지털1로 70', true, false, true, '클라우드 기본 지식', 640, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (11, 10, 22, 11, '클라우드 보안 운영 마스터', '2025-11-02', '2025-11-20', '2025-12-01', '2026-03-01', 3600000, '수금 19:00~22:30', '경기도 수원시 영통구 광교로 156', true, false, true, '클라우드 기본 지식', 640, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (12, 3, 15, 9, '데이터 엔지니어링 자동화', '2025-11-15', '2025-12-10', '2026-01-05', '2026-04-25', 3900000, '월수금 18:30~22:00', '경기도 성남시 성남대로 34', false, true, true, 'SQL/파이썬 기본', 710, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (12, 5, 17, 9, '데이터 엔지니어링 자동화', '2025-11-15', '2025-12-10', '2026-01-05', '2026-04-25', 3900000, '월수금 18:30~22:00', '서울특별시 마포구 양화로 186', false, true, true, 'SQL/파이썬 기본', 710, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (13, 1, 13, 3, 'AI 챗봇 실무 구축 트랙', '2025-12-12', '2025-12-29', '2026-01-07', '2026-04-07', 3400000, '주말 09:00~17:00', '온라인', false, false, false, 'Python/REST 기본', 520, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (13, 3, 15, 3, 'AI 챗봇 실무 구축 트랙', '2026-03-14', '2026-04-03', '2026-04-11', '2026-07-25', 3400000, '주말 09:00~17:00', '온라인', false, false, false, 'Python/REST 기본', 520, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (14, 2, 14, 10, 'DevOps와 GitOps 실무', '2025-11-18', '2025-12-08', '2025-12-16', '2026-03-31', 3100000, '월수 20:00~23:00', '온라인', true, true, false, '리눅스/스크립트 기반', 465, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (14, 10, 22, 10, 'DevOps와 GitOps 실무', '2025-11-18', '2025-12-08', '2025-12-16', '2026-03-31', 3100000, '월수 20:00~23:00', '온라인', true, true, false, '리눅스/스크립트 기반', 465, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (15, 3, 15, 1, '웹개발 취업 집중 트랙', '2025-11-05', '2025-12-05', '2025-12-12', '2026-04-10', 3600000, '월~금 09:00~18:00', '경기도 성남시 성남대로 34', true, false, true, '기초 알고리즘 숙련', 1010, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (15, 1, 13, 1, '웹개발 취업 집중 트랙', '2025-11-05', '2025-12-05', '2025-12-12', '2026-04-10', 3600000, '월~금 09:00~18:00', '서울특별시 종로구 우정국로 2길 21', true, false, true, '기초 알고리즘 숙련', 1010, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (16, 1, 13, 9, '데이터 시각화 & BI 전문가 과정', '2025-10-28', '2025-11-24', '2025-11-30', '2026-03-31', 3600000, '화목 19:00~22:00', '온라인', false, true, false, 'SQL 및 Tableau/Power BI 기초', 530, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (16, 5, 17, 9, '데이터 시각화 & BI 전문가 과정', '2025-10-28', '2025-11-24', '2025-11-30', '2026-02-28', 3600000, '화목 19:00~22:00', '온라인', false, true, false, 'SQL 및 Tableau/Power BI 기초', 530, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (17, 2, 14, 12, '사이버보안 취약점 실습 트랙', '2025-12-07', '2025-12-28', '2026-01-09', '2026-04-20', 3700000, '금 18:30~22:00', '서울특별시 금천구 가산디지털1로 70', false, false, true, '네트워크 및 Linux 경험', 410, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (17, 6, 18, 12, '사이버보안 취약점 실습 트랙', '2025-12-07', '2025-12-28', '2026-01-09', '2026-04-20', 3700000, '금 18:30~22:00', '경기도 성남시 분당구 판교역로 235', false, false, true, '네트워크 및 Linux 경험', 410, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
-VALUES (18, 3, 15, 11, '클라우드 마이그레이션 실무', '2025-11-22', '2025-12-20', '2026-01-08', '2026-04-30', 4100000, '월수금 18:30~22:30', '경기도 성남시 성남대로 34', true, true, true, 'AWS/GCP 기초', 380, 'APPROVED', NOW(), NOW(), NOW(), false);
+VALUES (18, 4, 16, 11, '클라우드 마이그레이션 실무', '2026-03-01', '2026-03-28', '2026-04-08', '2026-08-08', 4100000, '월수금 18:30~22:30', '서울특별시 강남구 테헤란로 145', true, true, true, 'AWS/GCP 기초', 380, 'APPROVED', NOW(), NOW(), NOW(), false);
 
 -- 5. CourseReview (강의별 0~5개 리뷰)
 INSERT INTO course_review (id, account_id, course_id, comment, approval_status, type, created_at, updated_at, is_deleted)
@@ -582,5 +624,121 @@ INSERT INTO comment (id, board_id, account_id, comment_id, text, is_secret, crea
 VALUES (19, 30, 6, NULL, 'OWASP ZAP 설정이 까다로웠는데 도움 됐어요.', false, NOW(), NOW(), false, NULL);
 INSERT INTO comment (id, board_id, account_id, comment_id, text, is_secret, created_at, updated_at, is_deleted, deleted_at)
 VALUES (20, 30, 7, 19, '저도 같은 부분에서 헤맸었어요.', false, NOW(), NOW(), false, NULL);
+
+-- 10. Additional Course (기관 분산 및 상태 분산용)
+INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
+VALUES (19, 7, 19, 2, 'Flutter 실전 앱 출시 트랙', '2026-03-12', '2026-04-07', '2026-04-14', '2026-07-18', 2900000, '화목 19:00~22:30', '서울특별시 송파구 법원로 128', false, true, true, 'Dart 또는 모바일 개발 입문 경험', 430, 'APPROVED', NOW(), NOW(), NOW(), false);
+
+INSERT INTO course (id, academy_id, requester_id, category_id, name, recruit_start, recruit_end, course_start, course_end, cost, class_day, location, is_kdt, is_nailbaeum, is_offline, requirement, view_count, is_approved, approved_at, created_at, updated_at, is_deleted)
+VALUES (20, 9, 21, 3, '생성형 AI 서비스 기획 부트캠프', '2025-09-20', '2025-10-18', '2025-10-28', '2026-02-13', 3800000, '월~금 10:00~18:00', '서울특별시 성동구 아차산로 113', true, false, true, 'Python 기초와 서비스 기획 관심', 690, 'APPROVED', NOW(), NOW(), NOW(), false);
+
+-- 11. Additional CourseReview
+INSERT INTO course_review (id, account_id, course_id, comment, approval_status, type, created_at, updated_at, is_deleted)
+VALUES (46, 12, 19, '모바일 화면 설계부터 출시 체크리스트까지 이어져 있어서 처음 앱을 만드는 사람에게 특히 좋았습니다.', 'APPROVED', 'JOB_SEEKER', NOW(), NOW(), false);
+INSERT INTO course_review (id, account_id, course_id, comment, approval_status, type, created_at, updated_at, is_deleted)
+VALUES (47, 11, 19, '실습 앱을 실제 스토어 제출 기준으로 다듬어 보는 과정이 만족스러웠습니다.', 'APPROVED', 'JOB_SEEKER', NOW(), NOW(), false);
+INSERT INTO course_review (id, account_id, course_id, comment, approval_status, type, created_at, updated_at, is_deleted)
+VALUES (48, 10, 20, '생성형 AI 서비스 기획과 프로토타입 검증을 한 번에 경험할 수 있어서 포트폴리오 만들기에 좋았습니다.', 'APPROVED', 'JOB_SEEKER', NOW(), NOW(), false);
+INSERT INTO course_review (id, account_id, course_id, comment, approval_status, type, created_at, updated_at, is_deleted)
+VALUES (49, 9, 20, '챗봇 운영 지표와 프롬프트 개선 루프를 실습으로 배워서 현업 감각을 익히기 좋았습니다.', 'APPROVED', 'JOB_SEEKER', NOW(), NOW(), false);
+
+-- 12. Additional ReviewSection
+INSERT INTO review_section (review_id, section_type, score, comment, created_at, updated_at, is_deleted)
+VALUES (46, 'CURRICULUM', 5, '실습 흐름이 앱 출시 단계와 잘 맞습니다.', NOW(), NOW(), false);
+INSERT INTO review_section (review_id, section_type, score, comment, created_at, updated_at, is_deleted)
+VALUES (46, 'COURSEWARE', 4, '모바일 디자인 템플릿이 함께 제공됩니다.', NOW(), NOW(), false);
+INSERT INTO review_section (review_id, section_type, score, comment, created_at, updated_at, is_deleted)
+VALUES (46, 'INSTRUCTOR', 5, '앱 심사 대응 경험을 자세히 공유해줍니다.', NOW(), NOW(), false);
+INSERT INTO review_section (review_id, section_type, score, comment, created_at, updated_at, is_deleted)
+VALUES (46, 'EQUIPMENT', 4, '실습용 디바이스와 테스트 가이드가 잘 갖춰져 있습니다.', NOW(), NOW(), false);
+INSERT INTO review_section (review_id, section_type, score, comment, created_at, updated_at, is_deleted)
+VALUES (48, 'CURRICULUM', 5, '서비스 기획과 모델 활용이 균형 있게 구성됩니다.', NOW(), NOW(), false);
+INSERT INTO review_section (review_id, section_type, score, comment, created_at, updated_at, is_deleted)
+VALUES (48, 'COURSEWARE', 4, '프롬프트 템플릿과 실습 시나리오가 유용합니다.', NOW(), NOW(), false);
+INSERT INTO review_section (review_id, section_type, score, comment, created_at, updated_at, is_deleted)
+VALUES (48, 'INSTRUCTOR', 5, '실제 운영 사례를 기반으로 설명해 이해가 쉬웠습니다.', NOW(), NOW(), false);
+INSERT INTO review_section (review_id, section_type, score, comment, created_at, updated_at, is_deleted)
+VALUES (48, 'EQUIPMENT', 4, '실습 환경이 안정적이고 협업 툴 안내가 명확합니다.', NOW(), NOW(), false);
+
+-- 13. Additional CourseQna
+INSERT INTO course_qna (course_id, account_id, answered_by_id, title, question_text, answer_text, is_answered, created_at, updated_at, is_deleted, deleted_at)
+VALUES (19, 8, 19, 'iOS와 Android 둘 다 배포 실습하나요?', '두 스토어에 모두 배포 문서를 작성해보는지 궁금합니다.', '네, 두 플랫폼 모두 제출 체크리스트를 작성하고 테스트 빌드까지 진행합니다.', true, NOW(), NOW(), false, NULL);
+
+-- 14. Additional CourseCurriculum
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (19, 1, 'Flutter 기본 구조', 'Widget 구조와 상태 관리, 라우팅 기초', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (19, 2, 'UI/UX 실습', '반응형 모바일 UI 설계와 디자인 시스템 적용', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (19, 3, '백엔드 연동', 'REST API, 인증, 상태 동기화 전략', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (19, 4, '스토어 배포 준비', '앱 번들 생성, 심사 체크리스트, QA', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (19, 5, '실전 팀 프로젝트', '실서비스 수준 모바일 앱 구현과 발표', 18, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (20, 1, '생성형 AI 서비스 이해', 'LLM 서비스 구조, 모델 선택, 과금 구조 이해', 10, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (20, 2, '문제 정의와 사용자 시나리오', '서비스 페르소나 정의, 프롬프트 UX 설계', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (20, 3, '프로토타입 구현', 'RAG, 함수 호출, 간단한 운영 콘솔 구현', 14, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (20, 4, '운영 지표와 개선', '정확도, 응답 속도, 비용 지표를 활용한 개선', 12, NOW(), NOW(), false, NULL);
+INSERT INTO course_curriculum (course_id, chapter_number, chapter_name, chapter_detail, chapter_time, created_at, updated_at, is_deleted, deleted_at)
+VALUES (20, 5, '최종 데모데이', '서비스 데모와 포트폴리오 발표, 회고', 16, NOW(), NOW(), false, NULL);
+
+-- 15. CourseImage (과정 썸네일)
+INSERT INTO course_image (id, course_id, image_url, is_thumbnail, image_type, original_filename, created_at, updated_at, is_deleted, deleted_at)
+VALUES
+    (1, 1, 'https://picsum.photos/seed/softwarecampus-course-01/1200/800', true, 'THUMBNAIL', 'course-01-thumb.jpg', NOW(), NOW(), false, NULL),
+    (2, 2, 'https://picsum.photos/seed/softwarecampus-course-02/1200/800', true, 'THUMBNAIL', 'course-02-thumb.jpg', NOW(), NOW(), false, NULL),
+    (3, 3, 'https://picsum.photos/seed/softwarecampus-course-03/1200/800', true, 'THUMBNAIL', 'course-03-thumb.jpg', NOW(), NOW(), false, NULL),
+    (4, 4, 'https://picsum.photos/seed/softwarecampus-course-04/1200/800', true, 'THUMBNAIL', 'course-04-thumb.jpg', NOW(), NOW(), false, NULL),
+    (5, 5, 'https://picsum.photos/seed/softwarecampus-course-05/1200/800', true, 'THUMBNAIL', 'course-05-thumb.jpg', NOW(), NOW(), false, NULL),
+    (6, 6, 'https://picsum.photos/seed/softwarecampus-course-06/1200/800', true, 'THUMBNAIL', 'course-06-thumb.jpg', NOW(), NOW(), false, NULL),
+    (7, 7, 'https://picsum.photos/seed/softwarecampus-course-07/1200/800', true, 'THUMBNAIL', 'course-07-thumb.jpg', NOW(), NOW(), false, NULL),
+    (8, 8, 'https://picsum.photos/seed/softwarecampus-course-08/1200/800', true, 'THUMBNAIL', 'course-08-thumb.jpg', NOW(), NOW(), false, NULL),
+    (9, 9, 'https://picsum.photos/seed/softwarecampus-course-09/1200/800', true, 'THUMBNAIL', 'course-09-thumb.jpg', NOW(), NOW(), false, NULL),
+    (10, 10, 'https://picsum.photos/seed/softwarecampus-course-10/1200/800', true, 'THUMBNAIL', 'course-10-thumb.jpg', NOW(), NOW(), false, NULL),
+    (11, 11, 'https://picsum.photos/seed/softwarecampus-course-11/1200/800', true, 'THUMBNAIL', 'course-11-thumb.jpg', NOW(), NOW(), false, NULL),
+    (12, 12, 'https://picsum.photos/seed/softwarecampus-course-12/1200/800', true, 'THUMBNAIL', 'course-12-thumb.jpg', NOW(), NOW(), false, NULL),
+    (13, 13, 'https://picsum.photos/seed/softwarecampus-course-13/1200/800', true, 'THUMBNAIL', 'course-13-thumb.jpg', NOW(), NOW(), false, NULL),
+    (14, 14, 'https://picsum.photos/seed/softwarecampus-course-14/1200/800', true, 'THUMBNAIL', 'course-14-thumb.jpg', NOW(), NOW(), false, NULL),
+    (15, 15, 'https://picsum.photos/seed/softwarecampus-course-15/1200/800', true, 'THUMBNAIL', 'course-15-thumb.jpg', NOW(), NOW(), false, NULL),
+    (16, 16, 'https://picsum.photos/seed/softwarecampus-course-16/1200/800', true, 'THUMBNAIL', 'course-16-thumb.jpg', NOW(), NOW(), false, NULL),
+    (17, 17, 'https://picsum.photos/seed/softwarecampus-course-17/1200/800', true, 'THUMBNAIL', 'course-17-thumb.jpg', NOW(), NOW(), false, NULL),
+    (18, 18, 'https://picsum.photos/seed/softwarecampus-course-18/1200/800', true, 'THUMBNAIL', 'course-18-thumb.jpg', NOW(), NOW(), false, NULL),
+    (19, 19, 'https://picsum.photos/seed/softwarecampus-course-19/1200/800', true, 'THUMBNAIL', 'course-19-thumb.jpg', NOW(), NOW(), false, NULL),
+    (20, 20, 'https://picsum.photos/seed/softwarecampus-course-20/1200/800', true, 'THUMBNAIL', 'course-20-thumb.jpg', NOW(), NOW(), false, NULL);
+
+-- 16. CourseFavorite (홈 베스트 노출용)
+INSERT INTO course_favorite (account_id, course_id, created_at, updated_at, is_deleted)
+VALUES
+    (3, 1, NOW(), NOW(), false), (4, 1, NOW(), NOW(), false),
+    (5, 2, NOW(), NOW(), false), (6, 2, NOW(), NOW(), false),
+    (7, 3, NOW(), NOW(), false), (8, 3, NOW(), NOW(), false),
+    (9, 4, NOW(), NOW(), false), (10, 4, NOW(), NOW(), false),
+    (11, 5, NOW(), NOW(), false), (12, 5, NOW(), NOW(), false),
+    (3, 6, NOW(), NOW(), false), (5, 6, NOW(), NOW(), false),
+    (4, 7, NOW(), NOW(), false), (6, 7, NOW(), NOW(), false),
+    (7, 8, NOW(), NOW(), false), (9, 8, NOW(), NOW(), false),
+    (8, 9, NOW(), NOW(), false), (10, 9, NOW(), NOW(), false),
+    (11, 10, NOW(), NOW(), false), (12, 10, NOW(), NOW(), false),
+    (3, 11, NOW(), NOW(), false), (7, 11, NOW(), NOW(), false),
+    (4, 12, NOW(), NOW(), false), (8, 12, NOW(), NOW(), false),
+    (5, 13, NOW(), NOW(), false), (9, 13, NOW(), NOW(), false),
+    (6, 14, NOW(), NOW(), false), (10, 14, NOW(), NOW(), false),
+    (3, 15, NOW(), NOW(), false), (11, 15, NOW(), NOW(), false),
+    (4, 16, NOW(), NOW(), false), (12, 16, NOW(), NOW(), false),
+    (5, 17, NOW(), NOW(), false), (7, 17, NOW(), NOW(), false),
+    (6, 18, NOW(), NOW(), false), (8, 18, NOW(), NOW(), false),
+    (9, 19, NOW(), NOW(), false), (11, 19, NOW(), NOW(), false),
+    (10, 20, NOW(), NOW(), false), (12, 20, NOW(), NOW(), false);
+
+-- 17. Banner (메인 상단 배너)
+INSERT INTO banner (id, title, image_url, link_url, description, sequence, is_activated, created_at, updated_at, is_deleted, deleted_at)
+VALUES
+    (1, '봄 시즌 취업예정자 집중 과정', 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1600&q=80', '/courses?categoryType=JOB_SEEKER', '웹개발, 모바일, 데이터/AI 트랙을 4월 개강 일정으로 확인해보세요.', 1, true, NOW(), NOW(), false, NULL),
+    (2, '재직자 야간·주말 업스킬링', 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80', '/courses?categoryType=EMPLOYEE', '백엔드, 클라우드, 보안, DevOps 중심의 실무 심화 과정을 모았습니다.', 2, true, NOW(), NOW(), false, NULL),
+    (3, '기관별 추천 과정 둘러보기', 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80', '/academies', '서울·판교·수원 주요 캠퍼스의 대표 과정을 한눈에 비교해보세요.', 3, true, NOW(), NOW(), false, NULL);
 
 -- End of mock data

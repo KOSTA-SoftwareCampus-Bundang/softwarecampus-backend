@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE)
 @RequiredArgsConstructor
 public class AdminAccountInitializer implements ApplicationRunner {
 
@@ -35,6 +38,12 @@ public class AdminAccountInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        // Mock 시드 또는 기존 데이터로 활성 ADMIN 계정이 이미 있으면 추가 초기화를 하지 않음
+        if (accountRepository.existsByAccountTypeAndIsDeletedFalse(AccountType.ADMIN)) {
+            log.info("활성 ADMIN 계정이 존재합니다. 초기화를 건너뜁니다.");
+            return;
+        }
+
         // .env 파일에서 ADMIN 설정값 읽기 (필수값)
         String adminEmail = env.getProperty("ADMIN_EMAIL");
         String adminPassword = env.getProperty("ADMIN_PASSWORD");
@@ -49,13 +58,7 @@ public class AdminAccountInitializer implements ApplicationRunner {
             throw new IllegalStateException("ADMIN_PASSWORD 환경 변수를 반드시 설정해야 합니다.");
         }
 
-        // 1. 활성 ADMIN 계정이 하나라도 존재하는지 확인
-        if (accountRepository.existsByAccountTypeAndIsDeletedFalse(AccountType.ADMIN)) {
-            log.info("활성 ADMIN 계정이 존재합니다. 초기화를 건너뜁니다.");
-            return;
-        }
-
-        // 2. 활성 ADMIN이 없음 → 삭제된 ADMIN 계정 복구 시도
+        // 1. 활성 ADMIN이 없음 → 삭제된 ADMIN 계정 복구 시도
         log.warn("활성 ADMIN 계정이 없습니다. 삭제된 ADMIN 계정을 확인합니다.");
         
         Optional<Account> deletedAdmin = accountRepository.findByEmailAndAccountTypeAndIsDeletedTrue(
